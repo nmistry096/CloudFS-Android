@@ -1,0 +1,50 @@
+*.class
+*~
+\#*#
+\#*~
+.\#*
+.AppleDouble
+*.so
+*.o
+.DS_Store
+bin
+obj
+.metadata
+armeabi
+# built application files
+*.apk
+*.ap_
+
+# files for the dex VM
+*.dex
+
+# Java class files
+*.class
+
+# generated files
+bin/
+gen/
+bin/*
+
+# Local configuration file (sdk path, etc)
+local.properties
+.settings/
+
+# Android Studio
+.idea/
+.gradle
+build/
+/*/local.properties
+/*/out
+/*/*/build
+/*/*/production
+*.iml
+*.iws
+*.ipr
+*~
+*.swp
+
+# Ignore gradle files
+.gradle/
+build/
+*/build
