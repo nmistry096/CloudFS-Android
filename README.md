@@ -4,5 +4,8 @@
 #Dependencies
   android-support-v7-appcompat (version 19.0.1 or above)
   
+#Documentation
+  https://www.bitcasa.com/cloudfs-api-docs/api/Introduction.html
+  
 #Setup Instructions 
   setup the project dependencies
