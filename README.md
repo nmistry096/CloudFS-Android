@@ -5,7 +5,7 @@
   android-support-v7-appcompat (version 19.0.1 or above)
   
 #Documentation
-  - BitcasaSDKfs - bitcasa cloudfs android sdk
+  - BitcasaSDKfs - Bitcasa cloudfs android sdk
   - BitcasaSDKfsTest - unit test against BitcasaSDKfs
   - MyStorage - sample app; MyStorage gives basic demo of how to authorized through Bitcasa Cloudfs, upload a file to Bitcasa file system, download first file from Bitcasa file system.
   - detail api document - https://www.bitcasa.com/cloudfs-api-docs/api/Introduction.html
