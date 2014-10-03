@@ -8,4 +8,15 @@
   https://www.bitcasa.com/cloudfs-api-docs/api/Introduction.html
   
 #Setup Instructions 
-  setup the project dependencies
+  1. download ZIP, and then unzip the package
+  2. Open Eclipse, go to File Menu -> Import
+  3. On Import dialog, select Android->Existing Android Code Into Workspace, then click "Next" button
+  4. click "Browse..." button and select the unzipped "bitcasa-cloudfs-sdk-android-master" folder; then you will see 4 projects as      below, check them all, then click "Finish" button<br />
+	- android-v7-appcompat
+	- BitcasaSDKfs
+	- BitcasaSDKfsTest
+	- MyStorage
+  5. Fix sample app "MyStorage" problem: right click on "MyStorage" project under Package Explorer, select "Properties", and click      on "Android" tab, add follow 2 libraries:<br />
+    - android-support-v7-appcompat
+    - BitcasaSDKfs
+<br />then click "OK" button to exit the menu.
