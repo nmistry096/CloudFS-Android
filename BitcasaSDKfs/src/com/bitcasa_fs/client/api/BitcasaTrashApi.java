@@ -23,16 +23,31 @@ import com.bitcasa_fs.client.api.BitcasaRESTUtility;
 import com.bitcasa_fs.client.datamodel.Credential;
 import com.bitcasa_fs.client.ParseJSON.BitcasaParseJSON;
 
+/**
+ * Trash related api requests; Trash Operations
+ * @author Valina Li
+ *
+ */
 public class BitcasaTrashApi {
 	private static final String TAG = BitcasaTrashApi.class.getSimpleName();
 	private BitcasaRESTUtility bitcasaRESTUtility;
 	private Credential credential;
 	
+	/**
+	 * Constructor
+	 * @param credential
+	 * @param utility
+	 */
 	public BitcasaTrashApi(Credential credential, BitcasaRESTUtility utility) {
 		bitcasaRESTUtility = utility;
 		this.credential = credential;
 	}
 	
+	/**
+	 * Browse Trash
+	 * @return
+	 * @throws IOException
+	 */
 	public Item[] browseTrash() throws IOException {
 		Item[] trash = null;
 		String url = bitcasaRESTUtility.getRequestUrl(credential, BitcasaRESTConstants.METHOD_TRASH, null, null);
@@ -74,13 +89,21 @@ public class BitcasaTrashApi {
 		return trash;
 	}
 	
-	public boolean recoverTrashItem(String absoluteParentPath, RestoreOptions restoreOption, String rescueOrrecreatePath) throws UnsupportedEncodingException {
+	/**
+	 * Recover Trash Item
+	 * @param path
+	 * @param restoreOption
+	 * @param rescueOrrecreatePath
+	 * @return
+	 * @throws UnsupportedEncodingException
+	 */
+	public boolean recoverTrashItem(String path, RestoreOptions restoreOption, String rescueOrrecreatePath) throws UnsupportedEncodingException {
 		boolean bResult = false;
 		StringBuilder sb = new StringBuilder();
-		if (absoluteParentPath.startsWith(File.separator))
-			sb.append(absoluteParentPath.substring(1));
+		if (path.startsWith(File.separator))
+			sb.append(path.substring(1));
 		else
-			sb.append(absoluteParentPath);
+			sb.append(path);
 		String url = bitcasaRESTUtility.getRequestUrl(credential, BitcasaRESTConstants.METHOD_TRASH, sb.toString(), null);
 		
 		TreeMap<String, String> formParams = null;
@@ -133,10 +156,15 @@ public class BitcasaTrashApi {
 		return bResult;
 	}
 	
-	public boolean deleteTrashItem(String absoluteParentPath) {
+	/**
+	 * Delete Trash Item
+	 * @param path
+	 * @return
+	 */
+	public boolean deleteTrashItem(String path) {
 		boolean bResult = false;
 		StringBuilder sb = new StringBuilder();
-		sb.append(absoluteParentPath);
+		sb.append(path);
 		//sb.append(File.separator);
 		String url = bitcasaRESTUtility.getRequestUrl(credential, BitcasaRESTConstants.METHOD_TRASH, sb.toString(), null);
 		

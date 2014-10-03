@@ -3,6 +3,7 @@ package com.bitcasa.bitcasasdkfs.test;
 import java.io.IOException;
 
 import com.bitcasa_fs.client.Session;
+import com.bitcasa_fs.client.datamodel.Profile;
 import com.bitcasa_fs.client.exception.BitcasaException;
 
 import android.test.InstrumentationTestCase;
@@ -22,6 +23,8 @@ public class TestSession extends InstrumentationTestCase{
 	
 	@Override
 	protected void tearDown() throws Exception {
+		mBitcasaSession.unlink();
+		mBitcasaSession = null;
 		super.tearDown();
 	}
 	

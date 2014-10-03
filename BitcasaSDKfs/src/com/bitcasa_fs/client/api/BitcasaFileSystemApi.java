@@ -40,19 +40,29 @@ import com.bitcasa_fs.client.exception.BitcasaRequestErrorException;
 import com.bitcasa_fs.client.utility.BitcasaProgressListener;
 import com.bitcasa_fs.client.utility.BitcasaProgressListener.ProgressAction;
 
+/**
+ * File system related api requests
+ * @author Valina Li
+ *
+ */
 public class BitcasaFileSystemApi {
 	private static final String TAG = BitcasaFileSystemApi.class.getSimpleName();
 	private BitcasaRESTUtility bitcasaRESTUtility;
 	private Credential credential;
 	
+	/**
+	 * Constructor
+	 * @param credential
+	 * @param utility
+	 */
 	public BitcasaFileSystemApi(Credential credential, BitcasaRESTUtility utility) {
 		this.bitcasaRESTUtility = utility;
 		this.credential = credential;
 	}
 	
 	/**
-     * list all files and folders under given folder   
-     * @param folder
+     * list all files and folders under given folder path   
+     * @param folderPath
      * @param version
      * @param depth
      * @param filter
@@ -119,10 +129,9 @@ public class BitcasaFileSystemApi {
 	}
     
     /**
-     * Download a file from Bitcasa Infinite Drive
+     * Download a file from Bitcasa file system
      * @param file - Bitcasa Item with valid bitcasa file path and file name
      * @param range - Any valid content range. No less than 0, no greater than the filesize.
-     * @param indirect - Boolean. Default 0. When true, responds with a one time url
      * @param localDestination - device file location with file path and name
      * @param listener - to listen to the file download progress
      * @throws BitcasaException
@@ -217,6 +226,15 @@ public class BitcasaFileSystemApi {
 		
     }
     
+    /**
+     * Download a file from Bitcasa file system
+     * @param file
+     * @param range
+     * @return InputStream
+     * @throws BitcasaException
+     * @throws InterruptedException
+     * @throws IOException
+     */
     public InputStream download(Item file, long range) throws BitcasaException, InterruptedException, IOException {
     	InputStream is = null;
 		String url;
@@ -247,6 +265,17 @@ public class BitcasaFileSystemApi {
 		return is;
     }
     
+    /**
+     * Upload a local file to Bitcasa CloudFS server
+     * @param destination folder
+     * @param sourcefile
+     * @param cr
+     * @param listener
+     * @return Bitcasa file meta data of this successful upload, null if upload failed 
+     * @throws IOException
+     * @throws InterruptedException
+     * @throws BitcasaException
+     */
     public Container uploadFile(Item folder, String sourcefile, Exists cr, BitcasaProgressListener listener) throws IOException, InterruptedException, BitcasaException {
     	Container meta = null;
     	File sourceFile = new File(sourcefile); 
@@ -286,19 +315,47 @@ public class BitcasaFileSystemApi {
 		return meta;
     }
     
-    public boolean deleteFolder(String path) throws BitcasaRequestErrorException, IOException, BitcasaException {
-    	return delete(path, FileType.FOLDER.toString());
+    /**
+     * Delete an existing folder from Bitcasa file system, including all directories and files under this folder.
+     * @param path
+     * @param bCommit
+     * @return
+     * @throws BitcasaRequestErrorException
+     * @throws IOException
+     * @throws BitcasaException
+     */
+    public boolean deleteFolder(String path, boolean bCommit) throws BitcasaRequestErrorException, IOException, BitcasaException {
+    	return delete(path, FileType.FOLDER.toString(), bCommit);
     }
     
-    public boolean deleteFile(String path) throws BitcasaRequestErrorException, IOException, BitcasaException {
-    	return delete(path, FileType.FILE.toString());
+    /**
+     * Delete an existing file from Bitcasa file system
+     * @param path
+     * @param bCommit
+     * @return
+     * @throws BitcasaRequestErrorException
+     * @throws IOException
+     * @throws BitcasaException
+     */
+    public boolean deleteFile(String path, boolean bCommit) throws BitcasaRequestErrorException, IOException, BitcasaException {
+    	return delete(path, FileType.FILE.toString(), bCommit);
     }
     
-    private boolean delete(String path, String fileType) throws BitcasaRequestErrorException, IOException, BitcasaException { 
+    /**
+     * Delete an item from Bitcasa CloudFS
+     * @param path
+     * @param fileType (file or folder)
+     * @param bCommit
+     * @return
+     * @throws BitcasaRequestErrorException
+     * @throws IOException
+     * @throws BitcasaException
+     */
+    private boolean delete(String path, String fileType, boolean bCommit) throws BitcasaRequestErrorException, IOException, BitcasaException { 
     	boolean bResult = false;
     	
     	TreeMap<String, String> queryParam = new TreeMap<String, String>();
-    	queryParam.put(BitcasaRESTConstants.PARAM_COMMIT, BitcasaRESTConstants.PARAM_FALSE);
+    	queryParam.put(BitcasaRESTConstants.PARAM_COMMIT, bCommit?BitcasaRESTConstants.PARAM_TRUE:BitcasaRESTConstants.PARAM_FALSE);
     	
     	String request = BitcasaRESTConstants.METHOD_FILES;
     	if (fileType.equals(FileType.FOLDER)) {
@@ -345,12 +402,21 @@ public class BitcasaFileSystemApi {
 		return bResult;
     }  
     
+    /**
+     * Create a folder in Bitcasa file system
+     * 
+     * @param newfolderName
+     * @param parentFolder
+     * @return
+     * @throws BitcasaRequestErrorException
+     * @throws IOException
+     */
     public Container createFolder(String newfolderName, Item parentFolder) throws BitcasaRequestErrorException, IOException {
     	return copyMoveCreate(FileOperation.ADDFOLDER, parentFolder, null, newfolderName, Exists.RENAME);
     }
     
     /**
-     * Copy a file or a folder from one location to another within Bitcasa Infinite Drive
+     * Copy a file or a folder from one location to another within Bitcasa file system
      * @param from
      * @param toFolder
      * @param cr
@@ -363,7 +429,7 @@ public class BitcasaFileSystemApi {
     }
     
     /**
-     * Move a file or a folder from one location to another within Bitcasa Infinite Drive
+     * Move a file or a folder from one location to another within Bitcasa file system
      * @param from
      * @param toFolder
      * @param cr
@@ -375,6 +441,14 @@ public class BitcasaFileSystemApi {
     	return copyMoveCreate(FileOperation.MOVE, from, toFolderPath, newName, Exists.RENAME);
     }
     
+    /**
+     * Get File Meta
+     * @param absolutepath
+     * @param fileType
+     * @return
+     * @throws BitcasaAuthenticationException
+     * @throws IOException
+     */
     public Container getMeta(String absolutepath, String fileType) throws BitcasaAuthenticationException, IOException {
     	Container meta = null;
     	StringBuilder endpoint = new StringBuilder();
@@ -424,6 +498,16 @@ public class BitcasaFileSystemApi {
 		return meta;
     }
     
+    /**
+     * Alter File Meta
+     * @param meta
+     * @param changes
+     * @param version
+     * @param vcr
+     * @return
+     * @throws BitcasaAuthenticationException
+     * @throws IOException
+     */
     public Container alterMeta(Item meta, Map<String, String> changes, int version, VersionExists vcr) throws BitcasaAuthenticationException, IOException {
     	Container metaResult = null;
     	StringBuilder endpoint = new StringBuilder();
@@ -485,6 +569,17 @@ public class BitcasaFileSystemApi {
     	return metaResult;
     }
     
+    /**
+     * File operation: copy, move, or create Bitcasa file system item (file or folder)
+     * @param operationType
+     * @param fileFrom
+     * @param fileToPath
+     * @param filename
+     * @param cr
+     * @return updated file meta data after file operation
+     * @throws BitcasaRequestErrorException
+     * @throws IOException
+     */
     private Container copyMoveCreate(FileOperation operationType, Item fileFrom, String fileToPath, String filename, Exists cr) throws BitcasaRequestErrorException, IOException {
     	
     	Container result = null;
@@ -605,22 +700,30 @@ public class BitcasaFileSystemApi {
 		return result;
     }
     
-    public Container[] listFileVersions(String absoluteParentPath, int startVersion, int stopVersion, int limit) throws IOException {
+    /**
+     * List File Versions
+     * @param path
+     * @param startVersion
+     * @param stopVersion
+     * @param limit
+     * @return This returns a list of file meta data reults, as they have been recorded in the file version history after successful meta data changes.
+     * @throws IOException
+     */
+    public Container[] listFileVersions(String path, int startVersion, int stopVersion, int limit) throws IOException {
     	Container[] versions = null;
     	
     	TreeMap<String, String> queryParams = new TreeMap<String, String>();
     	if (startVersion >= 0)
-    		queryParams.put(BitcasaRESTConstants.START_VERSION, Integer.toString(startVersion));
+    		queryParams.put(URLEncoder.encode(BitcasaRESTConstants.START_VERSION, BitcasaRESTConstants.UTF_8_ENCODING), Integer.toString(startVersion));
     	if (stopVersion >= 0)
-    		queryParams.put(BitcasaRESTConstants.STOP_VERSION, Integer.toString(stopVersion));
+    		queryParams.put(URLEncoder.encode(BitcasaRESTConstants.STOP_VERSION, BitcasaRESTConstants.UTF_8_ENCODING), Integer.toString(stopVersion));
     	if (limit >= 0)
-    		queryParams.put(BitcasaRESTConstants.LIMIT, Integer.toString(limit));
+    		queryParams.put(URLEncoder.encode(BitcasaRESTConstants.LIMIT, BitcasaRESTConstants.UTF_8_ENCODING), Integer.toString(limit));
     	
     	StringBuilder sb = new StringBuilder();
-    	sb.append(absoluteParentPath);
-    	sb.append(File.separator);
+    	sb.append(path);
     	sb.append(BitcasaRESTConstants.PARAM_VERSIONS);
-    	String url = bitcasaRESTUtility.getRequestUrl(credential, BitcasaRESTConstants.METHOD_FILES, sb.toString(), queryParams);
+    	String url = bitcasaRESTUtility.getRequestUrl(credential, BitcasaRESTConstants.METHOD_FILES, sb.toString(), queryParams.size()>0?queryParams:null);
     	Log.d(TAG, "listFileVersions: " + url);
 		HttpsURLConnection connection = null;
 		InputStream is = null;
@@ -649,12 +752,18 @@ public class BitcasaFileSystemApi {
     	return versions;
     }
     
-    public Container listSingleFileVersion(String absoluteParentPath, int version) throws IOException {
+    /**
+     * List Single File Version
+     * @param path
+     * @param version
+     * @return Returns the file meta data for the given version of the file.
+     * @throws IOException
+     */
+    public Container listSingleFileVersion(String path, int version) throws IOException {
     	Container file = null;    	
 
     	StringBuilder sb = new StringBuilder();
-    	sb.append(absoluteParentPath);
-    	sb.append(File.separator);
+    	sb.append(path);
     	sb.append(BitcasaRESTConstants.PARAM_VERSIONS);
     	sb.append(File.separator);
     	sb.append(Integer.toString(version));
@@ -687,11 +796,18 @@ public class BitcasaFileSystemApi {
     	return file;
     }
     
-    public Container PromoteFileVersion(String absoluteParentPath, int version) throws IOException {
+    /**
+     * Given a specified version of a file, set that version’s meta data as the current set of meta data on the file, creating a new version in the process.
+     * @param path
+     * @param version
+     * @return Returns the newest meta data with the new version number as well.
+     * @throws IOException
+     */
+    public Container PromoteFileVersion(String path, int version) throws IOException {
     	Container file = null;
     	
     	StringBuilder sb = new StringBuilder();
-    	sb.append(absoluteParentPath);
+    	sb.append(path);
     	sb.append(File.separator);
     	sb.append(BitcasaRESTConstants.PARAM_VERSIONS);
     	sb.append(File.separator);

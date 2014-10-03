@@ -3,13 +3,17 @@ package com.bitcasa_fs.client;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
+import android.os.Parcel;
+import android.os.ParcelFileDescriptor;
+import android.os.Parcelable;
+
 import com.bitcasa_fs.client.api.BitcasaClientApi;
 import com.bitcasa_fs.client.api.BitcasaRESTConstants.RestoreOptions;
 import com.bitcasa_fs.client.datamodel.ApplicationData;
 import com.bitcasa_fs.client.exception.BitcasaException;
 import com.bitcasa_fs.client.exception.BitcasaRequestErrorException;
 
-public class Item {
+public class Item implements Parcelable {
 	private String id;
 	private String parent_id;
 	private String file_type;
@@ -41,6 +45,57 @@ public class Item {
     public Item() {
     	applicationData = new ApplicationData();
 	}
+    
+    public Item(Parcel in) {
+    	id = in.readString();
+    	parent_id = in.readString();
+    	file_type = in.readString();
+    	name = in.readString();
+    	date_created = in.readLong();
+    	date_meta_last_modified = in.readLong();
+    	date_content_last_modified = in.readLong();
+    	version = in.readInt();
+    	is_mirrored = in.readInt()==0?false:true;
+    	absoluteParentPathId = in.readString();
+    	mime = in.readString();
+    	blocklist_key = in.readString();
+    	extension = in.readString();
+    	blocklist_id = in.readString();
+    	size = in.readLong();
+    }
+    
+    @Override
+	public int describeContents() {
+		return 0;
+	}
+
+	@Override
+	public void writeToParcel(Parcel out, int flags) {
+		out.writeString(id);
+		out.writeString(parent_id);
+		out.writeString(file_type);
+		out.writeString(name);
+		out.writeLong(date_created);
+		out.writeLong(date_meta_last_modified);
+		out.writeLong(date_content_last_modified);
+		out.writeInt(version);
+		out.writeInt(is_mirrored?1:0);
+		out.writeString(absoluteParentPathId);
+		out.writeString(mime);
+		out.writeString(blocklist_key);
+	}
+	
+	public static final Parcelable.Creator<Item> CREATOR = new Parcelable.Creator<Item>() {
+		@Override
+		public Item createFromParcel(Parcel source) {
+			return new Item(source);
+		}
+
+		@Override
+		public Item[] newArray(int size) {
+			return new Item[size];
+		}
+	};
  
     @Override
 	public String toString() {
@@ -250,9 +305,9 @@ public class Item {
      */
     public boolean delete(BitcasaClientApi api) throws BitcasaRequestErrorException, IOException, BitcasaException {
     	if (getFile_type().equals(FileType.FOLDER))
-    		return api.getBitcasaFileSystemApi().deleteFolder(getAbsolutePath());
+    		return api.getBitcasaFileSystemApi().deleteFolder(getAbsolutePath(), false);
     	else
-    		return api.getBitcasaFileSystemApi().deleteFile(getAbsolutePath());
+    		return api.getBitcasaFileSystemApi().deleteFile(getAbsolutePath(), false);
     }
  
     /**
@@ -268,7 +323,7 @@ public class Item {
     }
     
     /**
-     * This method requires a request to network
+     * This method restores the item from trash, requires a request to network
      * @param api
      * @param path
      * @return
@@ -279,8 +334,15 @@ public class Item {
     	return api.getBitcasaTrashApi().recoverTrashItem(getPathFromTrash(), RestoreOptions.RESCUE, path);
     }
  
-    public Item[] history() {
-    	return null;
+    /**
+     * This method lists versions of this file in history from 0 to current version, requires a request to network
+     * 
+     * @param api
+     * @return Returns the metadata for selected versions of a file as recorded in the History.
+     * @throws IOException
+     */
+    public Item[] listHistory(BitcasaClientApi api) throws IOException {
+    	return api.getBitcasaFileSystemApi().listFileVersions(getAbsolutePath(), 0, getVersion(), getVersion());
     }
     
     public String getAbsolutePath() {

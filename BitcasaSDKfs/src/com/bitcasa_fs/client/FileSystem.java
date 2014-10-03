@@ -8,6 +8,7 @@ import java.util.HashMap;
 import com.bitcasa_fs.client.Item.FileType;
 import com.bitcasa_fs.client.api.BitcasaClientApi;
 import com.bitcasa_fs.client.api.BitcasaFileSystemApi;
+import com.bitcasa_fs.client.api.BitcasaHistoryApi;
 import com.bitcasa_fs.client.api.BitcasaRESTConstants.Exists;
 import com.bitcasa_fs.client.api.BitcasaRESTConstants.RestoreOptions;
 import com.bitcasa_fs.client.api.BitcasaRESTConstants.VersionExists;
@@ -53,9 +54,9 @@ public class FileSystem {
     	boolean[] results = new boolean[items.length];
     	for (int i=0; i<items.length; i++) {
     		if (items[i].getFile_type().equals(FileType.FILE))
-    			results[i] = api.getBitcasaFileSystemApi().deleteFile(items[i].getAbsolutePath());
+    			results[i] = api.getBitcasaFileSystemApi().deleteFile(items[i].getAbsolutePath(), false);
     		else
-    			results[i] = api.getBitcasaFileSystemApi().deleteFolder(items[i].getAbsolutePath());
+    			results[i] = api.getBitcasaFileSystemApi().deleteFolder(items[i].getAbsolutePath(), false);
     	}
     	return results;
     }
@@ -231,15 +232,41 @@ public class FileSystem {
     	return Results;
     }
  
-    public Item[] fileHistory(String path) {
-    	return null;
+    /**
+     * File history up to 10 versions(default), this method requires a request to network
+     * @param path
+     * @return
+     * @throws IOException
+     */
+    public Item[] fileHistory(String path) throws IOException {
+    	BitcasaFileSystemApi filesystemApi = api.getBitcasaFileSystemApi();
+    	Item[] results = null;
+    	results = filesystemApi.listFileVersions(path, 0, -1, -1);
+    	return results;
     }
     
-    public Item[] fileHistory(Item item) {
-    	return null;
+    /**
+     * File history up to current version, this method requires a request to network
+     * @param item
+     * @return
+     * @throws IOException
+     */
+    public Item[] fileHistory(Item item) throws IOException {
+    	BitcasaFileSystemApi filesystemApi = api.getBitcasaFileSystemApi();
+    	Item[] results = null;
+    	results = filesystemApi.listFileVersions(item.getAbsolutePath(), 0, item.getVersion(), -1);
+    	return results;
     }
  
-    public ActionHistory actionHistory() {
-    	return null;
+    /**
+     * list action history, this method requires a request to network
+     * @return
+     * @throws IOException
+     */
+    public ActionHistory actionHistory() throws IOException {
+    	BitcasaHistoryApi historyApi = api.getBitcasaHistoryApi();
+    	ActionHistory history = null;
+    	history = historyApi.listHistory(0, 10);
+    	return history;
     }
 }

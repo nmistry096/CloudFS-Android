@@ -41,13 +41,26 @@ import com.bitcasa_fs.client.datamodel.Credential;
 import com.bitcasa_fs.client.exception.BitcasaException;
 import com.bitcasa_fs.client.exception.BitcasaRequestErrorException;
 
+/**
+ * REST api request utility
+ * @author Valina Li
+ *
+ */
 public class BitcasaRESTUtility {
 	
 	public static final String TAG = BitcasaRESTUtility.class.getSimpleName();
 	
+	/**
+	 * Get Request URL
+	 * @param credential
+	 * @param request
+	 * @param method
+	 * @param queryParams
+	 * @return
+	 */
 	public String getRequestUrl(Credential credential, String request, String method, Map<String, String> queryParams) {
 		StringBuilder url = new StringBuilder();
-		url.append("https://");
+		url.append(BitcasaRESTConstants.HTTPS);
 		url.append(credential.getEndPoint())
 		.append(BitcasaRESTConstants.API_VERSION_2)
 		.append(request);
@@ -63,10 +76,14 @@ public class BitcasaRESTUtility {
 		return url.toString();
 	}
 	
-	//encoding need to be done before calling generateParamsString 
+	/**
+	 * Generate parameter string from a map, encoding need to be done before calling generateParamsString 
+	 * @param params
+	 * @return
+	 */
   	public String generateParamsString(Map params) {
   		String query = null;
-  		if (params != null) {
+  		if (params != null && params.size() > 0) {
   			StringBuilder paramsString = new StringBuilder();
   			Set<String> keys = params.keySet();
   			for (String key : keys) {
@@ -87,6 +104,12 @@ public class BitcasaRESTUtility {
   		return query;
   	}
   	
+  	/**
+  	 * Set request Header from a map of string
+  	 * @param credential
+  	 * @param connection
+  	 * @param headers
+  	 */
   	public void setRequestHeaders(Credential credential, HttpURLConnection connection,
   			Map<String, String> headers) {
   		if (headers != null) {
@@ -107,7 +130,13 @@ public class BitcasaRESTUtility {
   			Log.d("setRequestHeaders", "we should set the auth header: " + accessToken);
   		}
   	}
-	
+  	
+  	/**
+  	 * Given InputStream, return String presentation of it
+  	 * @param in
+  	 * @return
+  	 * @throws IOException
+  	 */
 	public String read(InputStream in) throws IOException {
 		StringBuilder sb = new StringBuilder();
 		BufferedReader r = new BufferedReader(new InputStreamReader(in));
@@ -118,6 +147,11 @@ public class BitcasaRESTUtility {
 		return sb.toString();
 	}
 	
+	/**
+	 * 
+	 * @param path
+	 * @return
+	 */
 	public String urlEncodeSegments(String path) {
 		String encodedPath = null;
 		StringBuilder sb = new StringBuilder();
@@ -138,6 +172,11 @@ public class BitcasaRESTUtility {
 		return encodedPath;
 	}
 	
+	/**
+	 * Get ApiMethod from FileOperation
+	 * @param op
+	 * @return
+	 */
 	public ApiMethod getApiMethodFromFileOperation(FileOperation op) {
 		switch (op) {
 		case COPY:
@@ -168,14 +207,22 @@ public class BitcasaRESTUtility {
 		return s.replace(" ", "+");
 	}
 	
-	public String generateAuthorizationValue(Session session, String params, String date) throws InvalidKeyException, UnsupportedEncodingException, NoSuchAlgorithmException {
+	/**
+	 * Generate authorization value
+	 * @param session
+	 * @param params
+	 * @param date
+	 * @return
+	 * @throws InvalidKeyException
+	 * @throws UnsupportedEncodingException
+	 * @throws NoSuchAlgorithmException
+	 */
+	public String generateAuthorizationValue(Session session, String uri, String params, String date) throws InvalidKeyException, UnsupportedEncodingException, NoSuchAlgorithmException {
 		final StringBuilder stringToSign = new StringBuilder();
 		stringToSign
 				.append(BitcasaRESTConstants.REQUEST_METHOD_POST)
 				.append("&")
-				.append(BitcasaRESTConstants.API_VERSION_2)
-				.append(BitcasaRESTConstants.METHOD_OAUTH2)
-				.append(BitcasaRESTConstants.METHOD_TOKEN)
+				.append(uri)
 				.append("&")
 				.append(params)
 				.append("&")
@@ -192,6 +239,11 @@ public class BitcasaRESTUtility {
 		return authorizationValue.toString();
 	}
 	
+	/**
+	 * Check for errors on Request response back from server
+	 * @param connection
+	 * @return
+	 */
 	public BitcasaError checkRequestResponse(HttpsURLConnection connection) {
     	BitcasaError error = null;
     	InputStream is = null;

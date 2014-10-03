@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 
 import com.bitcasa_fs.client.api.BitcasaClientApi;
 import com.bitcasa_fs.client.datamodel.Credential;
+import com.bitcasa_fs.client.datamodel.Profile;
 import com.bitcasa_fs.client.exception.BitcasaException;
 
 public class Session {

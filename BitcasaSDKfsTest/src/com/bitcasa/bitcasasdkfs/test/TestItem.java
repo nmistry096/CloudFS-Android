@@ -11,6 +11,7 @@ import com.bitcasa_fs.client.exception.BitcasaException;
 import com.bitcasa_fs.client.exception.BitcasaRequestErrorException;
 
 import android.test.InstrumentationTestCase;
+import android.util.Log;
 
 public class TestItem extends InstrumentationTestCase{
 	private final static String CLIENT_ID = "1123456789012345678901234567890123456789012";
@@ -48,7 +49,7 @@ public class TestItem extends InstrumentationTestCase{
 					mContainer = (Container) result[i];
 				else if (mToContainer == null)
 					mToContainer = (Container) result[i];
-				else
+				else if (mFile != null)
 					break;
 			}
 			else if (result[i].getFile_type().equals(FileType.FILE)) {
@@ -65,9 +66,33 @@ public class TestItem extends InstrumentationTestCase{
 	
 	@Override
 	protected void tearDown() throws Exception {
-		//mBitcasaSession.unlink();
-		//mBitcasaSession = null;
+//		mBitcasaSession.unlink();
+//		mBitcasaSession = null;
 		super.tearDown();
+	}
+	
+	public void testItem() {
+		assertNotNull(mFile);
+		assertNotNull(mFile.getFile_type());
+		if (mFile.getFile_type().equals(FileType.FILE)) {
+			assertNotNull(mFile.getExtension());
+			assertNotNull(mFile.getMime());
+			assertNotNull(mFile.getSize());
+		}
+		assertNotNull(mFile.getAbsoluteParentPathId());
+		assertNotNull(mFile.getAbsolutePath());	//absolutePath only apply to non-trash item
+		assertNotNull(mFile.getBlocklist_id());
+		assertNotNull(mFile.getBlocklist_key());
+		assertNotNull(mFile.getId());
+		assertNotNull(mFile.getName());
+		assertNotNull(mFile.getParent_id());
+		//only if this item is from trash
+		//assertNotNull(mFile.getPathFromTrash());
+		assertNotNull(mFile.getDate_content_last_modified());
+		assertNotNull(mFile.getDate_created());
+		assertNotNull(mFile.getDate_meta_last_modified());
+		assertNotNull(mFile.getVersion());
+		assertNotNull(mFile.isIs_mirrored());
 	}
 	
 	public void testMove_ToWithContainer() {
@@ -159,7 +184,31 @@ public class TestItem extends InstrumentationTestCase{
 		}
 	}
 	
-//	public void testHistory() {
-//		
-//	}
+	public void testListHistory() {
+		
+		Item[] allversions = null;
+		try {
+			allversions = mFile.listHistory(mBitcasaSession.getBitcasaClientApi());
+			assertNotNull(allversions);
+		} catch (IOException e) {
+			assertTrue(false);
+			e.printStackTrace();
+		}
+		
+		//for(int i=0; i< allversions.length; i++)
+			//Log.d("testListHistory", allversions[i].toString());
+	}
+	
+	public void testListSingleFileVersion() {
+		Item version = null;
+		try {
+			version = mBitcasaSession.getBitcasaClientApi().getBitcasaFileSystemApi().listSingleFileVersion(mFile.getAbsolutePath(), 0);
+			assertNotNull(version);
+		} catch (IOException e) {
+			assertTrue(false);
+			e.printStackTrace();
+		}
+		
+		Log.d("testListSingleFileVersion", version.toString());
+	}
 }

@@ -1,11 +1,54 @@
 package com.bitcasa_fs.client.datamodel;
 
-public class ShareItem {
+import com.bitcasa_fs.client.Item;
+
+import android.os.Parcel;
+import android.os.Parcelable;
+
+public class ShareItem implements Parcelable{
 	private String share_key;
 	private String url;
 	private String short_url;
 	private long size;
 	private long date_created;
+	
+	public ShareItem() {
+		
+	}
+	
+	public ShareItem(Parcel in) {
+		share_key = in.readString();
+		url = in.readString();
+		short_url = in.readString();
+		size = in.readLong();
+		date_created = in.readLong();
+	}
+	
+	@Override
+	public int describeContents() {
+		return 0;
+	}
+
+	@Override
+	public void writeToParcel(Parcel out, int flags) {
+		out.writeString(share_key);
+		out.writeString(url);
+		out.writeString(short_url);
+		out.writeLong(size);
+		out.writeLong(date_created);
+	}
+	
+	public static final Parcelable.Creator<ShareItem> CREATOR = new Parcelable.Creator<ShareItem>() {
+		@Override
+		public ShareItem createFromParcel(Parcel source) {
+			return new ShareItem(source);
+		}
+
+		@Override
+		public ShareItem[] newArray(int size) {
+			return new ShareItem[size];
+		}
+	};
 	
 	@Override
 	public String toString() {

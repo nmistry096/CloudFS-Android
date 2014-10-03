@@ -23,26 +23,55 @@ import com.bitcasa_fs.client.datamodel.Credential;
 import com.bitcasa_fs.client.datamodel.Profile;
 import com.bitcasa_fs.client.exception.BitcasaException;
 
+/**
+ * Api request to Bitcasa CloudFS server to obtain Account data and User data information
+ * @author Valina Li
+ *
+ */
 public class BitcasaAccountDataApi {
 
 	public static final String TAG = BitcasaAccountDataApi.class.getSimpleName();
 	private BitcasaRESTUtility bitcasaRESTUtility;
 	private Credential credential;
 	
+	/**
+	 * Constructor 
+	 * @param credential
+	 * @param utility
+	 */
 	public BitcasaAccountDataApi(Credential credential, BitcasaRESTUtility utility) {
 		this.bitcasaRESTUtility = utility;
 		this.credential = credential;
 	}
 	
+	/**
+	 * request to get account information from Bitcasa CloudFS server 
+	 * @return Bitcasa Account object 
+	 * @throws IOException
+	 * @throws BitcasaException
+	 */
 	public Account requestAccountInfo() throws IOException, BitcasaException {
 		Profile profile = getProfile();
 		return profile.getAccountData();
 	}
 	
+	/**
+	 * request to get user information from Bitcasa CloudFS server
+	 * @return Bitcasa User object
+	 * @throws IOException
+	 * @throws BitcasaException
+	 */
 	public User requestUserInfo() throws IOException, BitcasaException {
 		Profile profile = getProfile();
 		return profile.getUserData();
 	}
+	
+	/**
+	 * request to get profile from Bitcasa CloudFS server, Bitcasa Profile object contains both account and user information
+	 * @return Bitcasa Profile Object
+	 * @throws IOException
+	 * @throws BitcasaException
+	 */
 	private Profile getProfile() throws IOException, BitcasaException {    	
 		Profile profile = null;
 		String url = bitcasaRESTUtility.getRequestUrl(credential, BitcasaRESTConstants.METHOD_USER, BitcasaRESTConstants.METHOD_PROFILE, null);
@@ -85,6 +114,12 @@ public class BitcasaAccountDataApi {
 		return profile;
 	}
     
+	/**
+	 * request to alter Profile information, more specifically to alter account information
+	 * @param accountInfo
+	 * @param changes
+	 * @return boolean value, true means succeed
+	 */
     public boolean alterProfile(Account accountInfo, Map<String, String> changes) {
     	boolean bResult = false;
     	
@@ -141,6 +176,11 @@ public class BitcasaAccountDataApi {
     	return bResult;
     }
     
+    /**
+     * a way to ping CloudFS server, can be ping by head or get request header 
+     * @param bUseHeadMethod
+     * @return boolean value, true means succeed
+     */
     public boolean ping(boolean bUseHeadMethod) {
     	boolean bResult = false;
     	

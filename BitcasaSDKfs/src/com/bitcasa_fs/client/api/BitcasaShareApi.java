@@ -13,6 +13,7 @@ import javax.net.ssl.HttpsURLConnection;
 import android.util.Log;
 
 import com.bitcasa_fs.client.BitcasaError;
+import com.bitcasa_fs.client.Container;
 import com.bitcasa_fs.client.Session;
 import com.bitcasa_fs.client.api.BitcasaRESTConstants;
 import com.bitcasa_fs.client.api.BitcasaRESTConstants.ApiMethod;
@@ -23,16 +24,31 @@ import com.bitcasa_fs.client.datamodel.BrowseShare;
 import com.bitcasa_fs.client.datamodel.Credential;
 import com.bitcasa_fs.client.datamodel.ShareItem;
 
+/**
+ * Share related api requests
+ * @author Valina Li
+ *
+ */
 public class BitcasaShareApi {
 	private static final String TAG = BitcasaShareApi.class.getSimpleName();
 	private BitcasaRESTUtility bitcasaRESTUtility;
 	private Credential credential;
 	
+	/**
+	 * Constructor
+	 * @param credential
+	 * @param utility
+	 */
 	public BitcasaShareApi(Credential credential, BitcasaRESTUtility utility) {
 		bitcasaRESTUtility = utility;
 		this.credential = credential;
 	}
 	
+	/**
+	 * Lists the shares the user has created.
+	 * @return list of ShareItem
+	 * @throws IOException
+	 */
 	public ShareItem[] listShare() throws IOException {
 		ShareItem[] result = null;
 		String url = bitcasaRESTUtility.getRequestUrl(credential, BitcasaRESTConstants.METHOD_SHARES, null, null);
@@ -52,7 +68,7 @@ public class BitcasaShareApi {
 			BitcasaError error = bitcasaRESTUtility.checkRequestResponse(connection);
 			if (error == null) {
 				is = connection.getInputStream();
-				parser = new BitcasaParseJSON(ApiMethod.GENERAL, null);
+				parser = new BitcasaParseJSON(ApiMethod.LISTSHARE, null);
 				if (parser.readJsonStream(is))
 					result = parser.listShares;
 			}
@@ -74,7 +90,16 @@ public class BitcasaShareApi {
 		return result;
 	}
 	
-	public ShareItem createShare(String absoluteParentPathId, String password) throws IOException {
+	/**
+	 * Shares allow users to create public windows into their filesystem. Only one item can be shared at a time (a file or a folder). 
+	 * If a folder is shared, the share that points to that folder will always show what is currently in that folder 
+	 * in the user’s file system (it’s a “live” view).
+	 * @param path
+	 * @param password
+	 * @return
+	 * @throws IOException
+	 */
+	public ShareItem createShare(String path, String password) throws IOException {
 		ShareItem share= null;
 		String url = bitcasaRESTUtility.getRequestUrl(credential, BitcasaRESTConstants.METHOD_SHARES, null, null);
 		
@@ -84,7 +109,7 @@ public class BitcasaShareApi {
 		OutputStream os = null;
 		BitcasaParseJSON parser = null;
 		TreeMap<String, String> formParams = new TreeMap<String, String>();
-		formParams.put(BitcasaRESTConstants.BODY_PATH, URLEncoder.encode(absoluteParentPathId, BitcasaRESTConstants.UTF_8_ENCODING));
+		formParams.put(BitcasaRESTConstants.BODY_PATH, URLEncoder.encode(path, BitcasaRESTConstants.UTF_8_ENCODING));
 		if (password != null)
 			formParams.put(BitcasaRESTConstants.PARAM_PASSWORD, URLEncoder.encode(password, BitcasaRESTConstants.UTF_8_ENCODING));
 		
@@ -132,13 +157,21 @@ public class BitcasaShareApi {
 		return share;
 	}
 	
-	public BrowseShare browseShare(String shareKey, String absoluteParentPathId) throws IOException {
+	/**
+	 * Given sharekey and the path to any foder/file under share, browseShare method will return BrowseShare related information
+	 * make sure unlockShare is called before browseShare
+	 * @param shareKey
+	 * @param path
+	 * @return
+	 * @throws IOException
+	 */
+	public BrowseShare browseShare(String shareKey, String path) throws IOException {
 		BrowseShare bsResult = null;
 		
 		StringBuilder sb = new StringBuilder();
 		sb.append(shareKey);
-		if (absoluteParentPathId != null)
-			sb.append(absoluteParentPathId);
+		if (path != null)
+			sb.append(path);
 		sb.append(BitcasaRESTConstants.METHOD_META);
 		String url = bitcasaRESTUtility.getRequestUrl(credential, BitcasaRESTConstants.METHOD_SHARES, sb.toString(), null);
 		
@@ -146,7 +179,6 @@ public class BitcasaShareApi {
 		HttpsURLConnection connection = null;
 		InputStream is = null;
 		BitcasaParseJSON parser = null;
-		
 		try {
 			connection = (HttpsURLConnection) new URL(url)
 					.openConnection();
@@ -182,9 +214,18 @@ public class BitcasaShareApi {
 		return bsResult;
 	}
 	
-	public boolean receiveShare(String shareKey, String pathToInsertShare, Exists cr) throws IOException {
-		boolean bResult = false;
-		String url = bitcasaRESTUtility.getRequestUrl(credential, BitcasaRESTConstants.METHOD_SHARES, null, null);
+	/**
+	 * Given a valid location in a user’s filesystem, all items found in this share will be inserted into the given location. 
+	 * File collisions will be handled as specified.
+	 * @param shareKey
+	 * @param pathToInsertShare
+	 * @param cr
+	 * @return
+	 * @throws IOException
+	 */
+	public Container[] receiveShare(String shareKey, String pathToInsertShare, Exists cr) throws IOException {
+		Container[] result = null;
+		String url = bitcasaRESTUtility.getRequestUrl(credential, BitcasaRESTConstants.METHOD_SHARES, shareKey+File.separator, null);
 		
 		Log.d(TAG, "receiveShare URL: " + url);
 		HttpsURLConnection connection = null;
@@ -193,19 +234,20 @@ public class BitcasaShareApi {
 		BitcasaParseJSON parser = null;
 		TreeMap<String, String> formParams = new TreeMap<String, String>();
 		formParams.put(BitcasaRESTConstants.BODY_PATH, URLEncoder.encode(pathToInsertShare, BitcasaRESTConstants.UTF_8_ENCODING));
-		switch(cr) {
-		case FAIL:
-			formParams.put(BitcasaRESTConstants.BODY_EXISTS, BitcasaRESTConstants.EXISTS_FAIL);
-			break;
-		case OVERWRITE:
-			formParams.put(BitcasaRESTConstants.BODY_EXISTS, BitcasaRESTConstants.EXISTS_OVERWRITE);
-			break;
-		case RENAME:
-			default:
-				formParams.put(BitcasaRESTConstants.BODY_EXISTS, BitcasaRESTConstants.EXISTS_RENAME);
-			break;
+		if (cr != null) {
+			switch(cr) {
+			case FAIL:
+				formParams.put(BitcasaRESTConstants.BODY_EXISTS, BitcasaRESTConstants.EXISTS_FAIL);
+				break;
+			case OVERWRITE:
+				formParams.put(BitcasaRESTConstants.BODY_EXISTS, BitcasaRESTConstants.EXISTS_OVERWRITE);
+				break;
+			case RENAME:
+				default:
+					formParams.put(BitcasaRESTConstants.BODY_EXISTS, BitcasaRESTConstants.EXISTS_RENAME);
+				break;
+			}
 		}
-		
 		
 		try {
 			connection = (HttpsURLConnection) new URL(url)
@@ -227,9 +269,9 @@ public class BitcasaShareApi {
 			BitcasaError error = bitcasaRESTUtility.checkRequestResponse(connection);
 			if (error == null) {
 				is = connection.getInputStream();
-				parser = new BitcasaParseJSON(ApiMethod.GENERAL, null);
+				parser = new BitcasaParseJSON(ApiMethod.RECEIVE_SHARE, null);
 				if (parser.readJsonStream(is))
-					bResult = parser.bSuccessResult;
+					result = parser.files;
 			}
 			
 		} catch (IOException ioe) {
@@ -248,9 +290,16 @@ public class BitcasaShareApi {
 			if (connection != null)
 				connection.disconnect();
 		}
-		return bResult;
+		return result;
 	}
 	
+	/**
+	 * Given a valid share and its password, this entrypoint will unlock the share for the login session.
+	 * @param shareKey
+	 * @param password
+	 * @return
+	 * @throws IOException
+	 */
 	public boolean unlockShare(String shareKey, String password) throws IOException {
 		boolean bResult = false;
 		
@@ -311,6 +360,14 @@ public class BitcasaShareApi {
 		return bResult;
 	}
 	
+	/**
+	 * Alter Share Info
+	 * @param shareKey
+	 * @param currentPassword
+	 * @param newPassword
+	 * @return
+	 * @throws IOException
+	 */
 	public ShareItem alterShareInfo(String shareKey, String currentPassword, String newPassword) throws IOException {
 		ShareItem share = null;
 		
@@ -372,6 +429,11 @@ public class BitcasaShareApi {
 		return share;
 	}
 	
+	/**
+	 * Delete Share
+	 * @param shareKey
+	 * @return
+	 */
 	public boolean deleteShare(String shareKey) {
 		boolean bResult = false;
 		StringBuilder sb = new StringBuilder();

@@ -11,7 +11,10 @@
 
 package com.bitcasa_fs.client;
 
-public class BitcasaError {
+import android.os.Parcel;
+import android.os.Parcelable;
+
+public class BitcasaError implements Parcelable{
 
 	private int mCode = -1;
 	private String mMessage;
@@ -20,13 +23,45 @@ public class BitcasaError {
 	
 	public BitcasaError() {
 		
-	}
+	}	
+	
+	public BitcasaError(Parcel in) {
+		mCode = in.readInt();
+		mMessage = in.readString();
+		mError = in.readString();
+		mData = in.readString();
+	}	
 	
 	public BitcasaError(int code, String error, String message) {
 		this.mCode = code;
 		this.mMessage = message;
 		this.setError(error);
 	}
+	
+	@Override
+	public int describeContents() {
+		return 0;
+	}
+
+	@Override
+	public void writeToParcel(Parcel out, int flags) {
+		out.writeInt(mCode);
+		out.writeString(mMessage);
+		out.writeString(mError);
+		out.writeString(mData);
+	}
+	
+	public static final Parcelable.Creator<BitcasaError> CREATOR = new Parcelable.Creator<BitcasaError>() {
+		@Override
+		public BitcasaError createFromParcel(Parcel source) {
+			return new BitcasaError(source);
+		}
+
+		@Override
+		public BitcasaError[] newArray(int size) {
+			return new BitcasaError[size];
+		}
+	};
 
 	public int getCode() {
 		return mCode;
@@ -58,6 +93,5 @@ public class BitcasaError {
 
 	public void setData(String mData) {
 		this.mData = mData;
-	}
-	
+	}	
 }

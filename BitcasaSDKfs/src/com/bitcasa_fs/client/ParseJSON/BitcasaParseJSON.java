@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.json.JSONObject;
 
@@ -29,7 +30,9 @@ import com.bitcasa_fs.client.User;
 import com.bitcasa_fs.client.api.BitcasaClientApi;
 import com.bitcasa_fs.client.api.BitcasaRESTConstants;
 import com.bitcasa_fs.client.api.BitcasaRESTConstants.ApiMethod;
+import com.bitcasa_fs.client.api.BitcasaRESTConstants.HistoryActions;
 import com.bitcasa_fs.client.datamodel.ApplicationData;
+import com.bitcasa_fs.client.datamodel.BaseAction;
 import com.bitcasa_fs.client.datamodel.Profile;
 import com.bitcasa_fs.client.datamodel.ShareItem;
 import com.bitcasa_fs.client.exception.BitcasaException;
@@ -86,6 +89,7 @@ public class BitcasaParseJSON {
 	private static final String TAG_EMAIL = "email";
 	private static final String TAG_SESSION = "session";
 	private static final String TAG_LAST_LOGIN = "last_login";
+	private static final String TAG_HOLDS = "holds";
 	
 	//error
 	private static final String TAG_ERROR = "error";
@@ -103,6 +107,12 @@ public class BitcasaParseJSON {
 	private static final String TAG_ACTION = "action";
 	private static final String TAG_DATA = "data";
 	private static final String TAG_PATH = "path";
+	private static final String TAG_EXISTS = "exists";
+	private static final String TAG_PATHS = "paths";
+	private static final String TAG_SHARE_URL = "share_url";
+	private static final String TAG_FROM = "from";
+	private static final String TAG_TO = "to";
+		
 	
 	//application data
 	private static final String TAG_SERVER = "_server";
@@ -151,6 +161,7 @@ public class BitcasaParseJSON {
 			else if (name.equals(TAG_RESULT) && reader.peek() != JsonToken.NULL) {
 				switch(requestMethod) {
 				case ACCOUNT:
+				case CREATE_TEST_USER_ACCOUNT:
 					parseAccountInfo(reader);
 					break;
 				case GETLIST:
@@ -166,8 +177,10 @@ public class BitcasaParseJSON {
 					parseBrowseShare(reader);
 					break;
 				case LISTHISTORY:
+					history = parseListHistory(reader);
 					break;
 				case LIST_FILE_VERSIONS:
+				case RECEIVE_SHARE:
 					files = parseItemsArray(reader);
 					break;
 				case ADD_FOLDER:
@@ -185,6 +198,7 @@ public class BitcasaParseJSON {
 				case GENERAL:
 					default:
 						getResultSecondLevel(reader);
+						break;
 				}
 			}
 			else if (name.equals(TAG_ERROR_MESSAGE) && reader.peek() != JsonToken.NULL) {
@@ -585,29 +599,128 @@ public class BitcasaParseJSON {
 		reader.endObject();
 	}
 	
-	private void parseListHistory(JsonReader reader) throws IOException {
+	private ActionHistory parseListHistory(JsonReader reader) throws IOException {
+		ActionHistory ah = new ActionHistory();
+		
 		reader.beginArray();
 		while (reader.hasNext()) {
+			BaseAction action = new BaseAction();
 			reader.beginObject();
 			while(reader.hasNext()) {
 				String name = reader.nextName();
-//				if (name.equals(TAG_VERSION))
-//					int version = reader.nextInt();
-//				else if (name.equals(TAG_ACTION))
-//					String action = reader.nextString();
-//				else if (name.equals(TAG_DATA)) {
-//					
-//				}
-//				else if (name.equals(TAG_PATH))
-//					String path = reader.nextString();
-//				else if (name.equals(TAG_TYPE))
-//					String type = reader.nextString();
-					
-				
+				if (name.equals(TAG_VERSION))
+					action.setVersion(reader.nextInt());
+				else if (name.equals(TAG_ACTION))
+					action.setAction(HistoryActions.getResult(reader.nextString()));
+				else if (name.equals(TAG_DATA)) {
+					reader.beginObject();
+					while(reader.hasNext()){
+						String data = reader.nextName();
+						if (data.equals(TAG_SHARE_KEY))
+							action.data_share_key = reader.nextString();
+						else if (data.equals(TAG_EXISTS))
+							action.data_exists = reader.nextString();
+						else if (data.equals(TAG_PATH))
+							action.data_path = reader.nextString();
+						else if (data.equals(TAG_PATHS))
+							action.data_paths = getStringArray(reader);
+						else if (data.equals(TAG_SHARE_URL))
+							action.data_share_url = reader.nextString();
+						else if (data.equals(TAG_ID)) {
+							reader.beginObject();
+							while(reader.hasNext()) {
+								String id = reader.nextName();
+								if (id.equals(TAG_FROM))
+									action.data_id_from = reader.nextString();
+								else if (id.equals(TAG_TO))
+									action.data_id_to = reader.nextString();
+								else
+									reader.skipValue();
+							}
+							reader.endObject();
+						}
+						else if (data.equals(TAG_NAME)) {
+							if (reader.peek() == JsonToken.BEGIN_OBJECT) {
+								reader.beginObject();
+								while (reader.hasNext()) {
+									String dataName = reader.nextName();
+									if (dataName.equals(TAG_FROM))
+										action.data_name_from = reader.nextString();
+									else if (dataName.equals(TAG_TO))
+										action.data_name_to = reader.nextString();
+									else
+										reader.skipValue();
+								}
+								reader.endObject();
+							}
+							else
+								action.data_name = reader.nextString();
+						}
+						else if (data.equals(TAG_DATE_CREATED)) {
+							if (reader.peek() == JsonToken.BEGIN_OBJECT) {
+								reader.beginObject();
+								while (reader.hasNext()) {
+									String dateCreated = reader.nextName();
+									if (dateCreated.equals(TAG_FROM))
+										action.data_date_created_from = reader.nextLong();
+									else if (dateCreated.equals(TAG_TO))
+										action.data_date_created_to = reader.nextLong();
+									else
+										reader.skipValue();
+								}
+								reader.endObject();
+							}
+							else
+								action.data_date_created = reader.nextLong();							
+						}
+						else if (data.equals(TAG_TO))
+							action.data_to = reader.nextString();
+						else if (data.equals(TAG_PARENT_ID))
+							action.data_parent_id = reader.nextString();
+						else if (data.equals(TAG_EXTENSION))
+							action.data_extension = reader.nextString();
+						else if (data.equals(TAG_DATE_META_LAST_MODIFIED))
+							action.data_date_meta_last_modified = reader.nextLong();
+						else if (data.equals(TAG_DATE_CONTENT_LAST_MODIFIED))
+							action.data_date_content_last_modified = reader.nextLong();
+						else if (data.equals(TAG_SIZE))
+							action.data_size = reader.nextLong();
+						else if (data.equals(TAG_MIME))
+							action.data_mime = reader.nextString();
+						else if (data.equals(TAG_IS_MIRRORED))
+							action.data_is_mirrored = reader.nextBoolean();
+						else if (name.equals(TAG_APPLICATION_DATA))
+							action.applicationData = parseApplicationData(reader);
+						else
+							reader.skipValue();
+					}
+					reader.endObject();
+				}
+				else if (name.equals(TAG_PATH))
+					action.path = reader.nextString();
+				else if (name.equals(TAG_TYPE))
+					action.type = reader.nextString();
+				else
+					reader.skipValue();
 			}
 			reader.endObject();
+			
+			ah.addAction(action);
 		}
 		reader.endArray();
+		
+		return ah;
+	}
+	
+	private String[] getStringArray(JsonReader reader) throws IOException {
+		List<String> result = new ArrayList<String>();
+		reader.beginArray();
+		while (reader.hasNext()) {
+			result.add(reader.nextString());
+		}
+		reader.endArray();
+		
+		return result.toArray(new String[result.size()]);
 	}
 	
 	private JsonObject getObjectFromReader(JsonReader reader) throws IOException {

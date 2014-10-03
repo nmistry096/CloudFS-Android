@@ -37,6 +37,36 @@ public class TestAccount extends InstrumentationTestCase {
 		super.tearDown();
 	}
 	
+	public void testAccount() {
+		Account account = null;
+		try {
+			account = mBitcasaSession.getBitcasaClientApi().getBitcasaAccountDataApi().requestAccountInfo();
+		} catch (IOException e) {
+			e.printStackTrace();
+			assertTrue(false);
+		} catch (BitcasaException e) {
+			e.printStackTrace();
+			assertTrue(false);
+		} finally {
+			assertNotNull(account);
+		}	
+		
+		assertNotNull(account.getAccount_id());
+		assertNotNull(account.getId());
+		assertNotNull(account.getLocale());
+		assertNotNull(account.getPlan());
+		//assertNotNull(account.getPlan_cta_text());
+		//assertNotNull(account.getPlan_cta_value());
+		assertNotNull(account.getPlan_id());
+		assertNotNull(account.getSession_locale());
+		assertNotNull(account.getState_display_name());
+		assertNotNull(account.getState_id());
+		assertNotNull(account.getLast_login());
+		assertNotNull(account.getQuota());
+		assertNotNull(account.getUsage());
+		assertNotNull(account.isStorage_otl());
+	}
+	
 	public void testChangeSessionLocale() throws Throwable {
 		Throwable exception = null;
 		Account account = null;

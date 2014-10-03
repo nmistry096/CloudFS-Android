@@ -1,6 +1,10 @@
 package com.bitcasa.bitcasasdkfs.test;
 
+import java.io.IOException;
+
 import com.bitcasa_fs.client.Session;
+import com.bitcasa_fs.client.User;
+import com.bitcasa_fs.client.exception.BitcasaException;
 
 import android.test.InstrumentationTestCase;
 
@@ -14,13 +18,37 @@ public class TestUser extends InstrumentationTestCase{
 	private Session mBitcasaSession;
 	@Override
 	protected void setUp() throws Exception {
-		// TODO Auto-generated method stub
-		super.setUp();
+		mBitcasaSession = new Session(getInstrumentation().getContext(), ENDPOINT, CLIENT_ID, CLIENT_SECRET);
+		if (!mBitcasaSession.isLinked())
+			mBitcasaSession.authenticate(USER, PW);
+		assertNotNull(mBitcasaSession.isLinked());
 	}
 	
 	@Override
 	protected void tearDown() throws Exception {
-		// TODO Auto-generated method stub
-		super.tearDown();
+		mBitcasaSession.unlink();
+		mBitcasaSession = null;
+	}
+	
+	public void testGetUser() {
+		User user = null;
+		try {
+			user = mBitcasaSession.getBitcasaClientApi().getBitcasaAccountDataApi().requestUserInfo();
+		} catch (IOException e) {
+			e.printStackTrace();
+			assertTrue(false);
+		} catch (BitcasaException e) {
+			e.printStackTrace();
+			assertTrue(false);
+		} finally {
+			assertNotNull(user);
+		}
+		
+		assertNotNull(user.getEmail());
+		assertNotNull(user.getFirst_name());
+		assertNotNull(user.getLast_name());
+		assertNotNull(user.getUsername());
+		assertNotNull(user.getCreated_time());
+		assertTrue(user.getCreated_time()>0);
 	}
 }

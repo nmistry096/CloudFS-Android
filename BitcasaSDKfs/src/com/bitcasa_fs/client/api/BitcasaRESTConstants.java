@@ -10,8 +10,14 @@
  */
 package com.bitcasa_fs.client.api;
 
+/**
+ * Constants used in REST api requests
+ * @author Valina Li
+ *
+ */
 public class BitcasaRESTConstants {
 	
+	public static final String HTTPS = "https://";
 	public static final String API_VERSION_2 = "/v2";
 	public static final String FORESLASH = "/";
 	
@@ -86,6 +92,9 @@ public class BitcasaRESTConstants {
 	public static final String PARAM_FALSE = "false";
 	public static final String PARAM_START = "start";
 	public static final String PARAM_STOP = "stop";
+	public static final String PARAM_EMAIL = "email";
+	public static final String PARAM_FIRSTNAME = "first_name";
+	public static final String PARAM_LASTNAME = "last_name";
 	
 	public static final String BODY_FOLDERNAME = "folder_name";
 	public static final String BODY_FILE = "file";
@@ -136,7 +145,7 @@ public class BitcasaRESTConstants {
 	public static enum ApiMethod {
 		GENERAL, ACCOUNT, GETLIST, ADD_FOLDER, DELETE, COPY, MOVE, META, 
 		LISTSHARE, SHARE, BROWSE_SHARE, LISTHISTORY, LIST_FILE_VERSIONS, 
-		LIST_SINGLE_FILE_VERSION, PROMOTE_FILE_VERSION, UPLOAD;
+		LIST_SINGLE_FILE_VERSION, PROMOTE_FILE_VERSION, UPLOAD, CREATE_TEST_USER_ACCOUNT, RECEIVE_SHARE;
 	}
 	
 	public static enum VersionExists {
@@ -145,5 +154,51 @@ public class BitcasaRESTConstants {
 	
 	public static enum RestoreOptions {
 		FAIL, RESCUE, RECREATE;
+	}
+	
+	public static enum HistoryActions {
+		SHARE_RECEIVE("share_receive"),
+		SHARE_CREATE("share_create"),
+		DEVICE_UPDATE("device_update"),
+		DEVICE_CREATE("device_create"),
+		DEVICE_DELETE("device_delete"),
+		ALTER_META("alter_meta"),
+		COPY("copy"),
+		MOVE("move"),
+		CREATE("create"),
+		DELETE("delete"),
+		TRASH("trash");
+		
+		private String historyAction;
+		private HistoryActions(String result) {
+			historyAction = result;
+		}
+		
+		public static HistoryActions getResult(String result) {
+			if (result.equals("share_receive"))
+				return SHARE_RECEIVE;
+			else if (result.equals("share_create"))
+				return SHARE_CREATE;
+			else if (result.equals("device_update"))
+				return DEVICE_UPDATE;
+			else if (result.equals("device_create"))
+				return DEVICE_CREATE;
+			else if (result.equals("device_delete"))
+				return DEVICE_DELETE;
+			else if (result.equals("alter_meta"))
+				return ALTER_META;
+			else if (result.equals("copy"))
+				return COPY;
+			else if (result.equals("move"))
+				return MOVE;
+			else if (result.equals("create"))
+				return CREATE;
+			else if (result.equals("delete"))
+				return DELETE;
+			else if (result.equals("trash"))
+				return TRASH;
+			else
+				return null;
+		}
 	}
 }

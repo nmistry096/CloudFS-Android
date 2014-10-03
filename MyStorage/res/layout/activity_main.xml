@@ -1,0 +1,54 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:orientation="vertical"
+    tools:context="com.example.mystorage.MainActivity" >
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/Description" />
+    
+     <TextView
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:id="@+id/status"
+	        android:text="@string/not_authorized"
+	        android:textStyle="bold"/>
+    
+    <Button 
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/upload"
+        android:id="@+id/upload"/>
+    
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height = "wrap_content"
+        android:text="@string/download" 
+        android:id="@+id/download"/>
+    
+    <EditText android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/upload_file_path"
+        android:id="@+id/userinput"
+        android:visibility="gone"/>
+    
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height = "wrap_content"
+        android:text="@string/go" 
+        android:id="@+id/set_to_go"
+        android:gravity="right"
+        android:visibility="gone"/>
+    
+	<EditText android:layout_width="match_parent"
+	    android:layout_height="fill_parent"
+	    android:singleLine="false"
+	    android:id="@+id/returnValue" />
+</LinearLayout>

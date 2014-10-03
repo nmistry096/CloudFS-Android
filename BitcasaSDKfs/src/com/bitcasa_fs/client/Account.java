@@ -4,9 +4,17 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import com.bitcasa_fs.client.api.BitcasaClientApi;
 
-public class Account {
+/**
+ * A class implements Parcelable
+ * @author Valina Li
+ *
+ */
+public class Account implements Parcelable {
 	private String account_id;
 	private String locale;
 	
@@ -28,6 +36,58 @@ public class Account {
 	
 	public Account(){
 	}
+	
+	public Account(Parcel in) {
+		account_id = in.readString();
+		locale = in.readString();
+		state_display_name = in.readString();
+		state_id = in.readString();
+		storage_usage = in.readLong();
+		storage_limit = in.readLong();
+		storage_otl = in.readInt()==0?false:true;
+		plan_cta_text = in.readString();
+		plan_display_name = in.readString();
+		plan_cta_value = in.readString();
+		plan_id = in.readString();
+		session_locale = in.readString();
+		last_login = in.readLong();
+		id = in.readString();
+	}
+	
+	@Override
+	public int describeContents() {
+		return 0;
+	}
+
+	@Override
+	public void writeToParcel(Parcel out, int flags) {
+		out.writeString(account_id);
+		out.writeString(locale);
+		out.writeString(state_display_name);
+		out.writeString(state_id);
+		out.writeLong(storage_usage);
+		out.writeLong(storage_limit);
+		out.writeInt(storage_otl?1:0);
+		out.writeString(plan_cta_text);
+		out.writeString(plan_display_name);
+		out.writeString(plan_cta_value);
+		out.writeString(plan_id);
+		out.writeString(session_locale);
+		out.writeLong(last_login);
+		out.writeString(id);
+	}
+	
+	public static final Parcelable.Creator<Account> CREATOR = new Parcelable.Creator<Account>() {
+		@Override
+		public Account createFromParcel(Parcel source) {
+			return new Account(source);
+		}
+
+		@Override
+		public Account[] newArray(int size) {
+			return new Account[size];
+		}
+	};
 
 	public String getId() {
 		return id;
