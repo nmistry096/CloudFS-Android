@@ -34,6 +34,7 @@ public class MainActivity extends ActionBarActivity {
 	private EditText mUserInput;
 	private Button mGo;
 	private EditText mResult;
+	private Button mUnlink;
 	
 	private boolean mIsUpload = false;
 	
@@ -48,6 +49,7 @@ public class MainActivity extends ActionBarActivity {
 		mUserInput = (EditText) findViewById(R.id.userinput);
 		mGo = (Button) findViewById(R.id.set_to_go);
 		mResult = (EditText) findViewById(R.id.returnValue);
+		mUnlink = (Button) findViewById(R.id.unlink);
 		
 		//authenticate
 		AuthorizationBitcasa bitcasaAuthorization = new AuthorizationBitcasa();
@@ -95,6 +97,18 @@ public class MainActivity extends ActionBarActivity {
 				}
 				BitcasaDownloadUpload bitcasaActivity = new BitcasaDownloadUpload(mIsUpload, path);
 				bitcasaActivity.execute();
+			}
+		});
+		
+		mUnlink.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				((MyStorageApplication) getApplication()).getBitcasaSession().unlink();
+				if (((MyStorageApplication) getApplication()).getBitcasaSession().isLinked())
+					mAuthenticateStatus.setText(R.string.authorized);
+				else
+					mAuthenticateStatus.setText(R.string.not_authorized);
 			}
 		});
 	}

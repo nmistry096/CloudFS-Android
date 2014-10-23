@@ -17,4 +17,5 @@
 	<string name="file_uploaded">File has been upload successfully.</string>
 	<string name="upload_failed">Upload has failed!</string>
 	<string name="file_downloaded">File just downloaded!</string>
+	<string name="unlink">Unlink</string>
 </resources>

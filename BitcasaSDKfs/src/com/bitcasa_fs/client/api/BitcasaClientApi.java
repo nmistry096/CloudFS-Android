@@ -10,6 +10,7 @@ import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
+import java.util.TimeZone;
 import java.util.TreeMap;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -119,7 +120,12 @@ public class BitcasaClientApi {
 		String accesstoken = null;
 		try {
 			SimpleDateFormat sdf = new SimpleDateFormat(BitcasaRESTConstants.DATE_FORMAT, Locale.US);
+			sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
 			String date = sdf.format(Calendar.getInstance(Locale.US).getTime());
+			int index = date.lastIndexOf("+");
+			if (index == -1)
+				index = date.length();
+			date = date.substring(0, index);
 			
 			TreeMap<String, Object> bodyparams = new TreeMap<String, Object>();
 			bodyparams.put(BitcasaRESTConstants.PARAM_GRANT_TYPE, Uri.encode(BitcasaRESTConstants.PARAM_PASSWORD, " "));
@@ -207,7 +213,12 @@ public class BitcasaClientApi {
 		BitcasaParseJSON parser = null;
 		try {
 			SimpleDateFormat sdf = new SimpleDateFormat(BitcasaRESTConstants.DATE_FORMAT, Locale.US);
+			sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
 			String date = sdf.format(Calendar.getInstance(Locale.US).getTime());
+			int index = date.lastIndexOf("+");
+			if (index == -1)
+				index = date.length();
+			date = date.substring(0, index);
 			
 			TreeMap<String, String> bodyparams = new TreeMap<String, String>();
 			bodyparams.put(BitcasaRESTConstants.PARAM_GRANT_TYPE, Uri.encode(BitcasaRESTConstants.PARAM_PASSWORD, " "));
