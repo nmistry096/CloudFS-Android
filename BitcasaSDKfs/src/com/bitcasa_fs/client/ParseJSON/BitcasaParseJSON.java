@@ -356,10 +356,11 @@ public class BitcasaParseJSON {
 		}
 		reader.endObject();
 		
-		if (requestAbsoluteParentPathId != null)
-			file.setAbsoluteParentPathId(requestAbsoluteParentPathId + file.getId());
+		if (requestAbsoluteParentPathId != null && requestAbsoluteParentPathId.length() > 1)
+			file.setAbsoluteParentPathId(requestAbsoluteParentPathId + File.separator + file.getId());
 		else
 			file.setAbsoluteParentPathId(File.separator + file.getId());
+		
 		return file;
 	}
 	

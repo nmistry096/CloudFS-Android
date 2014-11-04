@@ -30,6 +30,26 @@ public class TestContainer extends InstrumentationTestCase{
 			mBitcasaSession.authenticate(USER, PW);
 		assertNotNull(mBitcasaSession.isLinked());
 		mRootContainer = new Container();
+		
+		Item[] result = null;
+		try {
+			result = mRootContainer.list(mBitcasaSession.getBitcasaClientApi());
+		} catch (IOException e) {
+			assertTrue(false);
+			e.printStackTrace();
+		} catch (BitcasaException e) {
+			assertTrue(false);
+			e.printStackTrace();
+		}
+		assertNotNull(result);
+		
+		for (int i=0; i<result.length; i++) {
+			if (result[i].getFile_type().equals(FileType.FOLDER)) {
+				mTestContainer = (Container) result[i];
+				break;
+			}
+		}
+		
 	}
 	
 	@Override
@@ -53,8 +73,8 @@ public class TestContainer extends InstrumentationTestCase{
 		assertNotNull(result);
 		
 		for (int i=0; i<result.length; i++) {
-			if (result[0].getFile_type().equals(FileType.FOLDER)) {
-				mTestContainer = (Container) result[0];
+			if (result[i].getFile_type().equals(FileType.FOLDER)) {
+				mTestContainer = (Container) result[i];
 				break;
 			}
 		}
@@ -74,7 +94,7 @@ public class TestContainer extends InstrumentationTestCase{
 	
 	public void testCreateFolder() {
 		Container newfolder = new Container();
-		newfolder.setName("v2");
+		newfolder.setName("11042014");
 		Item folder = null;
 		try {
 			folder = mRootContainer.createFolder(mBitcasaSession.getBitcasaClientApi(), newfolder);
