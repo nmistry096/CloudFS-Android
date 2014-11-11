@@ -25,6 +25,7 @@ public class TestFolder extends InstrumentationTestCase {
 	private Session mBitcasaSession;
 	private Folder mRootFolder;
 	private Item[] mRootList;
+	private Item[] mSecondLevelList;
 	@Override
 	protected void setUp() throws Exception {
 		mBitcasaSession = new Session(getInstrumentation().getContext(), ENDPOINT, CLIENT_ID, CLIENT_SECRET);
@@ -34,7 +35,7 @@ public class TestFolder extends InstrumentationTestCase {
 		
 		mRootFolder = new Folder();
 		
-		mRootList = mBitcasaSession.getFileSystem().list(null);
+		mRootList = mBitcasaSession.getFileSystem().list(mRootFolder);
 	}
 	
 	@Override
@@ -64,7 +65,7 @@ public class TestFolder extends InstrumentationTestCase {
 		
 		Item meta = null;
 		try {
-			meta = mRootFolder.upload(mBitcasaSession.getBitcasaClientApi(), "/sdcard/Download/New Document.docx", Exists.RENAME, listener);
+			meta = mRootFolder.upload(mBitcasaSession.getBitcasaClientApi(), "/sdcard/Download/1.docx", Exists.RENAME, listener);
 		} catch (IOException e) {
 			assertTrue(false);
 			e.printStackTrace();
@@ -78,13 +79,53 @@ public class TestFolder extends InstrumentationTestCase {
 		
 		assertNotNull(meta);
 		
-		//upload to all folders under root
-		for (int i=0; i<mRootList.length; i++) {
-			if (mRootList[i].getFile_type().equals(FileType.FOLDER)) {
-				Log.d("uploadFile", "Folder name: " + mRootList[i].getName());
+		
+	}
+	
+	public void testUploadSecondLevel() {
+		
+		try {
+			for (int i=0; i<mRootList.length; i++) {
+				Log.d("ROOT LIST", mRootList[i].getAbsoluteParentPathId());
+				if (mRootList[i].getFile_type().equals(FileType.FOLDER)) {
+					mSecondLevelList = mBitcasaSession.getFileSystem().list(mRootList[i]);
+					Log.d("Second LIST", mRootList[i].getAbsoluteParentPathId());
+					break;
+				}
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (BitcasaException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		assertNotNull(mSecondLevelList);
+		
+		BitcasaProgressListener listener = new BitcasaProgressListener() {
+
+			@Override
+			public void onProgressUpdate(String file, int percentage,
+					ProgressAction action) {
+				Log.d("test Upload", file + " percentage: " + percentage);
+				
+			}
+
+			@Override
+			public void canceled(String file, ProgressAction action) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+		};
+		
+		for (int i=0; i<mSecondLevelList.length; i++) {
+			if (mSecondLevelList[i].getFile_type().equals(FileType.FOLDER)) {
+				Log.d("uploadFile", "Folder name: " + mSecondLevelList[i].getName());
 				Item meta1 = null;
 				try {
-					meta1 = mBitcasaSession.getBitcasaClientApi().getBitcasaFileSystemApi().uploadFile(mRootList[i], "/sdcard/Pictures/house.jpg", Exists.RENAME, listener);
+					meta1 = mBitcasaSession.getBitcasaClientApi().getBitcasaFileSystemApi().uploadFile(mRootList[i], "/sdcard/Pictures/DMT.png", Exists.RENAME, listener);
 				} catch (IOException e) {
 					assertTrue(false);
 					e.printStackTrace();

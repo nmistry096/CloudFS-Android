@@ -112,7 +112,7 @@ public class TestItem extends InstrumentationTestCase{
 	public void testMove_ToWithString() {
 		Item moveresult = null;
 		try {
-			moveresult = mFile.moveTo(mBitcasaSession.getBitcasaClientApi(), mToContainer.getAbsolutePath());
+			moveresult = mFile.moveTo(mBitcasaSession.getBitcasaClientApi(), mToContainer.getAbsoluteParentPathId());
 		} catch (IOException e) {
 			assertTrue(false);
 			e.printStackTrace();
@@ -140,7 +140,7 @@ public class TestItem extends InstrumentationTestCase{
 	public void testCopy_ToWithString() {
 		Item copyresult = null;
 		try {
-			copyresult = mFile.copyTo(mBitcasaSession.getBitcasaClientApi(), mToContainer.getAbsolutePath());
+			copyresult = mFile.copyTo(mBitcasaSession.getBitcasaClientApi(), mToContainer.getAbsoluteParentPathId());
 		} catch (IOException e) {
 			assertTrue(false);
 			e.printStackTrace();
@@ -202,7 +202,7 @@ public class TestItem extends InstrumentationTestCase{
 	public void testListSingleFileVersion() {
 		Item version = null;
 		try {
-			version = mBitcasaSession.getBitcasaClientApi().getBitcasaFileSystemApi().listSingleFileVersion(mFile.getAbsolutePath(), 0);
+			version = mBitcasaSession.getBitcasaClientApi().getBitcasaFileSystemApi().listSingleFileVersion(mFile.getAbsolutePath(), mFile.getVersion());
 			assertNotNull(version);
 		} catch (IOException e) {
 			assertTrue(false);

@@ -121,7 +121,9 @@ public class TestFileSystem extends InstrumentationTestCase{
 			assertTrue(false);
 			e.printStackTrace();
 		}
-		assertNotNull(bresult);
+		
+		for (int i=0; i<bresult.length; i++)
+			assertTrue(bresult[i]);
 	}
 	
 	public void testMoveToContainer() {
@@ -135,14 +137,16 @@ public class TestFileSystem extends InstrumentationTestCase{
 			assertTrue(false);
 			e.printStackTrace();
 		}
+		
 		assertNotNull(items);
+		assertTrue(items.length>0);
 	}
 	
 	public void testMoveToPath() {
 		//test with correct folder destination, this should succeed
 		Item[] toContainer=null;
 		try {
-			toContainer = mBitcasaSession.getFileSystem().move(mFilesToDelete, mContainer.getAbsolutePath(), null);
+			toContainer = mBitcasaSession.getFileSystem().move(mFilesToDelete, mContainer.getAbsoluteParentPathId(), null);
 		} catch (IOException e) {
 			assertTrue(false);
 			e.printStackTrace();
@@ -173,7 +177,7 @@ public class TestFileSystem extends InstrumentationTestCase{
 	public void testCopyToPath() {
 		Item[] toContainer=null;
 		try {
-			toContainer = mBitcasaSession.getFileSystem().copy(mFilesToDelete, mToContainer.getAbsolutePath(), null);
+			toContainer = mBitcasaSession.getFileSystem().copy(mFilesToDelete, mToContainer.getAbsoluteParentPathId(), null);
 		} catch (IOException e) {
 			assertTrue(false);
 			e.printStackTrace();
@@ -203,8 +207,9 @@ public class TestFileSystem extends InstrumentationTestCase{
 		Item[] trashitems = new Item[1];
 		trashitems[0] = mTrashItem1;
 		try {
-			boolean[] results = mBitcasaSession.getFileSystem().restore(trashitems, mContainer.getAbsolutePath(), RestoreOptions.FAIL);
-			assertTrue(results[0]);
+			boolean[] results = mBitcasaSession.getFileSystem().restore(trashitems, mContainer.getAbsoluteParentPathId(), RestoreOptions.FAIL);
+			for (int i=0; i <results.length; i++)
+				assertTrue(results[i]);
 		} catch (UnsupportedEncodingException e) {
 			assertTrue(false);
 			e.printStackTrace();
@@ -213,10 +218,11 @@ public class TestFileSystem extends InstrumentationTestCase{
 	
 	public void testRestoreToContainerDestination() {
 		String[] trashitems = new String[1];
-		trashitems[0] = mTrashItem1.getAbsolutePath();
+		trashitems[0] = mTrashItem1.getAbsoluteParentPathId();
 		try {
 			boolean[] results = mBitcasaSession.getFileSystem().restore(trashitems, mContainer, RestoreOptions.FAIL);
-			assertTrue(results[0]);
+			for (int i=0; i <results.length; i++)
+				assertTrue(results[i]);
 		} catch (UnsupportedEncodingException e) {
 			assertTrue(false);
 			e.printStackTrace();
@@ -227,8 +233,9 @@ public class TestFileSystem extends InstrumentationTestCase{
 		String[] trashitems = new String[1];
 		trashitems[0] = mTrashItem1.getAbsolutePath();
 		try {
-			boolean[] results = mBitcasaSession.getFileSystem().restore(trashitems, mContainer.getAbsolutePath(), RestoreOptions.FAIL);
-			assertTrue(results[0]);
+			boolean[] results = mBitcasaSession.getFileSystem().restore(trashitems, mContainer.getAbsoluteParentPathId(), RestoreOptions.FAIL);
+			for (int i=0; i <results.length; i++)
+				assertTrue(results[i]);
 		} catch (UnsupportedEncodingException e) {
 			assertTrue(false);
 			e.printStackTrace();
@@ -237,10 +244,11 @@ public class TestFileSystem extends InstrumentationTestCase{
 	
 	public void testRestoreTrashItems() {
 		String[] trashitems = new String[1];
-		trashitems[0] = mTrashItem1.getAbsolutePath();
+		trashitems[0] = mTrashItem1.getAbsoluteParentPathId();
 		try {
 			boolean[] results = mBitcasaSession.getFileSystem().restore(trashitems, mContainer, RestoreOptions.FAIL);
-			assertTrue(results[0]);
+			for (int i=0; i <results.length; i++)
+				assertTrue(results[i]);
 		} catch (UnsupportedEncodingException e) {
 			assertTrue(false);
 			e.printStackTrace();

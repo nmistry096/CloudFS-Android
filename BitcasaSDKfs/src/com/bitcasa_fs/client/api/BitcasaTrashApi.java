@@ -165,7 +165,6 @@ public class BitcasaTrashApi {
 		boolean bResult = false;
 		StringBuilder sb = new StringBuilder();
 		sb.append(path);
-		//sb.append(File.separator);
 		String url = bitcasaRESTUtility.getRequestUrl(credential, BitcasaRESTConstants.METHOD_TRASH, sb.toString(), null);
 		
 		Log.d(TAG, "deleteTrashItem URL: " + url);

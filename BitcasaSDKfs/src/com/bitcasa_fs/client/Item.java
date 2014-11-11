@@ -252,7 +252,7 @@ public class Item implements Parcelable {
 	 * @return meta of moved item
 	 */
 	public Item moveTo(BitcasaClientApi api, Container destination) throws IOException, BitcasaException {
-    	return api.getBitcasaFileSystemApi().move(this, destination.getAbsolutePath(), null, null);
+    	return api.getBitcasaFileSystemApi().move(this, destination.getAbsoluteParentPathId(), null, null);
     }
     
 	/**
@@ -278,7 +278,7 @@ public class Item implements Parcelable {
      * @return meta of copied item
      */
     public Item copyTo(BitcasaClientApi api, Container destination) throws IOException, BitcasaException {
-    	return api.getBitcasaFileSystemApi().copy(this, destination.getAbsolutePath(), null, null);
+    	return api.getBitcasaFileSystemApi().copy(this, destination.getAbsoluteParentPathId(), null, null);
     }
     
     /**
@@ -305,9 +305,9 @@ public class Item implements Parcelable {
      */
     public boolean delete(BitcasaClientApi api) throws BitcasaRequestErrorException, IOException, BitcasaException {
     	if (getFile_type().equals(FileType.FOLDER))
-    		return api.getBitcasaFileSystemApi().deleteFolder(getAbsolutePath(), false);
+    		return api.getBitcasaFileSystemApi().deleteFolder(getAbsoluteParentPathId(), false);
     	else
-    		return api.getBitcasaFileSystemApi().deleteFile(getAbsolutePath(), false);
+    		return api.getBitcasaFileSystemApi().deleteFile(getAbsoluteParentPathId(), false);
     }
  
     /**

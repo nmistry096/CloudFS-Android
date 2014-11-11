@@ -21,7 +21,7 @@ public class Container extends Item {
 	 * @return all items(files or folder) under current item, one level down
 	 */
     public Item[] list(BitcasaClientApi api) throws IOException, BitcasaException {
-    	return api.getBitcasaFileSystemApi().getList(getAbsolutePath(), -1, 1, null);
+    	return api.getBitcasaFileSystemApi().getList(getAbsoluteParentPathId(), -1, 1, null);
     }
      
     /**

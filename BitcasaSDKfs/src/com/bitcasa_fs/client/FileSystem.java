@@ -35,10 +35,10 @@ public class FileSystem {
 	 * @return all items(files and folders) under input item
 	 */
     public Item[] list(Item item) throws IOException, BitcasaException {
-    	if (item == null)
+    	if (item == null || item.getAbsoluteParentPathId() == null)
     		return api.getBitcasaFileSystemApi().getList(null, -1, 1, null);
     	else
-    		return api.getBitcasaFileSystemApi().getList(item.getAbsolutePath(), -1, 1, null);
+    		return api.getBitcasaFileSystemApi().getList(item.getAbsoluteParentPathId(), -1, 1, null);
     }
     
     /**
@@ -54,9 +54,9 @@ public class FileSystem {
     	boolean[] results = new boolean[items.length];
     	for (int i=0; i<items.length; i++) {
     		if (items[i].getFile_type().equals(FileType.FILE))
-    			results[i] = api.getBitcasaFileSystemApi().deleteFile(items[i].getAbsolutePath(), false);
+    			results[i] = api.getBitcasaFileSystemApi().deleteFile(items[i].getAbsoluteParentPathId(), false);
     		else
-    			results[i] = api.getBitcasaFileSystemApi().deleteFolder(items[i].getAbsolutePath(), false);
+    			results[i] = api.getBitcasaFileSystemApi().deleteFolder(items[i].getAbsoluteParentPathId(), false);
     	}
     	return results;
     }
@@ -94,7 +94,7 @@ public class FileSystem {
     	BitcasaFileSystemApi filesystemApi = api.getBitcasaFileSystemApi();
     	Item[] Results = new Item[items.length];
     	for (int i=0; i<items.length; i++) {
-    		Results[i] = filesystemApi.move(items[i], destination.getAbsolutePath(), null, null);
+    		Results[i] = filesystemApi.move(items[i], destination.getAbsoluteParentPathId(), null, null);
     	}
     	return Results;
     }
@@ -132,7 +132,7 @@ public class FileSystem {
     	BitcasaFileSystemApi filesystemApi = api.getBitcasaFileSystemApi();
     	Item[] Results = new Item[items.length];
     	for (int i=0; i<items.length; i++) {
-    		Results[i] = filesystemApi.copy(items[i], destination.getAbsolutePath(), items[i].getName(), exists);
+    		Results[i] = filesystemApi.copy(items[i], destination.getAbsoluteParentPathId(), items[i].getName(), exists);
     	}
     	return Results;
     }
@@ -173,7 +173,7 @@ public class FileSystem {
     	BitcasaTrashApi trashApi = api.getBitcasaTrashApi();
     	boolean[] Results = new boolean[items.length];
     	for (int i=0; i<items.length; i++) {
-    		Results[i] = trashApi.recoverTrashItem(items[i].getAbsolutePath(), restoreOption, destination);
+    		Results[i] = trashApi.recoverTrashItem(items[i].getAbsoluteParentPathId(), restoreOption, destination);
     	}
     	return Results;
     }
@@ -191,7 +191,7 @@ public class FileSystem {
     	BitcasaTrashApi trashApi = api.getBitcasaTrashApi();
     	boolean[] Results = new boolean[items.length];
     	for (int i=0; i<items.length; i++) {
-    		Results[i] = trashApi.recoverTrashItem(items[i].getAbsolutePath(), restoreOption, destination.getAbsolutePath());
+    		Results[i] = trashApi.recoverTrashItem(items[i].getAbsoluteParentPathId(), restoreOption, destination.getAbsoluteParentPathId());
     	}
     	return Results;
     }
@@ -227,7 +227,7 @@ public class FileSystem {
     	BitcasaTrashApi trashApi = api.getBitcasaTrashApi();
     	boolean[] Results = new boolean[paths.length];
     	for (int i=0; i<paths.length; i++) {
-    		Results[i] = trashApi.recoverTrashItem(paths[i], restoreOption, destination.getAbsolutePath());
+    		Results[i] = trashApi.recoverTrashItem(paths[i], restoreOption, destination.getAbsoluteParentPathId());
     	}
     	return Results;
     }

@@ -77,7 +77,7 @@ public class TestShare extends InstrumentationTestCase {
 	public void testCreateShare() {
 		ShareItem sItem, sItemFolder = null;
 		try {
-			sItem = mBitcasaSession.getBitcasaClientApi().getBitcasaShareApi().createShare(mFile.getAbsolutePath(), SHARE_PW);
+			sItem = mBitcasaSession.getBitcasaClientApi().getBitcasaShareApi().createShare(mFile.getAbsoluteParentPathId(), SHARE_PW);
 			assertNotNull(sItem);
 		} catch (IOException e) {
 			assertTrue(false);
@@ -86,7 +86,7 @@ public class TestShare extends InstrumentationTestCase {
 		
 		//create share folder
 		try {
-			sItemFolder = mBitcasaSession.getBitcasaClientApi().getBitcasaShareApi().createShare(mContainer.getAbsolutePath(), SHARE_PW);
+			sItemFolder = mBitcasaSession.getBitcasaClientApi().getBitcasaShareApi().createShare(mContainer.getAbsoluteParentPathId(), SHARE_PW);
 			assertNotNull(sItemFolder);
 		} catch (IOException e) {
 			assertTrue(false);
@@ -109,7 +109,8 @@ public class TestShare extends InstrumentationTestCase {
 	public void testBrowseShare() {
 		BrowseShare browseshare = null;
 		try {
-			browseshare = mBitcasaSession.getBitcasaClientApi().getBitcasaShareApi().browseShare(mSharedItems[0].getShare_key(), mFile.getAbsolutePath());
+			assertTrue(mBitcasaSession.getBitcasaClientApi().getBitcasaShareApi().unlockShare(mSharedItems[0].getShare_key(), NEW_SHARE_PW));
+			browseshare = mBitcasaSession.getBitcasaClientApi().getBitcasaShareApi().browseShare(mSharedItems[0].getShare_key(), null);
 			assertNotNull(browseshare);
 		} catch (IOException e) {
 			assertTrue(false);
@@ -120,7 +121,7 @@ public class TestShare extends InstrumentationTestCase {
 	public void testReceiveShare() {
 		Container[] items = null;
 		try {
-			items = mBitcasaSession.getBitcasaClientApi().getBitcasaShareApi().receiveShare(mSharedItems[0].getShare_key(), mContainer.getAbsolutePath(), null);
+			items = mBitcasaSession.getBitcasaClientApi().getBitcasaShareApi().receiveShare(mSharedItems[0].getShare_key(), mContainer.getAbsoluteParentPathId(), null);
 			assertNotNull(items);
 		} catch (IOException e) {
 			assertTrue(false);
