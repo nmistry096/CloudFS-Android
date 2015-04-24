@@ -1,25 +1,75 @@
-#Bitcasa-cloudfs-sdk-android 
-  Bitcasa-cloudfs-sdk-android is a library project to enable developers integrate Bitcasa CloudFS file system into their applications for storage.
+# Bitcasa SDK for Android
   
-#Dependencies
-  android-support-v7-appcompat (version 19.0.1 or above)
-  
-#Documentation
-  - BitcasaSDKfs - Bitcasa cloudfs android sdk
-  - BitcasaSDKfsTest - unit test against BitcasaSDKfs
-  - MyStorage - sample app; MyStorage gives basic demo of how to authorized through Bitcasa Cloudfs, upload a file to Bitcasa file system, download first file from Bitcasa file system.
-  - detail api document - https://www.bitcasa.com/cloudfs-api-docs/api/Introduction.html
-  
-#Setup Instructions 
-  1. download ZIP, and then unzip the package
-  2. Open Eclipse, go to File Menu -> Import
-  3. On Import dialog, select Android->Existing Android Code Into Workspace, then click "Next" button
-  4. click "Browse..." button and select the unzipped "bitcasa-cloudfs-sdk-android-master" folder; then you will see 4 projects as      below, check them all, then click "Finish" button<br />
-	- android-v7-appcompat
-	- BitcasaSDKfs
-	- BitcasaSDKfsTest
-	- MyStorage
-  5. Fix sample app "MyStorage" problem: right click on "MyStorage" project under Package Explorer, select "Properties", and click      on "Android" tab, add follow 2 libraries:<br />
-    - android-support-v7-appcompat
-    - BitcasaSDKfs
-<br />then click "OK" button to exit the menu.
+The **Bitcasa SDK for Android** enables Android developers to easily work with [Bitcasa Cloud Storage Platform](https://www.bitcasa.com/) and build scalable solutions.
+
+* [REST API Documentation](https://www.bitcasa.com/cloudfs-api-docs/)
+* [Blog](http://blog.bitcasa.com/) 
+
+## Getting Started
+
+If you have already [signed up](https://www.bitcasa.com/cloudfs/pricing) and obtained your credentials you can get started in minutes.
+
+
+Cloning the git repository.
+
+  ```bash
+  $ git clone https://github.com/bitcasa/CloudFS-Android.git
+  ```
+
+## Using the SDK
+
+Use the credentials you obtained from Bitcasa admin console to create a client session. This session can be used for all future requests to Bitcasa.
+
+```java
+Session session = new Session(endpoint, clientId, clientSecret);
+session.authenticate(username, password);
+```
+
+Getting the root folder
+
+```java
+root = fileSystem.root();
+```
+
+Getting the contents of root folder
+
+```java
+items = root.list();
+```
+
+Creating a sub folder under root folder
+
+```java
+folder = root.createFolder(String name, Exists exist);
+```
+Uploading a file to a folder
+
+```java
+uploadedFile = folder.upload(String filesystemPath, BitcasaProgressListener listener, BitcasaRESTConstants.Exists exists);
+```
+
+Download a file to a local destination.
+
+```java
+uploadedFile.download(String localDestinationPath, BitcasaProgressListener listener);
+```
+
+Deleting a file or folder
+
+```java
+item.delete(boolean commit, boolean force);
+```
+
+Create user (for paid accounts only)
+
+```java
+session.setAdminCredentials(String adminClientId, String adminClientSecret);
+user = session.createAccount(String username, String password, String email, String firstName, String lastName, Boolean logInToCreatedUser);
+```
+
+## Test Suite
+
+The tests that exist are functional tests designed to be used with a CloudFS test user. They use API credentials on your free CloudFS account. You should add the credentials to the file app\src\test\java\com\bitcasa\cloudfs\BaseTest.java.
+
+
+

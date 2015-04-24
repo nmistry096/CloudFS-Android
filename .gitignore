@@ -25,6 +25,7 @@ armeabi
 bin/
 gen/
 bin/*
+Test.txt
 
 # Local configuration file (sdk path, etc)
 local.properties
