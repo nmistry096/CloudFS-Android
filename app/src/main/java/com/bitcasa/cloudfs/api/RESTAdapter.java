@@ -2517,9 +2517,9 @@ public class RESTAdapter {
                     .openConnection();
             connection.setRequestMethod(BitcasaRESTConstants.REQUEST_METHOD_POST);
             bitcasaRESTUtility.setRequestHeaders(credential, connection, null);
-
-            outputStream = connection.getOutputStream();
             connection.setDoOutput(true);
+            outputStream = connection.getOutputStream();
+
             String body = bitcasaRESTUtility.generateParamsString(formParams);
             Log.d("recoverTrashItem", "formParams: " + body);
             outputStream.write(body.getBytes());

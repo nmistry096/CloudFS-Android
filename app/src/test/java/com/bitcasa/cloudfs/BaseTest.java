@@ -1,7 +1,6 @@
 package com.bitcasa.cloudfs;
 
 import com.bitcasa.cloudfs.Utils.BitcasaRESTConstants;
-import com.bitcasa.cloudfs.Utils.BitcasaRESTConstants.VersionExists;
 import com.bitcasa.cloudfs.exception.BitcasaException;
 
 import org.junit.AfterClass;
@@ -26,11 +25,14 @@ public abstract class BaseTest {
      */
     protected static Folder sdkTestFolder;
 
-    protected static final String endpoint = "evyg9ym7w1.cloudfs.io";
-    protected static final String clientId = "6VaRUN0AJDftZaaFyQy98oHvVmuUjI8fJz6UHIkQct0";
-    protected static final String clientSecret = "fSXNM3HhRJaNM-N8gJsADjYwxvQnCMyZEh95BQpjuNRpt2j5EGVInd8UtTbmjg8dtd1qK0sb1NDmN7ClxxdanA";
-    protected static final String username = "dhanushka@calcey.com";
-    protected static final String password = "dhanushka";
+    protected static final String cloudfsEndpoint = "<add cloudfs endpoint here>";
+    protected static final String clientId = "<add client id here>";
+    protected static final String clientSecret = "<add cloudfs endpoint here>";
+    protected static final String username = "<add cloudfs username here>";
+    protected static final String password = "<add cloudfs password here>";
+    protected final static String adminId = "<add cloudfs admin id here - only available for paid users>";
+    protected final static String adminSecret = "<add cloudfs admin secret here - only available for paid users>";
+
     protected static final String testFolderName = "CFSAndroidSDKTest";
 
     /**
@@ -47,7 +49,7 @@ public abstract class BaseTest {
     @BeforeClass
     public static void classSetUp() throws Exception {
         if (session == null) {
-            session = new Session(endpoint, clientId, clientSecret);
+            session = new Session(cloudfsEndpoint, clientId, clientSecret);
             session.authenticate(username, password);
         }
     }

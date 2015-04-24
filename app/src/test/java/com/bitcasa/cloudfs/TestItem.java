@@ -188,7 +188,7 @@ public class TestItem extends BaseTest{
             }
             assertNotNull(trashItem);
             boolean restoreState = trashItem.restore(trashRecoverFolder,
-                    BitcasaRESTConstants.RestoreMethod.FAIL, null);
+                    BitcasaRESTConstants.RestoreMethod.RESCUE, null);
 			assertTrue(restoreState);
 		} catch (UnsupportedEncodingException e) {
 			assertTrue(false);

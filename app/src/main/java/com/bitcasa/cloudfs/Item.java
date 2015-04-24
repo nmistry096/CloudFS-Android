@@ -377,7 +377,7 @@ public abstract class Item {
      */
     public boolean restore(Container destination, RestoreMethod method, String restoreArgument)
             throws UnsupportedEncodingException, BitcasaException {
-        return restAdapter.recoverTrashItem(destination.getPath(), method, restoreArgument);
+        return restAdapter.recoverTrashItem(this.getId(), method, destination.getPath());
     }
 
     /**
