@@ -1,12 +1,24 @@
+.. java:import:: android.os Parcel
+
+.. java:import:: android.os Parcelable
+
 BitcasaError
 ============
 
 .. java:package:: com.bitcasa.cloudfs
    :noindex:
 
-.. java:type:: public class BitcasaError
+.. java:type:: public class BitcasaError implements Parcelable
 
    The BitcasaError class provides custom errors.
+
+Fields
+------
+CREATOR
+^^^^^^^
+
+.. java:field:: public static final Parcelable.Creator<BitcasaError> CREATOR
+   :outertype: BitcasaError
 
 Constructors
 ------------
@@ -41,8 +53,28 @@ BitcasaError
    :param code: The error code.
    :param message: The error message.
 
+BitcasaError
+^^^^^^^^^^^^
+
+.. java:constructor:: public BitcasaError(Parcel in)
+   :outertype: BitcasaError
+
+   Initializes the BitcasaError instance.
+
+   :param in: The error parcel object.
+
 Methods
 -------
+describeContents
+^^^^^^^^^^^^^^^^
+
+.. java:method:: @Override public int describeContents()
+   :outertype: BitcasaError
+
+   Describe the kinds of special objects contained in this Parcelable's marshalled representation
+
+   :return: a bitmask indicating the set of special object types marshalled by the Parcelable
+
 getCode
 ^^^^^^^
 
@@ -96,10 +128,21 @@ setData
 setMessage
 ^^^^^^^^^^
 
-.. java:method:: public void setMessage(String Message)
+.. java:method:: public void setMessage(String message)
    :outertype: BitcasaError
 
    Sets the error message.
 
-   :param Message: The error message.
+   :param message: The error message.
+
+writeToParcel
+^^^^^^^^^^^^^
+
+.. java:method:: @Override public void writeToParcel(Parcel out, int flags)
+   :outertype: BitcasaError
+
+   Flatten this object in to a Parcel.
+
+   :param out: The Parcel in which the object should be written.
+   :param flags: Additional flags about how the object should be written. May be 0 or PARCELABLE_WRITE_RETURN_VALUE
 

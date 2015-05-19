@@ -12,7 +12,7 @@ ActionFactory
 .. java:package:: com.bitcasa.cloudfs.model
    :noindex:
 
-.. java:type:: public final class ActionFactory
+.. java:type:: public class ActionFactory
 
    Factory that generates Action objects.
 

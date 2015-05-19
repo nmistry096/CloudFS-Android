@@ -1,12 +1,12 @@
 /**
  * Bitcasa Client Android SDK
  * Copyright (C) 2015 Bitcasa, Inc.
- * 215 Castro Street, 2nd Floor
- * Mountain View, CA 94041
+ * 1200 Park Place,
+ * Suite 350 San Mateo, CA 94403.
  *
  * This file contains an SDK in Java for accessing the Bitcasa infinite drive in Android platform.
  *
- * For support, please send email to support@bitcasa.com.
+ * For support, please send email to sdks@bitcasa.com.
  */
 
 package com.bitcasa.cloudfs;
@@ -28,12 +28,12 @@ public class Session {
     /**
      * The client id.
      */
-    private String clientId;
+    private final String clientId;
 
     /**
      * The client secret.
      */
-    private String clientSecret;
+    private final String clientSecret;
 
     /**
      * The admin client id.
@@ -53,7 +53,7 @@ public class Session {
     /**
      * The api service to access REST end point.
      */
-    private RESTAdapter restAdapter;
+    private final RESTAdapter restAdapter;
 
     /**
      * Initializes an instance of CloudFS Session.
@@ -62,14 +62,14 @@ public class Session {
      * @param clientId     The file meta data returned from REST Adapter.
      * @param clientSecret The absolute parent path of this file.
      */
-    public Session(String endPoint, String clientId, String clientSecret) {
+    public Session(final String endPoint, final String clientId, final String clientSecret) {
         this.clientId = clientId;
         this.clientSecret = clientSecret;
 
         this.credential = new Credential(endPoint);
         this.credential.setEndPoint(endPoint);
 
-        this.restAdapter = new RESTAdapter(credential);
+        this.restAdapter = new RESTAdapter(this.credential);
     }
 
     /**
@@ -80,9 +80,9 @@ public class Session {
      * @throws IOException      If a network error occurs.
      * @throws BitcasaException If a CloudFS API error occurs.
      */
-    public void authenticate(String username, String password)
+    public void authenticate(final String username, final String password)
             throws IOException, BitcasaException {
-        restAdapter.authenticate(this, username, password);
+        this.restAdapter.authenticate(this, username, password);
     }
 
     /**
@@ -91,36 +91,35 @@ public class Session {
      * @return The value indicating whether the operation was successful or not.
      */
     public boolean isLinked() {
-        return credential.getAccessToken() != null;
+        return this.credential.getAccessToken() != null;
     }
 
     /**
      * Unlinks a specific user from the session.
      */
     public void unlink() {
-        credential.setAccessToken(null);
-        credential.setTokenType(null);
+        this.credential.setAccessToken(null);
+        this.credential.setTokenType(null);
     }
 
     /**
      * Gets the current user information.
      *
      * @return The user information.
-     * @throws IOException      If a network error occurs
      * @throws BitcasaException If a CloudFS API error occurs.
      */
-    public User user() throws IOException, BitcasaException {
-        return restAdapter.requestUserInfo();
+    public User user() throws BitcasaException {
+        return this.restAdapter.requestUserInfo();
     }
 
     /**
      * Gets the current account information.
      *
      * @return The account information.
-     * @throws IOException If a network error occurs
+     * @throws BitcasaException If a CloudFS API error occurs.
      */
-    public Account account() throws IOException, BitcasaException {
-        return restAdapter.requestAccountInfo();
+    public Account account() throws BitcasaException {
+        return this.restAdapter.requestAccountInfo();
     }
 
     /**
@@ -129,7 +128,7 @@ public class Session {
      * @return The filesystem instance.
      */
     public FileSystem filesystem() {
-        return new FileSystem(restAdapter);
+        return new FileSystem(this.restAdapter);
     }
 
     /**
@@ -138,7 +137,7 @@ public class Session {
      * @return The client id.
      */
     public String getClientId() {
-        return clientId;
+        return this.clientId;
     }
 
     /**
@@ -147,7 +146,7 @@ public class Session {
      * @return The client secret.
      */
     public String getClientSecret() {
-        return clientSecret;
+        return this.clientSecret;
     }
 
     /**
@@ -156,7 +155,7 @@ public class Session {
      * @return An instance of the RESTAdapter.
      */
     public RESTAdapter getRestAdapter() {
-        return restAdapter;
+        return this.restAdapter;
     }
 
     /**
@@ -165,7 +164,7 @@ public class Session {
      * @param adminClientId     The admin client id.
      * @param adminClientSecret The admin client secret.
      */
-    public void setAdminCredentials(String adminClientId, String adminClientSecret) {
+    public void setAdminCredentials(final String adminClientId, final String adminClientSecret) {
         this.adminClientId = adminClientId;
         this.adminClientSecret = adminClientSecret;
     }
@@ -199,11 +198,11 @@ public class Session {
      * @throws IOException      If a network error occurs
      * @throws BitcasaException If a CloudFS API error occurs.
      */
-    public ActionHistory actionHistory(int startVersion, int stopVersion)
+    public ActionHistory actionHistory(final int startVersion, final int stopVersion)
             throws IOException, BitcasaException {
-        List<BaseAction> baseActions = restAdapter.listHistory(startVersion, stopVersion);
-        ArrayList<BaseAction> actions = new ArrayList<BaseAction>();
-        for (BaseAction action : baseActions) {
+        final List<BaseAction> baseActions = this.restAdapter.listHistory(startVersion, stopVersion);
+        final ArrayList<BaseAction> actions = new ArrayList<BaseAction>();
+        for (final BaseAction action : baseActions) {
             actions.add(ActionFactory.getAction(action));
         }
 
@@ -223,13 +222,13 @@ public class Session {
      *                           authenticate the user and logs the user created.
      * @return The newly created user instance.
      */
-    public User createAccount(String username, String password, String email, String firstName,
-                              String lastName, Boolean logInToCreatedUser)
+    public User createAccount(final String username, final String password, final String email, final String firstName,
+                              final String lastName, final Boolean logInToCreatedUser)
             throws IOException,
             BitcasaException {
-        User user = restAdapter.createAccount(this, username, password, email, firstName, lastName);
-        if (user != null && logInToCreatedUser) {
-            authenticate(username, password);
+        final User user = this.restAdapter.createAccount(this, username, password, email, firstName, lastName);
+        if ((user != null) && logInToCreatedUser) {
+            this.authenticate(username, password);
         }
         return user;
     }
@@ -239,7 +238,7 @@ public class Session {
      *
      * @param accessToken The access token to be set.
      */
-    public void setAccessToken(String accessToken) {
+    public void setAccessToken(final String accessToken) {
         this.credential.setAccessToken(accessToken);
     }
 }

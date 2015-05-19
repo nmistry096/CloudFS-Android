@@ -1,30 +1,30 @@
+.. java:import:: android.os Parcel
+
+.. java:import:: android.os Parcelable
+
 .. java:import:: com.bitcasa.cloudfs Utils.BitcasaRESTConstants
-
-.. java:import:: com.bitcasa.cloudfs Utils.BitcasaRESTConstants.Exists
-
-.. java:import:: com.bitcasa.cloudfs Utils.BitcasaRESTConstants.RestoreMethod
-
-.. java:import:: com.bitcasa.cloudfs Utils.BitcasaRESTConstants.VersionExists
 
 .. java:import:: com.bitcasa.cloudfs.api RESTAdapter
 
 .. java:import:: com.bitcasa.cloudfs.exception BitcasaException
 
-.. java:import:: com.bitcasa.cloudfs.model ApplicationData
-
 .. java:import:: com.bitcasa.cloudfs.model ItemMeta
 
-.. java:import:: com.bitcasa.cloudfs.model Storage
+.. java:import:: com.google.gson JsonObject
 
-.. java:import:: org.json JSONObject
+.. java:import:: com.google.gson JsonParser
 
 .. java:import:: java.io IOException
 
 .. java:import:: java.io UnsupportedEncodingException
 
+.. java:import:: java.util AbstractMap
+
 .. java:import:: java.util Date
 
 .. java:import:: java.util HashMap
+
+.. java:import:: java.util Map
 
 Item.FileType
 =============
@@ -42,12 +42,12 @@ Fields
 FILE
 ^^^^
 
-.. java:field::  String FILE
+.. java:field:: final String FILE
    :outertype: Item.FileType
 
 FOLDER
 ^^^^^^
 
-.. java:field::  String FOLDER
+.. java:field:: final String FOLDER
    :outertype: Item.FileType
 

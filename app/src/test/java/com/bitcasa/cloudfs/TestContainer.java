@@ -17,16 +17,16 @@ public class TestContainer extends BaseTest {
     public void testList() {
         try {
 
-            Folder rootFolder = session.filesystem().root();
-            Item[] rootItems = rootFolder.list();
+            final Folder rootFolder = BaseTest.session.filesystem().root();
+            final Item[] rootItems = rootFolder.list();
             Assert.assertNotNull(rootItems);
 
-        } catch (IOException e) {
+        } catch (final IOException e) {
             e.printStackTrace();
-            Assert.assertTrue(false);
-        } catch (BitcasaException e) {
+            Assert.fail();
+        } catch (final BitcasaException e) {
             e.printStackTrace();
-            Assert.assertTrue(false);
+            Assert.fail();
         }
     }
 }

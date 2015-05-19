@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="cfs_shared_scope" pattern="file[app]:*/*.java&amp;&amp;!file[app]:build//*" />
+</component>

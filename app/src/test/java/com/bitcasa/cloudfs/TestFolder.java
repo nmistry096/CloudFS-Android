@@ -7,11 +7,13 @@ import com.bitcasa.cloudfs.Utils.BitcasaRESTConstants;
 import com.bitcasa.cloudfs.exception.BitcasaException;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
@@ -20,27 +22,29 @@ import java.io.IOException;
 public class TestFolder extends BaseTest {
 
     private static Folder testFolder;
-    private java.io.File textFile;
-    private String uploadFileName = "Test.txt";
-    private String text = "Test file CloudFS Android ADK.";
+    private File textFile;
+    private final String uploadFileName = "Test.txt";
+    private final String text = "Test file CloudFS Android ADK.";
     private Item[] testFolderItems;
+    private static final String folderName = "SDKCreateFolderTest";
+
+    @Before
+    public void setUp() {
+        try {
+            final Folder sdkTestFolder = BaseTest.getSDKTestFolder();
+            TestFolder.testFolder = sdkTestFolder.createFolder(TestFolder.folderName,
+                    BitcasaRESTConstants.Exists.OVERWRITE);
+        } catch (final IOException e) {
+            e.printStackTrace();
+        } catch (final BitcasaException e) {
+            e.printStackTrace();
+        }
+
+    }
 
     @Test
     public void test1CreateFolder() {
-        try {
-            String folderName = "SDKCreateFolderTest";
-            Folder sdkTestFolder = this.getSDKTestFolder();
-            testFolder = sdkTestFolder.createFolder(folderName,
-                    BitcasaRESTConstants.Exists.OVERWRITE);
-
-            Assert.assertEquals(folderName, testFolder.getName());
-        } catch (IOException e) {
-            e.printStackTrace();
-            Assert.assertTrue(false);
-        } catch (BitcasaException e) {
-            e.printStackTrace();
-            Assert.assertTrue(false);
-        }
+        Assert.assertEquals(TestFolder.folderName, TestFolder.testFolder.getName());
     }
 
     /**
@@ -50,17 +54,17 @@ public class TestFolder extends BaseTest {
     @Test
     public void test2Upload() {
         //upload to root
-        BitcasaProgressListener listener = new BitcasaProgressListener() {
+        final BitcasaProgressListener listener = new BitcasaProgressListener() {
 
             @Override
-            public void onProgressUpdate(String file, int percentage,
-                                         ProgressAction action) {
+            public void onProgressUpdate(final String file, final int percentage,
+                                         final ProgressAction action) {
                 Log.d("test Upload", file + " percentage: " + percentage);
 
             }
 
             @Override
-            public void canceled(String file, ProgressAction action) {
+            public void canceled(final String file, final ProgressAction action) {
 
             }
 
@@ -68,31 +72,41 @@ public class TestFolder extends BaseTest {
 
         Item meta = null;
         try {
+            final String folderName = "SDKCreateFolderTest";
+            final Folder sdkTestFolder = BaseTest.getSDKTestFolder();
+            TestFolder.testFolder = sdkTestFolder.createFolder(folderName,
+                    BitcasaRESTConstants.Exists.OVERWRITE);
 
-            textFile = temporaryFolder.newFile(uploadFileName);
-            BufferedWriter output = new BufferedWriter(new FileWriter(textFile));
-            output.write(text);
+            this.textFile = this.temporaryFolder.newFile(this.uploadFileName);
+            final BufferedWriter output = new BufferedWriter(new FileWriter(this.textFile));
+            output.write(this.text);
             output.close();
-            testFolder.upload(textFile.getAbsolutePath(), listener, BitcasaRESTConstants.Exists.OVERWRITE);
+            com.bitcasa.cloudfs.File uploadedFile1 = TestFolder.testFolder.upload(this.textFile.getAbsolutePath(), listener, BitcasaRESTConstants.Exists.OVERWRITE);
+            Assert.assertNotNull(uploadedFile1);
 
-            //Gets the uploaded file.
-            testFolderItems = testFolder.list();
-            for (Item item : testFolderItems) {
-                if (item.getName().equalsIgnoreCase(uploadFileName)) {
+
+            //Gets the uploaded file by listing.
+            this.testFolderItems = TestFolder.testFolder.list();
+            for (final Item item : this.testFolderItems) {
+                if (item.getName().equalsIgnoreCase(this.uploadFileName)) {
                     meta = item;
                     break;
                 }
             }
+            Assert.assertNotNull(meta);
 
-        } catch (IOException e) {
-            Assert.assertTrue(false);
+            Folder testFolderLevel2 = TestFolder.testFolder.createFolder("testFolderLevel2", BitcasaRESTConstants.Exists.OVERWRITE);
+            com.bitcasa.cloudfs.File uploadedFile2 = testFolderLevel2.upload(this.textFile.getAbsolutePath(),listener, BitcasaRESTConstants.Exists.OVERWRITE);
+            Assert.assertNotNull(uploadedFile2);
+        } catch (final IOException e) {
+            Assert.fail();
             e.printStackTrace();
-        } catch (BitcasaException e) {
-            Assert.assertTrue(false);
+        } catch (final BitcasaException e) {
+            Assert.fail();
             e.printStackTrace();
         }
 
-        Assert.assertNotNull(meta);
+
 
     }
 }

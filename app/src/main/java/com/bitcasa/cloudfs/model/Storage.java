@@ -1,3 +1,13 @@
+/**
+ * Bitcasa Client Android SDK
+ * Copyright (C) 2015 Bitcasa, Inc.
+ * 1200 Park Place,
+ * Suite 350 San Mateo, CA 94403.
+ *
+ * This file contains an SDK in Java for accessing the Bitcasa infinite drive in Android platform.
+ *
+ * For support, please send email to sdks@bitcasa.com.
+ */
 package com.bitcasa.cloudfs.model;
 
 import com.google.gson.JsonElement;
@@ -57,20 +67,18 @@ public class Storage {
      */
     public final Integer getLimit() {
 
-        if (parsedLimit == null) {
+        if (this.parsedLimit == null) {
             int limit = 0;
             try {
                 limit = this.limit.getAsInt();
-            }
-            catch (NumberFormatException e) {
+            } catch (final NumberFormatException e) {
                 // this.limit is not a number and limit is already assigned to 0.
-            }
-            finally {
-                parsedLimit = new Integer(limit);
+            } finally {
+                this.parsedLimit = Integer.valueOf(limit);
             }
         }
 
-        return parsedLimit;
+        return this.parsedLimit;
     }
 
     /**

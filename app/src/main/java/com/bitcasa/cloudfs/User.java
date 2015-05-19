@@ -1,15 +1,18 @@
 /**
  * Bitcasa Client Android SDK
  * Copyright (C) 2015 Bitcasa, Inc.
- * 215 Castro Street, 2nd Floor
- * Mountain View, CA 94041
+ * 1200 Park Place,
+ * Suite 350 San Mateo, CA 94403.
  *
  * This file contains an SDK in Java for accessing the Bitcasa infinite drive in Android platform.
  *
- * For support, please send email to support@bitcasa.com.
+ * For support, please send email to sdks@bitcasa.com.
  */
 
 package com.bitcasa.cloudfs;
+
+import android.os.Parcel;
+import android.os.Parcelable;
 
 import com.bitcasa.cloudfs.api.RESTAdapter;
 import com.bitcasa.cloudfs.model.UserProfile;
@@ -19,47 +22,47 @@ import java.util.Date;
 /**
  * The User class provides accessibility to CloudFS User.
  */
-public class User {
+public class User implements Parcelable {
 
     /**
      * The api service to access REST endpoint.
      */
-    private RESTAdapter restAdapter;
+    private final RESTAdapter restAdapter;
 
     /**
      * The user id.
      */
-    private String userId;
+    private final String userId;
 
     /**
      * The user name.
      */
-    private String username;
+    private final String username;
 
     /**
      * The user created date and time.
      */
-    private Date createdTime;
+    private final Date createdTime;
 
     /**
      * The user's last login date and time.
      */
-    private Date lastLogin;
+    private final Date lastLogin;
 
     /**
      * The user's first name.
      */
-    private String firstName;
+    private final String firstName;
 
     /**
      * The user's last name.
      */
-    private String lastName;
+    private final String lastName;
 
     /**
      * The user's email address.
      */
-    private String email;
+    private final String email;
 
     /**
      * Initializes an instance of CloudFS User.
@@ -79,12 +82,76 @@ public class User {
     }
 
     /**
+     * {@inheritDoc}
+     */
+    public static final Parcelable.Creator<User> CREATOR = new Parcelable.Creator<User>() {
+
+        @Override
+        /**
+         * {@inheritDoc}
+         */
+        public User createFromParcel(Parcel source) {
+            return new User(source);
+        }
+
+        @Override
+        /**
+         * {@inheritDoc}
+         */
+        public User[] newArray(int size) {
+            return new User[size];
+        }
+    };
+
+    /**
+     * Initializes the User instance.
+     *
+     * @param in The parcel object containing the user details.
+     */
+    public User(Parcel in) {
+        userId = in.readString();
+        username = in.readString();
+        createdTime = new Date(in.readLong());
+        firstName = in.readString();
+        lastName = in.readString();
+        email = in.readString();
+        lastLogin = new Date(in.readLong());
+        restAdapter = (RESTAdapter) in.readValue(RESTAdapter.class.getClassLoader());
+    }
+
+    /**
+     * @return @inheritDoc
+     * @inheritDoc
+     */
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    /**
+     * @param out   @inheritDoc
+     * @param flags @inheritDoc
+     * @inheritDoc
+     */
+    @Override
+    public void writeToParcel(Parcel out, int flags) {
+        out.writeString(userId);
+        out.writeString(username);
+        out.writeLong(createdTime.getTime());
+        out.writeString(firstName);
+        out.writeString(lastName);
+        out.writeString(email);
+        out.writeLong(lastLogin.getTime());
+        out.writeValue(restAdapter);
+    }
+
+    /**
      * Gets the user's email address.
      *
      * @return The user's email address.
      */
     public String getEmail() {
-        return email;
+        return this.email;
     }
 
     /**
@@ -93,7 +160,7 @@ public class User {
      * @return The user's first name.
      */
     public String getFirstName() {
-        return firstName;
+        return this.firstName;
     }
 
     /**
@@ -102,7 +169,7 @@ public class User {
      * @return The user's last name.
      */
     public String getLastName() {
-        return lastName;
+        return this.lastName;
     }
 
     /**
@@ -111,7 +178,7 @@ public class User {
      * @return The user id.
      */
     public String getId() {
-        return userId;
+        return this.userId;
     }
 
     /**
@@ -120,7 +187,7 @@ public class User {
      * @return The username.
      */
     public String getUsername() {
-        return username;
+        return this.username;
     }
 
     /**
@@ -129,7 +196,7 @@ public class User {
      * @return The user's last login date and time.
      */
     public Date getLastLogin() {
-        return lastLogin;
+        return this.lastLogin;
     }
 
     /**
@@ -138,7 +205,7 @@ public class User {
      * @return The user created date and time.
      */
     public Date getCreatedAt() {
-        return createdTime;
+        return this.createdTime;
     }
 
     /**
@@ -148,8 +215,8 @@ public class User {
      */
     @Override
     public String toString() {
-        return "\nusername[" + username + "] \ncreated_time[" + Long.toString(createdTime.getTime())
-                + "] \nfirst_name[" + firstName + "] \nlast_name[" + lastName + "] \nemail[" + email
+        return "\nusername[" + this.username + "] \ncreated_time[" + Long.toString(this.createdTime.getTime())
+                + "] \nfirst_name[" + this.firstName + "] \nlast_name[" + this.lastName + "] \nemail[" + this.email
                 + "]*****";
     }
 }

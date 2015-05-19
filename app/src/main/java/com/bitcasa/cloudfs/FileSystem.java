@@ -1,18 +1,19 @@
 /**
  * Bitcasa Client Android SDK
  * Copyright (C) 2015 Bitcasa, Inc.
- * 215 Castro Street, 2nd Floor
- * Mountain View, CA 94041
+ * 1200 Park Place,
+ * Suite 350 San Mateo, CA 94403.
  *
  * This file contains an SDK in Java for accessing the Bitcasa infinite drive in Android platform.
  *
- * For support, please send email to support@bitcasa.com.
+ * For support, please send email to sdks@bitcasa.com.
  */
 
 package com.bitcasa.cloudfs;
 
 import com.bitcasa.cloudfs.api.RESTAdapter;
 import com.bitcasa.cloudfs.exception.BitcasaException;
+import com.bitcasa.cloudfs.model.ShareItem;
 
 import java.io.IOException;
 
@@ -39,22 +40,20 @@ public class FileSystem {
      * Gets the file system root folder.
      *
      * @return The file system root folder.
-     * @throws IOException      If a network error occurs.
      * @throws BitcasaException If a CloudFS API error occurs.
      */
-    public Folder root() throws IOException, BitcasaException {
-        return restAdapter.getFolderMeta("/");
+    public Folder root() throws BitcasaException {
+        return this.restAdapter.getFolderMeta("/");
     }
 
     /**
      * Lists the items in the trash.
      *
      * @return The list of trash items.
-     * @throws IOException      If a network error occurs.
      * @throws BitcasaException If a CloudFS API error occurs.
      */
-    public Item[] listTrash() throws IOException, BitcasaException {
-        return restAdapter.browseTrash();
+    public Item[] listTrash() throws BitcasaException {
+        return this.restAdapter.browseTrash(null);
     }
 
     /**
@@ -62,22 +61,20 @@ public class FileSystem {
      *
      * @param path The file system item path.
      * @return The item at the given path.
-     * @throws IOException      If a network error occurs.
      * @throws BitcasaException If a CloudFS API error occurs.
      */
-    public Item getItem(String path) throws IOException, BitcasaException {
-        return restAdapter.getItemMeta(path);
+    public Item getItem(final String path) throws BitcasaException {
+        return this.restAdapter.getItemMeta(path);
     }
 
     /**
      * Lists the shares in the file system.
      *
      * @return The list of shares in the file system.
-     * @throws IOException      If a network error occurs
      * @throws BitcasaException If a CloudFS API error occurs.
      */
-    public Share[] listShares() throws IOException, BitcasaException {
-        return restAdapter.listShare();
+    public Share[] listShares() throws BitcasaException {
+        return this.restAdapter.listShare();
     }
 
     /**
@@ -89,8 +86,21 @@ public class FileSystem {
      * @throws IOException      If a network error occurs.
      * @throws BitcasaException If a CloudFS API error occurs.
      */
-    public Share createShare(String path, String password) throws IOException, BitcasaException {
-        return restAdapter.createShare(path, password);
+    public Share createShare(final String path, final String password) throws IOException, BitcasaException {
+        return this.restAdapter.createShare(path, password);
+    }
+
+    /**
+     * Creates a new share.
+     *
+     * @param paths     The full array paths of items to share.
+     * @param password The password of the share to be created.
+     * @return The new share instance.
+     * @throws IOException      If a network error occurs.
+     * @throws BitcasaException If a CloudFS API error occurs.
+     */
+    public Share createShare(final String[] paths, final String password) throws IOException, BitcasaException{
+        return  this.restAdapter.createShare(paths, password);
     }
 
     /**
@@ -102,17 +112,28 @@ public class FileSystem {
      * @throws IOException      If a network error occurs
      * @throws BitcasaException If a CloudFS API error occurs.
      */
-    public Share retrieveShare(String shareKey, String password)
+    public Share retrieveShare(final String shareKey, final String password)
             throws IOException, BitcasaException {
-        Share[] shares = restAdapter.listShare();
+        final Share[] shares = this.restAdapter.listShare();
         Share sharedItem = null;
 
-        for (Share share : shares) {
+        if (password != null) {
+            this.restAdapter.unlockShare(shareKey, password);
+        }
+
+        for (final Share share : shares) {
             if (share.getShareKey().equals(shareKey)) {
                 sharedItem = share;
                 break;
             }
         }
+
+        //To handle share keys not found in the current users shares.
+        if (sharedItem == null) {
+            ShareItem shareItem = new ShareItem(shareKey, null, null, null, 0, 0);
+            sharedItem = new Share(this.restAdapter, shareItem, null);
+        }
+
         return sharedItem;
     }
 }

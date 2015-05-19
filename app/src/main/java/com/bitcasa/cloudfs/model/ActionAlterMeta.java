@@ -1,3 +1,13 @@
+/**
+ * Bitcasa Client Android SDK
+ * Copyright (C) 2015 Bitcasa, Inc.
+ * 1200 Park Place,
+ * Suite 350 San Mateo, CA 94403.
+ *
+ * This file contains an SDK in Java for accessing the Bitcasa infinite drive in Android platform.
+ *
+ * For support, please send email to sdks@bitcasa.com.
+ */
 package com.bitcasa.cloudfs.model;
 
 /**
@@ -11,14 +21,14 @@ public class ActionAlterMeta extends BaseAction {
      * @param action Data from base action.
      */
     public ActionAlterMeta(final BaseAction action) {
-        setAction(action.historyAction);
-        setDataCreatedTo(action.data.alteredDateCreated.getTo());
-        setDataNameFrom(action.data.alteredName.getFrom());
-        setDataNameTo(action.data.alteredName.getTo());
-        setDateCreatedFrom(action.data.alteredDateCreated.getFrom());
-        setPath(action.path);
-        setType(action.type);
-        setVersion(action.version);
+        this.setAction(action.historyAction);
+        this.setDataCreatedTo(action.data.alteredDateCreated.getTo());
+        this.setDataNameFrom(action.data.alteredName.getFrom());
+        this.setDataNameTo(action.data.alteredName.getTo());
+        this.setDateCreatedFrom(action.data.alteredDateCreated.getFrom());
+        this.setPath(action.path);
+        this.setType(action.type);
+        this.setVersion(action.version);
     }
 
     /**

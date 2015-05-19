@@ -1,3 +1,5 @@
+.. java:import:: com.google.gson JsonObject
+
 .. java:import:: com.google.gson.annotations SerializedName
 
 ItemMeta
@@ -15,7 +17,7 @@ Constructors
 ItemMeta
 ^^^^^^^^
 
-.. java:constructor:: public ItemMeta(String id, String parentId, String type, String name, String extension, long size, String mime, Integer dateCreated, Integer dateMetaLastModified, Integer dateContentLastModified, Integer version, ApplicationData applicationData, Boolean isMirrored)
+.. java:constructor:: public ItemMeta(String id, String parentId, String type, String name, String extension, long size, String mime, Integer dateCreated, Integer dateMetaLastModified, Integer dateContentLastModified, Integer version, JsonObject applicationData, Boolean isMirrored)
    :outertype: ItemMeta
 
    Initializes a new instance of an item meta.
@@ -39,7 +41,7 @@ Methods
 getApplicationData
 ^^^^^^^^^^^^^^^^^^
 
-.. java:method:: public final ApplicationData getApplicationData()
+.. java:method:: public final JsonObject getApplicationData()
    :outertype: ItemMeta
 
    Gets the application data.

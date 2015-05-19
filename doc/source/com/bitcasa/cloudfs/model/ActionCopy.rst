@@ -1,4 +1,4 @@
-.. java:import:: com.bitcasa.cloudfs Utils.BitcasaRESTConstants.Exists
+.. java:import:: com.bitcasa.cloudfs Utils.BitcasaRESTConstants
 
 ActionCopy
 ==========
@@ -30,9 +30,9 @@ getDataExists
 .. java:method:: public final String getDataExists()
    :outertype: ActionCopy
 
-   Gets the \ :java:ref:`Exists <Exists>`\  option that was used.
+   Gets the \ :java:ref:`Exists <BitcasaRESTConstants.Exists>`\  option that was used.
 
-   :return: The \ :java:ref:`Exists <Exists>`\  option that was used.
+   :return: The \ :java:ref:`Exists <BitcasaRESTConstants.Exists>`\  option that was used.
 
 getDataName
 ^^^^^^^^^^^
@@ -80,9 +80,9 @@ setDataExists
 .. java:method:: public final void setDataExists(String dataExists)
    :outertype: ActionCopy
 
-   Sets the \ :java:ref:`Exists <Exists>`\  option that was used.
+   Sets the \ :java:ref:`Exists <BitcasaRESTConstants.Exists>`\  option that was used.
 
-   :param dataExists: The \ :java:ref:`Exists <Exists>`\  option that was used.
+   :param dataExists: The \ :java:ref:`Exists <BitcasaRESTConstants.Exists>`\  option that was used.
 
 setDataName
 ^^^^^^^^^^^

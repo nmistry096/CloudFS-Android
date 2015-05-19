@@ -1,12 +1,12 @@
 /**
  * Bitcasa Client Android SDK
  * Copyright (C) 2015 Bitcasa, Inc.
- * 215 Castro Street, 2nd Floor
- * Mountain View, CA 94041
+ * 1200 Park Place,
+ * Suite 350 San Mateo, CA 94403.
  *
  * This file contains an SDK in Java for accessing the Bitcasa infinite drive in Android platform.
  *
- * For support, please send email to support@bitcasa.com.
+ * For support, please send email to sdks@bitcasa.com.
  */
 
 package com.bitcasa.cloudfs;
@@ -88,14 +88,14 @@ public enum HistoryActions {
     /**
      * The history action.
      */
-    private String action;
+    private final String action;
 
     /**
      * Initializes a new instance of HistoryActions.
      *
      * @param action The history action.
      */
-    private HistoryActions(final String action) {
+    HistoryActions(final String action) {
         this.action = action;
     }
 
@@ -106,30 +106,33 @@ public enum HistoryActions {
      * @return A history action.
      */
     public static Pair<HistoryActions, Class> getAction(final String action) {
-        if (action.equals("share_receive")) {
-            return new Pair<HistoryActions, Class>(SHARE_RECEIVE, ActionShareReceive.class);
-        } else if (action.equals("share_create")) {
-            return new Pair<HistoryActions, Class>(SHARE_CREATE, ActionShareCreate.class);
-        } else if (action.equals("device_update")) {
-            return new Pair<HistoryActions, Class>(DEVICE_UPDATE, ActionDeviceUpdate.class);
-        } else if (action.equals("device_create")) {
-            return new Pair<HistoryActions, Class>(DEVICE_CREATE, ActionDeviceCreate.class);
-        } else if (action.equals("device_delete")) {
-            return new Pair<HistoryActions, Class>(DEVICE_DELETE, ActionDeviceDelete.class);
-        } else if (action.equals("alter_meta")) {
-            return new Pair<HistoryActions, Class>(ALTER_META, ActionAlterMeta.class);
-        } else if (action.equals("copy")) {
-            return new Pair<HistoryActions, Class>(COPY, ActionCopy.class);
-        } else if (action.equals("move")) {
-            return new Pair<HistoryActions, Class>(MOVE, ActionMove.class);
-        } else if (action.equals("create")) {
-            return new Pair<HistoryActions, Class>(CREATE, ActionCreate.class);
-        } else if (action.equals("delete")) {
-            return new Pair<HistoryActions, Class>(DELETE, ActionDelete.class);
-        } else if (action.equals("trash")) {
-            return new Pair<HistoryActions, Class>(TRASH, ActionTrash.class);
+        final Pair<HistoryActions, Class> pair;
+        if ("share_receive".equals(action)) {
+            pair = new Pair<HistoryActions, Class>(HistoryActions.SHARE_RECEIVE, ActionShareReceive.class);
+        } else if ("share_create".equals(action)) {
+            pair = new Pair<HistoryActions, Class>(HistoryActions.SHARE_CREATE, ActionShareCreate.class);
+        } else if ("device_update".equals(action)) {
+            pair = new Pair<HistoryActions, Class>(HistoryActions.DEVICE_UPDATE, ActionDeviceUpdate.class);
+        } else if ("device_create".equals(action)) {
+            pair = new Pair<HistoryActions, Class>(HistoryActions.DEVICE_CREATE, ActionDeviceCreate.class);
+        } else if ("device_delete".equals(action)) {
+            pair = new Pair<HistoryActions, Class>(HistoryActions.DEVICE_DELETE, ActionDeviceDelete.class);
+        } else if ("alter_meta".equals(action)) {
+            pair = new Pair<HistoryActions, Class>(HistoryActions.ALTER_META, ActionAlterMeta.class);
+        } else if ("copy".equals(action)) {
+            pair = new Pair<HistoryActions, Class>(HistoryActions.COPY, ActionCopy.class);
+        } else if ("move".equals(action)) {
+            pair = new Pair<HistoryActions, Class>(HistoryActions.MOVE, ActionMove.class);
+        } else if ("create".equals(action)) {
+            pair = new Pair<HistoryActions, Class>(HistoryActions.CREATE, ActionCreate.class);
+        } else if ("delete".equals(action)) {
+            pair = new Pair<HistoryActions, Class>(HistoryActions.DELETE, ActionDelete.class);
+        } else if ("trash".equals(action)) {
+            pair = new Pair<HistoryActions, Class>(HistoryActions.TRASH, ActionTrash.class);
         } else {
-            return null;
+            pair = null;
         }
+
+        return pair;
     }
 }

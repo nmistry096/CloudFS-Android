@@ -1,5 +1,16 @@
+/**
+ * Bitcasa Client Android SDK
+ * Copyright (C) 2015 Bitcasa, Inc.
+ * 1200 Park Place,
+ * Suite 350 San Mateo, CA 94403.
+ *
+ * This file contains an SDK in Java for accessing the Bitcasa infinite drive in Android platform.
+ *
+ * For support, please send email to sdks@bitcasa.com.
+ */
 package com.bitcasa.cloudfs.model;
 
+import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
 
 /**
@@ -70,7 +81,7 @@ public class ItemMeta {
      * Additional information about item.
      */
     @SerializedName("application_data")
-    private final ApplicationData applicationData;
+    private final JsonObject applicationData;
 
     /**
      * A value indicating whether the item is mirrored.
@@ -97,7 +108,7 @@ public class ItemMeta {
      */
     public ItemMeta(final String id, final String parentId, final String type, final String name, final String extension, final long size,
                     final String mime, final Integer dateCreated, final Integer dateMetaLastModified, final Integer dateContentLastModified,
-                    final Integer version, final ApplicationData applicationData, final Boolean isMirrored) {
+                    final Integer version, final JsonObject applicationData, final Boolean isMirrored) {
         this.id = id;
         this.parentId = parentId;
         this.type = type;
@@ -226,7 +237,7 @@ public class ItemMeta {
      *
      * @return The application data.
      */
-    public final ApplicationData getApplicationData() {
+    public final JsonObject getApplicationData() {
         return this.applicationData;
     }
 
@@ -236,7 +247,7 @@ public class ItemMeta {
      * @return True if the item is a folder, otherwise false.
      */
     public final boolean isFolder() {
-        return this.type.equalsIgnoreCase("folder");
+        return "folder".equalsIgnoreCase(this.type);
     }
 
     /**

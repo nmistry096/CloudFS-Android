@@ -54,7 +54,7 @@ BitcasaException
 BitcasaException
 ^^^^^^^^^^^^^^^^
 
-.. java:constructor:: public BitcasaException(java.lang.Throwable throwable)
+.. java:constructor:: public BitcasaException(Throwable throwable)
    :outertype: BitcasaException
 
    Initializes the BitcasaException instance.

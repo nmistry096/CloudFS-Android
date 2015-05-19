@@ -15,38 +15,35 @@ import org.junit.runners.MethodSorters;
 import org.robolectric.RobolectricTestRunner;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.assertTrue;
 
 @RunWith(RobolectricTestRunner.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class TestShare extends BaseTest {
 
-    private final static String SHARE_PW = "hello";
-    private final static String NEW_SHARE_PW = "world";
-    private static Folder sdkTestFolder;
-    private static Folder testFolder;
+    private static final String SHARE_PW = "hello";
+    private static final String NEW_SHARE_PW = "world";
+    private Folder testFolder;
     private static Share sharedFolder;
-    private java.io.File textFile;
-    private String uploadFileName = "Test.txt";
-    private String text = "Test file CloudFS Android ADK.";
+    private File textFile;
+    private final String uploadFileName = "Test.txt";
+    private final String text = "Test file CloudFS Android ADK.";
 
     @Before
     public void setUp() throws IOException, BitcasaException {
-        BitcasaProgressListener listener = new BitcasaProgressListener() {
+        final BitcasaProgressListener listener = new BitcasaProgressListener() {
 
             @Override
-            public void onProgressUpdate(String file, int percentage,
-                                         ProgressAction action) {
+            public void onProgressUpdate(final String file, final int percentage,
+                                         final BitcasaProgressListener.ProgressAction action) {
                 Log.d("test Upload", file + " percentage: " + percentage);
 
             }
 
             @Override
-            public void canceled(String file, ProgressAction action) {
+            public void canceled(final String file, final BitcasaProgressListener.ProgressAction action) {
 
             }
 
@@ -55,28 +52,32 @@ public class TestShare extends BaseTest {
         try {
 
             // Create folder to be shared.
-            String folderName = "SDKShareFolderTest";
-            sdkTestFolder = this.getSDKTestFolder();
-            testFolder = sdkTestFolder.createFolder(folderName,
+            final String folderName = "SDKShareFolderTest";
+            this.sdkTestFolder = BaseTest.getSDKTestFolder();
+            this.testFolder = this.sdkTestFolder.createFolder(folderName,
                     BitcasaRESTConstants.Exists.OVERWRITE);
 
-            Assert.assertEquals(folderName, testFolder.getName());
+            Assert.assertEquals(folderName, this.testFolder.getName());
 
             // Create file to be uploaded and upload it to the test folder.
-            textFile = temporaryFolder.newFile(uploadFileName);
-            BufferedWriter output = new BufferedWriter(new FileWriter(textFile));
-            output.write(text);
+            this.textFile = this.temporaryFolder.newFile(this.uploadFileName);
+            final BufferedWriter output = new BufferedWriter(new FileWriter(this.textFile));
+            output.write(this.text);
             output.close();
-            testFolder.upload(textFile.getAbsolutePath(), listener, BitcasaRESTConstants.Exists.OVERWRITE);
+            this.testFolder.upload(this.textFile.getAbsolutePath(), listener, BitcasaRESTConstants.Exists.OVERWRITE);
+            Folder level2Folder = this.testFolder.createFolder("sharedFolder2",BitcasaRESTConstants.Exists.OVERWRITE);
+            level2Folder.upload(this.textFile.getAbsolutePath(), listener, BitcasaRESTConstants.Exists.OVERWRITE);
 
 
-        } catch (IOException e) {
-            Assert.assertTrue(false);
+        } catch (final IOException e) {
+            Assert.fail();
             e.printStackTrace();
-        } catch (BitcasaException e) {
-            Assert.assertTrue(false);
+        } catch (final BitcasaException e) {
+            Assert.fail();
             e.printStackTrace();
         }
+
+        sharedFolder = BaseTest.session.getRestAdapter().createShare(this.testFolder.getPath(), TestShare.SHARE_PW);
     }
 
     /**
@@ -85,14 +86,14 @@ public class TestShare extends BaseTest {
     @Test
     public void test1CreateShare() {
         try {
-            sharedFolder = session.getRestAdapter().createShare(testFolder.getPath(), SHARE_PW);
-            assertNotNull(sharedFolder);
-        } catch (IOException e) {
+            sharedFolder = BaseTest.session.getRestAdapter().createShare(this.testFolder.getPath(), TestShare.SHARE_PW);
+            junit.framework.Assert.assertNotNull(sharedFolder);
+        } catch (final IOException e) {
             e.printStackTrace();
-            Assert.assertTrue(false);
-        } catch (BitcasaException e) {
+            Assert.fail();
+        } catch (final BitcasaException e) {
             e.printStackTrace();
-            Assert.assertTrue(false);
+            Assert.fail();
         }
     }
 
@@ -102,13 +103,24 @@ public class TestShare extends BaseTest {
     @Test
     public void test2ListShare() {
         try {
-            Item[] sItems = sharedFolder.list();
-            assertNotNull(sItems);
-        } catch (IOException e) {
-            assertTrue(false);
+            final Item[] sItems = sharedFolder.list();
+            Assert.assertNotNull(sItems);
+
+            Folder shareFolder = null;
+            for (final Item item : sItems) {
+                if (item.getType().equals(Item.FileType.FOLDER)) {
+                    shareFolder = (Folder)item;
+                }
+            }
+
+            Item[] shareFolderItems = shareFolder.list();
+            Assert.assertNotNull(shareFolderItems);
+
+        } catch (final IOException e) {
+            Assert.fail();
             e.printStackTrace();
-        } catch (BitcasaException e) {
-            assertTrue(false);
+        } catch (final BitcasaException e) {
+            Assert.fail();
             e.printStackTrace();
         }
     }
@@ -119,13 +131,13 @@ public class TestShare extends BaseTest {
     @Test
     public void test3ReceiveShare() {
         try {
-            Item[] items = sharedFolder.receive(sdkTestFolder.getPath(), BitcasaRESTConstants.Exists.OVERWRITE);
-            assertNotNull(items);
-        } catch (IOException e) {
-            assertTrue(false);
+            final Item[] items = sharedFolder.receive(this.sdkTestFolder.getPath(), BitcasaRESTConstants.Exists.OVERWRITE);
+            Assert.assertNotNull(items);
+        } catch (final IOException e) {
+            Assert.fail();
             e.printStackTrace();
-        } catch (BitcasaException e) {
-            assertTrue(false);
+        } catch (final BitcasaException e) {
+            Assert.fail();
             e.printStackTrace();
         }
     }
@@ -135,16 +147,16 @@ public class TestShare extends BaseTest {
      */
     @Test
     public void test4SetName() {
-        boolean success;
-        String name = "ShareFolder";
+        final boolean success;
+        final String name = "ShareFolder";
         try {
-            success = sharedFolder.setName(name, SHARE_PW);
-            assertTrue(success);
-        } catch (IOException e) {
-            assertTrue(false);
+            success = sharedFolder.setName(name, TestShare.SHARE_PW);
+            junit.framework.Assert.assertTrue(success);
+        } catch (final IOException e) {
+            Assert.fail();
             e.printStackTrace();
-        } catch (BitcasaException e) {
-            assertTrue(false);
+        } catch (final BitcasaException e) {
+            Assert.fail();
             e.printStackTrace();
         }
     }
@@ -154,15 +166,15 @@ public class TestShare extends BaseTest {
      */
     @Test
     public void test5SetPassword() {
-        boolean success;
+        final boolean success;
         try {
-            success = sharedFolder.setPassword(NEW_SHARE_PW, SHARE_PW);
-            assertTrue(success);
-        } catch (IOException e) {
-            assertTrue(false);
+            success = sharedFolder.setPassword(TestShare.NEW_SHARE_PW, TestShare.SHARE_PW);
+            Assert.assertTrue(success);
+        } catch (final IOException e) {
+            Assert.fail();
             e.printStackTrace();
-        } catch (BitcasaException e) {
-            assertTrue(false);
+        } catch (final BitcasaException e) {
+            Assert.fail();
             e.printStackTrace();
         }
     }
@@ -175,10 +187,10 @@ public class TestShare extends BaseTest {
         boolean status = false;
         try {
             status = sharedFolder.delete();
-        } catch (BitcasaException e) {
-            assertTrue(false);
+        } catch (final BitcasaException e) {
+            Assert.fail();
             e.printStackTrace();
         }
-        assertTrue(status);
+        Assert.assertTrue(status);
     }
 }

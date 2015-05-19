@@ -1,3 +1,13 @@
+/**
+ * Bitcasa Client Android SDK
+ * Copyright (C) 2015 Bitcasa, Inc.
+ * 1200 Park Place,
+ * Suite 350 San Mateo, CA 94403.
+ *
+ * This file contains an SDK in Java for accessing the Bitcasa infinite drive in Android platform.
+ *
+ * For support, please send email to sdks@bitcasa.com.
+ */
 package com.bitcasa.cloudfs.model;
 
 /**
@@ -11,10 +21,10 @@ public class ActionDeviceCreate extends BaseAction {
      * @param action Data from base action.
      */
     public ActionDeviceCreate(final BaseAction action) {
-        setAction(action.historyAction);
-        setDataId(action.data.id);
-        setDataName(action.data.name);
-        setVersion(action.version);
+        this.setAction(action.historyAction);
+        this.setDataId(action.data.id);
+        this.setDataName(action.data.name);
+        this.setVersion(action.version);
     }
 
     /**

@@ -41,12 +41,12 @@ Methods
 account
 ^^^^^^^
 
-.. java:method:: public Account account() throws IOException, BitcasaException
+.. java:method:: public Account account() throws BitcasaException
    :outertype: Session
 
    Gets the current account information.
 
-   :throws IOException: If a network error occurs
+   :throws BitcasaException: If a CloudFS API error occurs.
    :return: The account information.
 
 actionHistory
@@ -194,12 +194,11 @@ unlink
 user
 ^^^^
 
-.. java:method:: public User user() throws IOException, BitcasaException
+.. java:method:: public User user() throws BitcasaException
    :outertype: Session
 
    Gets the current user information.
 
    :throws BitcasaException: If a CloudFS API error occurs.
-   :throws IOException: If a network error occurs
    :return: The user information.
 

@@ -1,12 +1,24 @@
+.. java:import:: android.os Parcel
+
+.. java:import:: android.os Parcelable
+
 Credential
 ==========
 
 .. java:package:: com.bitcasa.cloudfs
    :noindex:
 
-.. java:type:: public class Credential
+.. java:type:: public class Credential implements Parcelable, Cloneable
 
    The Credential class provides accessibility to CloudFS Credential.
+
+Fields
+------
+CREATOR
+^^^^^^^
+
+.. java:field:: public static final Parcelable.Creator<Credential> CREATOR
+   :outertype: Credential
 
 Constructors
 ------------
@@ -20,8 +32,38 @@ Credential
 
    :param endpoint: The CloudFS API endpoint.
 
+Credential
+^^^^^^^^^^
+
+.. java:constructor:: public Credential(Parcel in)
+   :outertype: Credential
+
+   Initializes the credential instance using a Parcel.
+
+   :param in: The parcel object.
+
 Methods
 -------
+clone
+^^^^^
+
+.. java:method:: public Credential clone()
+   :outertype: Credential
+
+   Returns a clone of the Credential.
+
+   :return: A clone of Credential.
+
+describeContents
+^^^^^^^^^^^^^^^^
+
+.. java:method:: @Override public int describeContents()
+   :outertype: Credential
+
+   Describe the kinds of special objects contained in this Parcelable's marshalled representation
+
+   :return: a bitmask indicating the set of special object types marshalled by the Parcelable
+
 getAccessToken
 ^^^^^^^^^^^^^^
 
@@ -81,4 +123,15 @@ setTokenType
    Sets the CloudFS API token type.
 
    :param tokenType: The CloudFS API token type.
+
+writeToParcel
+^^^^^^^^^^^^^
+
+.. java:method:: @Override public void writeToParcel(Parcel out, int flags)
+   :outertype: Credential
+
+   Flatten this object in to a Parcel.
+
+   :param out: The Parcel in which the object should be written.
+   :param flags: Additional flags about how the object should be written. May be 0 or PARCELABLE_WRITE_RETURN_VALUE
 

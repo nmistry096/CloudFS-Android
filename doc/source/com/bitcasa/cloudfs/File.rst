@@ -1,3 +1,7 @@
+.. java:import:: android.os Parcel
+
+.. java:import:: android.os Parcelable
+
 .. java:import:: com.bitcasa.cloudfs Utils.BitcasaProgressListener
 
 .. java:import:: com.bitcasa.cloudfs Utils.BitcasaRESTConstants
@@ -12,7 +16,11 @@
 
 .. java:import:: java.io InputStream
 
+.. java:import:: java.util AbstractMap
+
 .. java:import:: java.util HashMap
+
+.. java:import:: java.util Map
 
 File
 ====
@@ -24,12 +32,22 @@ File
 
    The File class provides accessibility to CloudFS File.
 
+Fields
+------
+CREATOR
+^^^^^^^
+
+.. java:field:: public static final Parcelable.Creator<File> CREATOR
+   :outertype: File
+
+   {@inheritDoc}
+
 Constructors
 ------------
 File
 ^^^^
 
-.. java:constructor:: public File(RESTAdapter restAdapter, ItemMeta itemMeta, String absoluteParentPath)
+.. java:constructor:: public File(RESTAdapter restAdapter, ItemMeta itemMeta, String absoluteParentPath, String parentState, String shareKey)
    :outertype: File
 
    Initializes an instance of CloudFS File.
@@ -37,9 +55,34 @@ File
    :param restAdapter: The REST Adapter instance.
    :param itemMeta: The file meta data returned from REST Adapter.
    :param absoluteParentPath: The absolute parent path of this file.
+   :param parentState: The parent state of the item.
+   :param shareKey: The share key of the item if the item is of type share.
+
+File
+^^^^
+
+.. java:constructor:: public File(Parcel source)
+   :outertype: File
+
+   Initializes the Item instance.
+
+   :param source: The parcel object parameter.
 
 Methods
 -------
+changeAttributes
+^^^^^^^^^^^^^^^^
+
+.. java:method:: @Override public boolean changeAttributes(Map<String, String> values, BitcasaRESTConstants.VersionExists ifConflict) throws BitcasaException
+   :outertype: File
+
+   Changes the specified item attributes.
+
+   :param values: The attributes to be changed.
+   :param ifConflict: The action to be taken if a conflict occurs.
+   :throws BitcasaException: If a CloudFS API error occurs.
+   :return: boolean A value indicating whether the operation was successful or not.
+
 download
 ^^^^^^^^
 
@@ -56,13 +99,12 @@ download
 downloadUrl
 ^^^^^^^^^^^
 
-.. java:method:: public String downloadUrl() throws IOException, BitcasaException
+.. java:method:: public String downloadUrl() throws BitcasaException
    :outertype: File
 
    Gets the file download url. Please note that this download url will expire within 24 hours.
 
    :throws BitcasaException: If a CloudFS API error occurs.
-   :throws IOException: If a network error occurs.
    :return: The file download url.
 
 getExtension
@@ -109,12 +151,11 @@ read
 setMime
 ^^^^^^^
 
-.. java:method:: public boolean setMime(String mime) throws BitcasaException, IOException
+.. java:method:: public boolean setMime(String mime) throws BitcasaException
    :outertype: File
 
    Sets the file mime type.
 
-   :throws IOException: If a network error occurs.
    :throws BitcasaException: If a CloudsFS API error occurs.
    :return: A value indicating whether the operation was successful or not.
 
@@ -131,4 +172,15 @@ versions
    :param limit: The file version list limit.
    :throws IOException: If a network error occurs.
    :return: The file version list.
+
+writeToParcel
+^^^^^^^^^^^^^
+
+.. java:method:: @Override public void writeToParcel(Parcel out, int flags)
+   :outertype: File
+
+   Flatten this object in to a Parcel.
+
+   :param out: The Parcel in which the object should be written.
+   :param flags: Additional flags about how the object should be written. May be 0 or PARCELABLE_WRITE_RETURN_VALUE
 

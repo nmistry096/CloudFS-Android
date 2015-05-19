@@ -1,3 +1,13 @@
+/**
+ * Bitcasa Client Android SDK
+ * Copyright (C) 2015 Bitcasa, Inc.
+ * 1200 Park Place,
+ * Suite 350 San Mateo, CA 94403.
+ *
+ * This file contains an SDK in Java for accessing the Bitcasa infinite drive in Android platform.
+ *
+ * For support, please send email to sdks@bitcasa.com.
+ */
 package com.bitcasa.cloudfs.model;
 
 /**
@@ -11,20 +21,20 @@ public class ActionCreate extends BaseAction {
      * @param action Data from base action.
      */
     public ActionCreate(final BaseAction action) {
-        setAction(action.historyAction);
-        setApplicationData(action.data);
-        setDataDateContentLastModified(action.data.dateContentLastModified);
-        setDataDateCreated(action.data.dateCreated);
-        setDataDateMetaLastModified(action.data.dateMetaLastModified);
-        setDataExtension(action.data.extension);
-        setDataIsMirrored(action.data.isMirrored);
-        setDataMime(action.data.mime);
-        setDataName(action.data.name);
-        setDataParentId(action.data.parentId);
-        setDataSize(action.data.size);
-        setPath(action.path);
-        setType(action.type);
-        setVersion(action.version);
+        this.setAction(action.historyAction);
+        this.setApplicationData(action.data);
+        this.setDataDateContentLastModified(action.data.dateContentLastModified);
+        this.setDataDateCreated(action.data.dateCreated);
+        this.setDataDateMetaLastModified(action.data.dateMetaLastModified);
+        this.setDataExtension(action.data.extension);
+        this.setDataIsMirrored(action.data.isMirrored);
+        this.setDataMime(action.data.mime);
+        this.setDataName(action.data.name);
+        this.setDataParentId(action.data.parentId);
+        this.setDataSize(action.data.size);
+        this.setPath(action.path);
+        this.setType(action.type);
+        this.setVersion(action.version);
     }
 
     /**

@@ -1,8 +1,8 @@
 .. java:import:: com.bitcasa.cloudfs.model BaseAction
 
-.. java:import:: java.util HashMap
+.. java:import:: java.util AbstractMap
 
-.. java:import:: java.util List
+.. java:import:: java.util HashMap
 
 ActionHistory
 =============
@@ -19,7 +19,7 @@ Constructors
 ActionHistory
 ^^^^^^^^^^^^^
 
-.. java:constructor:: public ActionHistory(List<BaseAction> actionList)
+.. java:constructor:: public ActionHistory(Iterable<BaseAction> actionList)
    :outertype: ActionHistory
 
    Initializes a new instance of ActionHistory.

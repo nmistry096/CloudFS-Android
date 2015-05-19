@@ -1,12 +1,12 @@
 /**
  * Bitcasa Client Android SDK
- * Copyright (C) 2013 Bitcasa, Inc.
- * 215 Castro Street, 2nd Floor
- * Mountain View, CA 94041
+ * Copyright (C) 2015 Bitcasa, Inc.
+ * 1200 Park Place,
+ * Suite 350 San Mateo, CA 94403.
  *
  * This file contains an SDK in Java for accessing the Bitcasa infinite drive in Android platform.
  *
- * For support, please send email to support@bitcasa.com.
+ * For support, please send email to sdks@bitcasa.com.
  */
 package com.bitcasa.cloudfs.Utils;
 
@@ -58,7 +58,7 @@ public class BitcasaRESTConstants {
     public static final String METHOD_TOKEN = "/token";
     public static final String METHOD_FOLDERS = "/folders";
     public static final String METHOD_FILES = "/files";
-    public static final String METHOD_ITEM = "/files";
+    public static final String METHOD_ITEM = "/filesystem/root";
     public static final String METHOD_USER = "/user";
     public static final String METHOD_PROFILE = "/profile/";
     public static final String METHOD_META = "/meta";
@@ -138,12 +138,19 @@ public class BitcasaRESTConstants {
     public static final String RESTORE_RESCUE = "rescue";
     public static final String RESTORE_RECREATE = "recreate";
 
+    public static final String ITEM_STATE_NORMAL = "normal";
+    public static final String ITEM_STATE_SHARE = "share";
+    public static final String ITEM_STATE_TRASH = "trash";
+    public static final String ITEM_STATE_DEAD = "dead";
+
     public static final String START_VERSION = "start-version";
     public static final String STOP_VERSION = "stop-version";
     public static final String LIMIT = "limit";
 
     // update progress interval
     public static final long PROGRESS_UPDATE_INTERVAL = 2000;
+
+    public static final int CONNECTION_TIME_OUT = 300000;
 
     public static final String DATE_FORMAT = "EEE, d MMM yyyy HH:mm:ss z";
     public static final String FORM_URLENCODED = "application/x-www-form-urlencoded; charset=\"utf-8\"";
@@ -186,36 +193,38 @@ public class BitcasaRESTConstants {
 
         private final String historyAction;
 
-        private HistoryActions(String result) {
-            historyAction = result;
+        private HistoryActions(final String result) {
+            this.historyAction = result;
         }
 
-        public static HistoryActions getResult(String result) {
-            if (result.equals("share_receive")) {
-                return SHARE_RECEIVE;
-            } else if (result.equals("share_create")) {
-                return SHARE_CREATE;
-            } else if (result.equals("device_update")) {
-                return DEVICE_UPDATE;
-            } else if (result.equals("device_create")) {
-                return DEVICE_CREATE;
-            } else if (result.equals("device_delete")) {
-                return DEVICE_DELETE;
-            } else if (result.equals("alter_meta")) {
-                return ALTER_META;
-            } else if (result.equals("copy")) {
-                return COPY;
-            } else if (result.equals("move")) {
-                return MOVE;
-            } else if (result.equals("create")) {
-                return CREATE;
-            } else if (result.equals("delete")) {
-                return DELETE;
-            } else if (result.equals("trash")) {
-                return TRASH;
+        public static BitcasaRESTConstants.HistoryActions getResult(final String result) {
+            final BitcasaRESTConstants.HistoryActions historyActions;
+            if ("share_receive".equals(result)) {
+                historyActions = BitcasaRESTConstants.HistoryActions.SHARE_RECEIVE;
+            } else if ("share_create".equals(result)) {
+                historyActions = BitcasaRESTConstants.HistoryActions.SHARE_CREATE;
+            } else if ("device_update".equals(result)) {
+                historyActions = BitcasaRESTConstants.HistoryActions.DEVICE_UPDATE;
+            } else if ("device_create".equals(result)) {
+                historyActions = BitcasaRESTConstants.HistoryActions.DEVICE_CREATE;
+            } else if ("device_delete".equals(result)) {
+                historyActions = BitcasaRESTConstants.HistoryActions.DEVICE_DELETE;
+            } else if ("alter_meta".equals(result)) {
+                historyActions = BitcasaRESTConstants.HistoryActions.ALTER_META;
+            } else if ("copy".equals(result)) {
+                historyActions = BitcasaRESTConstants.HistoryActions.COPY;
+            } else if ("move".equals(result)) {
+                historyActions = BitcasaRESTConstants.HistoryActions.MOVE;
+            } else if ("create".equals(result)) {
+                historyActions = BitcasaRESTConstants.HistoryActions.CREATE;
+            } else if ("delete".equals(result)) {
+                historyActions = BitcasaRESTConstants.HistoryActions.DELETE;
+            } else if ("trash".equals(result)) {
+                historyActions = BitcasaRESTConstants.HistoryActions.TRASH;
             } else {
-                return null;
+                historyActions = null;
             }
+            return historyActions;
         }
     }
 

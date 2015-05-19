@@ -1,5 +1,9 @@
 .. java:import:: android.net Uri
 
+.. java:import:: android.os Parcel
+
+.. java:import:: android.os Parcelable
+
 .. java:import:: android.util Log
 
 .. java:import:: com.bitcasa.cloudfs Account
@@ -22,17 +26,11 @@
 
 .. java:import:: com.bitcasa.cloudfs Utils.BitcasaRESTConstants
 
-.. java:import:: com.bitcasa.cloudfs Utils.BitcasaRESTConstants.Exists
-
-.. java:import:: com.bitcasa.cloudfs Utils.BitcasaRESTConstants.VersionExists
-
 .. java:import:: com.bitcasa.cloudfs.exception BitcasaAuthenticationException
 
 .. java:import:: com.bitcasa.cloudfs.exception BitcasaClientException
 
 .. java:import:: com.bitcasa.cloudfs.exception BitcasaException
-
-.. java:import:: com.bitcasa.cloudfs.exception BitcasaFileException
 
 .. java:import:: com.bitcasa.cloudfs.model AccessToken
 
@@ -62,11 +60,15 @@
 
 .. java:import:: com.google.gson JsonObject
 
+.. java:import:: com.google.gson JsonSyntaxException
+
 .. java:import:: java.io BufferedInputStream
 
 .. java:import:: java.io BufferedOutputStream
 
 .. java:import:: java.io File
+
+.. java:import:: java.io FileNotFoundException
 
 .. java:import:: java.io FileOutputStream
 
@@ -83,6 +85,8 @@
 .. java:import:: java.net HttpURLConnection
 
 .. java:import:: java.net MalformedURLException
+
+.. java:import:: java.net ProtocolException
 
 .. java:import:: java.net URL
 
@@ -120,9 +124,17 @@ RESTAdapter
 .. java:package:: com.bitcasa.cloudfs.api
    :noindex:
 
-.. java:type:: public class RESTAdapter
+.. java:type:: public class RESTAdapter implements Parcelable, Cloneable
 
    Entry point to all CloudFS API requests.
+
+Fields
+------
+CREATOR
+^^^^^^^
+
+.. java:field:: public static final Parcelable.Creator<RESTAdapter> CREATOR
+   :outertype: RESTAdapter
 
 Constructors
 ------------
@@ -136,24 +148,65 @@ RESTAdapter
 
    :param credential: Application Credentials.
 
+RESTAdapter
+^^^^^^^^^^^
+
+.. java:constructor:: public RESTAdapter(Parcel in)
+   :outertype: RESTAdapter
+
+   Initializes the credential instance using a Parcel.
+
+   :param in: The parcel object.
+
 Methods
 -------
+alterFileMeta
+^^^^^^^^^^^^^
+
+.. java:method:: public com.bitcasa.cloudfs.File alterFileMeta(Item meta, Map<String, String> changes, int version, BitcasaRESTConstants.VersionExists versionExists) throws BitcasaException
+   :outertype: RESTAdapter
+
+   Changes the specified file's meta data.
+
+   :param meta: Item object to be changed.
+   :param changes: Meta data to be changed.
+   :param version: Version of the item to be changed.
+   :param versionExists: The action to perform if the version exists at the destination.
+   :throws BitcasaException: If a CloudFS API error occurs.
+   :throws BitcasaAuthenticationException: If user not authenticated.
+   :return: File object with altered meta data.
+
+alterFolderMeta
+^^^^^^^^^^^^^^^
+
+.. java:method:: public Folder alterFolderMeta(Item meta, Map<String, String> changes, int version, BitcasaRESTConstants.VersionExists versionExists) throws BitcasaException
+   :outertype: RESTAdapter
+
+   Changes the specified folder's meta data.
+
+   :param meta: Item object to be changed.
+   :param changes: Meta data to be changed.
+   :param version: Version of the item to be changed.
+   :param versionExists: The action to perform if the version exists at the destination.
+   :throws BitcasaException: If a CloudFS API error occurs.
+   :throws BitcasaAuthenticationException: If user not authenticated.
+   :return: Folder object with altered meta
+
 alterMeta
 ^^^^^^^^^
 
-.. java:method:: public Item alterMeta(Item meta, Map<String, String> changes, int version, VersionExists versionExists) throws BitcasaException, IOException
+.. java:method:: public Item alterMeta(Item meta, Map<String, String> changes, int version, BitcasaRESTConstants.VersionExists versionExists) throws BitcasaException
    :outertype: RESTAdapter
 
-   Alter File Meta
+   Changes the specified item's meta data.
 
-   :param meta: Item object of file meta
-   :param changes: String map of meta changes
-   :param version: Integer version
-   :param versionExists: VersionExists enum
+   :param meta: Item object to be changed.
+   :param changes: Meta data to be changed.
+   :param version: Version of the item to be changed.
+   :param versionExists: The action to perform if the version exists at the destination.
    :throws BitcasaException: If a CloudFS API error occurs.
-   :throws IOException: If a network error occurs
-   :throws BitcasaAuthenticationException: If user not authenticated
-   :return: Item object with altered meta
+   :throws BitcasaAuthenticationException: If user not authenticated.
+   :return: Item object with altered meta data.
 
 alterShare
 ^^^^^^^^^^
@@ -161,14 +214,14 @@ alterShare
 .. java:method:: public Share alterShare(String shareKey, Map<String, String> changes, String currentPassword) throws IOException, BitcasaException
    :outertype: RESTAdapter
 
-   Alters the Shares attributes.
+   Alter the share attributes associated with the given shareKey.
 
-   :param shareKey: The share key of the specified share.
-   :param changes: The changes to be updated.
-   :param currentPassword: The current password of the share.
+   :param shareKey: The shareKey of the share to be altered.
+   :param changes: The changes to be updated to the share associated with given shareKey.
+   :param currentPassword: Password associated with the share which needs to be altered.
    :throws BitcasaException: If a CloudFS API error occurs.
-   :throws IOException: If a network error occurs
-   :return: Share object of the altered share
+   :throws IOException: If a network error occurs.
+   :return: Share object with altered share attributes.
 
 alterShareInfo
 ^^^^^^^^^^^^^^
@@ -176,14 +229,14 @@ alterShareInfo
 .. java:method:: public Share alterShareInfo(String shareKey, String currentPassword, String newPassword) throws IOException, BitcasaException
    :outertype: RESTAdapter
 
-   Alter Share Info
+   Alter the share information associated with the given shareKey.
 
-   :param shareKey: String share key of the share
-   :param currentPassword: The current password of the share
-   :param newPassword: The new password of the share
+   :param shareKey: The shareKey of the share which needs to be altered.
+   :param currentPassword: Password associated with the share which needs to be altered.
+   :param newPassword: New password to be set to the current share.
    :throws BitcasaException: If a CloudFS API error occurs.
-   :throws IOException: If a network error occurs
-   :return: Share object of the altered share info
+   :throws IOException: If a network error occurs.
+   :return: Share object with altered share info.
 
 authenticate
 ^^^^^^^^^^^^
@@ -206,30 +259,39 @@ browseShare
 .. java:method:: public Item[] browseShare(String shareKey, String path) throws IOException, BitcasaException
    :outertype: RESTAdapter
 
-   Given the sharekey and the path to any folder/file under share, browseShare method will return the item list for that share. Make sure unlockShare is called before browseShare
+   Given the shareKey and the path to any folder/file under share, browseShare method will return the item list for that share. Make sure unlockShare is called before browseShare
 
-   :param shareKey: String share key of the share
-   :param path: String file path
+   :param shareKey: The shareKey of the share to be browsed.
+   :param path: Path to be browsed.
    :throws BitcasaException: If a CloudFS API error occurs.
    :throws IOException: If a network error occurs
-   :return: Share object
+   :return: Items list found at given share path.
 
 browseTrash
 ^^^^^^^^^^^
 
-.. java:method:: public Item[] browseTrash() throws IOException, BitcasaException
+.. java:method:: public Item[] browseTrash(String path) throws BitcasaException
    :outertype: RESTAdapter
 
-   Browse Trash
+   Browse the trash associated with current account.
 
    :throws BitcasaException: If a CloudFS API error occurs.
-   :throws IOException: If a network error occurs
-   :return: An array of item objects
+   :return: An array of trash item objects found.
+
+clone
+^^^^^
+
+.. java:method:: public RESTAdapter clone()
+   :outertype: RESTAdapter
+
+   Returns a clone of the RESTAdapter.
+
+   :return: A clone of RESTAdapter.
 
 copy
 ^^^^
 
-.. java:method:: public Item copy(Item item, String destinationPath, String newName, Exists exists) throws IOException, BitcasaException
+.. java:method:: public Item copy(Item item, String destinationPath, String newName, BitcasaRESTConstants.Exists exists) throws IOException, BitcasaException
    :outertype: RESTAdapter
 
    Copies an item to given destination path.
@@ -264,7 +326,7 @@ createAccount
 createFolder
 ^^^^^^^^^^^^
 
-.. java:method:: public Folder createFolder(String folderName, Folder parentFolder, Exists exists) throws IOException, BitcasaException
+.. java:method:: public Folder createFolder(String folderName, Folder parentFolder, BitcasaRESTConstants.Exists exists) throws IOException, BitcasaException
    :outertype: RESTAdapter
 
    Creates a folder in the CloudFS file system.
@@ -284,26 +346,39 @@ createShare
 
    Creates a share including the item in the path specified.
 
-   :param path: String file path
-   :param password: String password
+   :param path: Path to the item to be shared.
+   :param password: Password to access the share to be created.
    :throws BitcasaException: If a CloudFS API error occurs.
    :throws IOException: If a network error occurs
-   :return: Share object created
+   :return: The created share object.
+
+createShare
+^^^^^^^^^^^
+
+.. java:method:: public Share createShare(String[] paths, String password) throws IOException, BitcasaException
+   :outertype: RESTAdapter
+
+   Creates a share including the item in the path specified.
+
+   :param paths: Paths to the items to be shared.
+   :param password: Password to access the share to be created.
+   :throws BitcasaException: If a CloudFS API error occurs.
+   :throws IOException: If a network error occurs
+   :return: The created share object.
 
 deleteFile
 ^^^^^^^^^^
 
-.. java:method:: public boolean deleteFile(String path, boolean commit, boolean force) throws IOException, BitcasaException
+.. java:method:: public boolean deleteFile(String path, boolean commit) throws IOException, BitcasaException
    :outertype: RESTAdapter
 
    Deletes an existing file from the CloudFS file system.
 
-   :param path: String file path.
-   :param commit: if boolean false, transfer file to trash.
-   :param force: if boolean true, deletes file without trashing.
+   :param path: Path to the file to be deleted.
+   :param commit: If true, folder is deleted immediately. Otherwise, it is moved to the Trash. The default is false.
    :throws BitcasaException: If a CloudFS API error occurs.
    :throws IOException: If response data can not be read due to network errors.
-   :return: boolean flag whether the file was successfully deleted or not.
+   :return: Returns true if the file is deleted successfully, otherwise false.
 
 deleteFolder
 ^^^^^^^^^^^^
@@ -311,8 +386,9 @@ deleteFolder
 .. java:method:: public boolean deleteFolder(String path, boolean commit, boolean force) throws IOException, BitcasaException
    :outertype: RESTAdapter
 
-   Deletes the folder at given path.
+   Deletes the folder from the CloudFS file system.
 
+   :param path: Path to the folder to be deleted.
    :param commit: If true, folder is deleted immediately. Otherwise, it is moved to the Trash. The default is false.
    :param force: If true, folder is deleted even if it contains sub-items. The default is false.
    :throws BitcasaException: If a CloudFS API error occurs.
@@ -325,23 +401,33 @@ deleteShare
 .. java:method:: public boolean deleteShare(String shareKey) throws BitcasaException
    :outertype: RESTAdapter
 
-   Delete Share
+   Delete the share associated with given shareKey.
 
-   :param shareKey: String share key of the share
+   :param shareKey: The shareKey of the share which needs to be deleted.
    :throws BitcasaException: If a CloudFS API error occurs.
-   :return: Boolean if the share was deleted or not
+   :return: Returns true if the share is deleted successfully, otherwise false.
 
 deleteTrashItem
 ^^^^^^^^^^^^^^^
 
-.. java:method:: public boolean deleteTrashItem(String path) throws BitcasaException
+.. java:method:: public boolean deleteTrashItem(String trashItemId) throws BitcasaException
    :outertype: RESTAdapter
 
-   Delete Trash Item
+   Delete the given item from trash.
 
-   :param path: String file path
+   :param trashItemId: Item id to be deleted from trash.
    :throws BitcasaException: If a CloudFS API error occurs.
-   :return: Boolean whether the item in trash was deleted or not
+   :return: Returns true if the item is deleted successfully, otherwise false.
+
+describeContents
+^^^^^^^^^^^^^^^^
+
+.. java:method:: @Override public int describeContents()
+   :outertype: RESTAdapter
+
+   Describe the kinds of special objects contained in this Parcelable's marshalled representation
+
+   :return: a bitmask indicating the set of special object types marshalled by the Parcelable
 
 download
 ^^^^^^^^
@@ -365,7 +451,7 @@ downloadFile
    Download a file from CloudFS file system.
 
    :param file: Bitcasa Item with valid bitcasa file path and file name.
-   :param range: Any valid content range. No less than 0, no greater than the filesize.
+   :param range: Any valid content range. No less than 0, no greater than the file size.
    :param localDestination: Device file location with file path and name.
    :param listener: The progress listener to listen to the file download progress.
    :throws IOException: If a network error occurs.
@@ -374,7 +460,7 @@ downloadFile
 downloadUrl
 ^^^^^^^^^^^
 
-.. java:method:: public String downloadUrl(String path, long size) throws IOException, BitcasaException
+.. java:method:: public String downloadUrl(String path, long size) throws IOException
    :outertype: RESTAdapter
 
    Creates a redirect url from a given path.
@@ -387,28 +473,26 @@ downloadUrl
 getFolderMeta
 ^^^^^^^^^^^^^
 
-.. java:method:: public Folder getFolderMeta(String absolutePath) throws BitcasaException, IOException
+.. java:method:: public Folder getFolderMeta(String absolutePath) throws BitcasaException
    :outertype: RESTAdapter
 
-   Get Folder Meta.
+   Gets the Meta data of the folder.
 
-   :param absolutePath: String file location
+   :param absolutePath: Location of the folder whose meta data is to be obtained.
    :throws BitcasaException: If a CloudFS API error occurs.
-   :throws IOException: If a network error occurs
    :throws BitcasaAuthenticationException: If user not authenticated
    :return: Folder object at the given path.
 
 getItemMeta
 ^^^^^^^^^^^
 
-.. java:method:: public Item getItemMeta(String absolutePath) throws BitcasaException, IOException
+.. java:method:: public Item getItemMeta(String absolutePath) throws BitcasaException
    :outertype: RESTAdapter
 
-   Get Item Meta.
+   Gets the meta data of an item.
 
-   :param absolutePath: String file location.
+   :param absolutePath: Location of the item whose meta data is to be obtained.
    :throws BitcasaException: If a CloudFS API error occurs.
-   :throws IOException: If a network error occurs.
    :throws BitcasaAuthenticationException: If user not authenticated.
    :return: Item object at the given path.
 
@@ -420,10 +504,10 @@ getList
 
    Lists all the files and folders under the given folder path.
 
-   :param folderPath: String folder path.
-   :param version: String version.
-   :param depth: Integer depth.
-   :param filter: String filter.
+   :param folderPath: String folder path to get the list.
+   :param version: String version of the folder.
+   :param depth: Integer folder depth to read.
+   :param filter: String filter to be applied when reading the list.
    :throws BitcasaException: If a CloudFS API error occurs.
    :throws IOException: If a network error occurs.
    :return: Item array of files and folders.
@@ -434,12 +518,12 @@ listFileVersions
 .. java:method:: public com.bitcasa.cloudfs.File[] listFileVersions(String path, int startVersion, int stopVersion, int limit) throws BitcasaException, IOException
    :outertype: RESTAdapter
 
-   List File Versions
+   List the versions of specified file.
 
-   :param path: String file path
-   :param startVersion: Integer starting file version
-   :param stopVersion: Integer Ending version
-   :param limit: Integer file Limit
+   :param path: File path of the file whose versions are to be listed.
+   :param startVersion: Start version of the version list.
+   :param stopVersion: End version of the version list.
+   :param limit: Limits the number of versions to be listed down in results.
    :throws BitcasaException: If a CloudFS API error occurs.
    :throws IOException: If a network error occurs.
    :return: A list of file meta data results, as they have been recorded in the file version history after successful meta data changes.
@@ -450,25 +534,24 @@ listHistory
 .. java:method:: public List<BaseAction> listHistory(int startVersion, int stopVersion) throws IOException, BitcasaException
    :outertype: RESTAdapter
 
-   List History
+   List the action history associated with current account.
 
-   :param startVersion: Integer starting file version
-   :param stopVersion: Integer Ending version
+   :param startVersion: Version to start the list from.
+   :param stopVersion: Version to end the list.
    :throws BitcasaException: If a CloudFS API error occurs.
-   :throws IOException: If a network error occurs
-   :return: ActionHistory object
+   :throws IOException: If a network error occurs.
+   :return: ActionHistory object containing actions associated with current account.
 
 listShare
 ^^^^^^^^^
 
-.. java:method:: public Share[] listShare() throws IOException, BitcasaException
+.. java:method:: public Share[] listShare() throws BitcasaException
    :outertype: RESTAdapter
 
    Lists the shares the user has created.
 
    :throws BitcasaException: If a CloudFS API error occurs.
-   :throws IOException: If a network error occurs
-   :return: list of ShareItem
+   :return: List of shares associated with current account.
 
 move
 ^^^^
@@ -492,52 +575,50 @@ receiveShare
 .. java:method:: public Item[] receiveShare(String shareKey, String pathToInsertShare, BitcasaRESTConstants.Exists exists) throws IOException, BitcasaException
    :outertype: RESTAdapter
 
-   Given a valid location in a user's fileSystem, all items found in this share specified by the sharekey will be inserted into the given location. File collisions will be handled with the exist action specified.
+   Given a valid location in a user's fileSystem, all items found in this share specified by the shareKey will be inserted into the given location. File collisions will be handled with the exist action specified.
 
-   :param shareKey: String share key of the share
-   :param pathToInsertShare: String path to insert share
-   :param exists: Exists enum
+   :param shareKey: The shareKey of the share to be received.
+   :param pathToInsertShare: Path to save the received files and folders.
+   :param exists: The action to perform if the version exists at the destination.
    :throws BitcasaException: If a CloudFS API error occurs.
    :throws IOException: If a network error occurs
-   :return: An array of container object
+   :return: An array of item objects received from share.
 
 recoverTrashItem
 ^^^^^^^^^^^^^^^^
 
-.. java:method:: public boolean recoverTrashItem(String path, BitcasaRESTConstants.RestoreMethod restoreMethod, String rescueOrRecreatePath) throws UnsupportedEncodingException, BitcasaException
+.. java:method:: public boolean recoverTrashItem(String trashItemId, BitcasaRESTConstants.RestoreMethod restoreMethod, String rescueOrRecreatePath) throws UnsupportedEncodingException, BitcasaException
    :outertype: RESTAdapter
 
    Recover Trash Item
 
-   :param path: String file path
-   :param restoreMethod: RestoreMethod enum
-   :param rescueOrRecreatePath: String path to rescue or recreate file
-   :throws UnsupportedEncodingException: If encoding not supported
+   :param trashItemId: Item id to be recovered from trash.
+   :param restoreMethod: RestoreMethod to be used on the recover process.
+   :param rescueOrRecreatePath: Path to rescue or recreate the item to.
+   :throws UnsupportedEncodingException: If encoding not supported.
    :throws BitcasaException: If a CloudFS API error occurs.
-   :return: Boolean whether the item was recovered from trash or not
+   :return: Returns true if the item is recovered successfully, otherwise false.
 
 requestAccountInfo
 ^^^^^^^^^^^^^^^^^^
 
-.. java:method:: public Account requestAccountInfo() throws IOException, BitcasaException
+.. java:method:: public Account requestAccountInfo() throws BitcasaException
    :outertype: RESTAdapter
 
    Requests to retrieve account information from the CloudFS server.
 
    :throws BitcasaException: If a CloudFS API error occurs.
-   :throws IOException: If a network error occurs.
    :return: Bitcasa Account object.
 
 requestUserInfo
 ^^^^^^^^^^^^^^^
 
-.. java:method:: public User requestUserInfo() throws IOException, BitcasaException
+.. java:method:: public User requestUserInfo() throws BitcasaException
    :outertype: RESTAdapter
 
    Requests to retrieve user information from the CloudFS server.
 
    :throws BitcasaException: If a CloudFS API error occurs.
-   :throws IOException: If a network error occurs.
    :return: Bitcasa User object.
 
 unlockShare
@@ -546,18 +627,18 @@ unlockShare
 .. java:method:: public boolean unlockShare(String shareKey, String password) throws IOException, BitcasaException
    :outertype: RESTAdapter
 
-   Given a valid share and its password, this entrypoint will unlock the share for the login session.
+   Given a valid share and its password, this entry point will unlock the share for the login session.
 
-   :param shareKey: String share key of the share
-   :param password: String password
+   :param shareKey: The shareKey of the share need to be unlocked.
+   :param password: Password associated with the share need to be unlocked.
    :throws BitcasaException: If a CloudFS API error occurs.
-   :throws IOException: If a network error occurs
-   :return: boolean of whether the share was unlocked or not
+   :throws IOException: If a network error occurs.
+   :return: Returns true if the share is unlocked successfully, otherwise false.
 
 uploadFile
 ^^^^^^^^^^
 
-.. java:method:: public com.bitcasa.cloudfs.File uploadFile(Item folder, String sourceFilePath, Exists exists, BitcasaProgressListener listener) throws IOException, BitcasaException
+.. java:method:: public com.bitcasa.cloudfs.File uploadFile(Item folder, String sourceFilePath, BitcasaRESTConstants.Exists exists, BitcasaProgressListener listener) throws IOException, BitcasaException
    :outertype: RESTAdapter
 
    Upload a local file to the CloudFS server.
@@ -569,4 +650,15 @@ uploadFile
    :throws BitcasaException: If a CloudFS API error occurs.
    :throws IOException: If a network error occurs.
    :return: CloudFS file meta data of this successful upload, null if upload failed.
+
+writeToParcel
+^^^^^^^^^^^^^
+
+.. java:method:: @Override public void writeToParcel(Parcel out, int flags)
+   :outertype: RESTAdapter
+
+   Flatten this object in to a Parcel.
+
+   :param out: The Parcel in which the object should be written.
+   :param flags: Additional flags about how the object should be written. May be 0 or PARCELABLE_WRITE_RETURN_VALUE
 

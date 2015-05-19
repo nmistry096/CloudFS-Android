@@ -6,8 +6,6 @@
 
 .. java:import:: com.bitcasa.cloudfs Utils.BitcasaProgressListener
 
-.. java:import:: com.bitcasa.cloudfs Utils.BitcasaProgressListener.ProgressAction
-
 .. java:import:: com.bitcasa.cloudfs Utils.BitcasaRESTConstants
 
 .. java:import:: com.bitcasa.cloudfs.exception BitcasaException
@@ -35,6 +33,8 @@
 .. java:import:: java.net URL
 
 .. java:import:: java.util HashMap
+
+.. java:import:: java.util Map
 
 .. java:import:: javax.net.ssl HttpsURLConnection
 
@@ -80,7 +80,7 @@ addFile
 addUploadFormField
 ^^^^^^^^^^^^^^^^^^
 
-.. java:method:: public void addUploadFormField(String fieldName, String fieldValue)
+.. java:method:: public void addUploadFormField(CharSequence fieldName, CharSequence fieldValue)
    :outertype: MultipartUpload
 
    Adds an upload form field to the print writer.
@@ -91,12 +91,13 @@ addUploadFormField
 finishUpload
 ^^^^^^^^^^^^
 
-.. java:method:: public com.bitcasa.cloudfs.File finishUpload(RESTAdapter restAdapter) throws BitcasaException
+.. java:method:: public com.bitcasa.cloudfs.File finishUpload(RESTAdapter restAdapter, String parentPath) throws BitcasaException
    :outertype: MultipartUpload
 
    Finishes the file upload process.
 
    :param restAdapter: The REST Adapter instance.
+   :param parentPath: The parent path.
    :throws BitcasaException: If a CloudFS API error occurs.
    :return: The uploaded file.
 

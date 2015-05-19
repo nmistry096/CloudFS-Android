@@ -1,6 +1,16 @@
+/**
+ * Bitcasa Client Android SDK
+ * Copyright (C) 2015 Bitcasa, Inc.
+ * 1200 Park Place,
+ * Suite 350 San Mateo, CA 94403.
+ *
+ * This file contains an SDK in Java for accessing the Bitcasa infinite drive in Android platform.
+ *
+ * For support, please send email to sdks@bitcasa.com.
+ */
 package com.bitcasa.cloudfs.model;
 
-import com.bitcasa.cloudfs.Utils.BitcasaRESTConstants.Exists;
+import com.bitcasa.cloudfs.Utils.BitcasaRESTConstants;
 
 /**
  * Represents Copy Action details.
@@ -13,13 +23,13 @@ public class ActionCopy extends BaseAction {
      * @param action Data from base action.
      */
     public ActionCopy(final BaseAction action) {
-        setAction(action.historyAction);
-        setDataExists(action.data.exists);
-        setDataName(action.data.name);
-        setDataTo(action.data.to);
-        setPath(action.path);
-        setType(action.type);
-        setVersion(action.version);
+        this.setAction(action.historyAction);
+        this.setDataExists(action.data.exists);
+        this.setDataName(action.data.name);
+        this.setDataTo(action.data.to);
+        this.setPath(action.path);
+        this.setType(action.type);
+        this.setVersion(action.version);
     }
 
     /**
@@ -77,18 +87,18 @@ public class ActionCopy extends BaseAction {
     }
 
     /**
-     * Gets the {@link Exists Exists} option that was used.
+     * Gets the {@link BitcasaRESTConstants.Exists Exists} option that was used.
      *
-     * @return The {@link Exists Exists} option that was used.
+     * @return The {@link BitcasaRESTConstants.Exists Exists} option that was used.
      */
     public final String getDataExists() {
         return this.data.exists;
     }
 
     /**
-     * Sets the {@link Exists Exists} option that was used.
+     * Sets the {@link BitcasaRESTConstants.Exists Exists} option that was used.
      *
-     * @param dataExists The {@link Exists Exists} option that was used.
+     * @param dataExists The {@link BitcasaRESTConstants.Exists Exists} option that was used.
      */
     public final void setDataExists(final String dataExists) {
         this.data.exists = dataExists;

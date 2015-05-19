@@ -2,15 +2,10 @@ package com.bitcasa.cloudfs;
 
 import com.bitcasa.cloudfs.exception.BitcasaException;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
-
-import java.io.IOException;
-
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.assertTrue;
 
 /**
  * Tests the User class methods.
@@ -21,27 +16,24 @@ public class TestUser extends BaseTest {
     public void testGetUser() {
         User user = null;
         try {
-            user = session.user();
-        } catch (IOException e) {
+            user = BaseTest.session.user();
+        } catch (final BitcasaException e) {
             e.printStackTrace();
-            assertTrue(false);
-        } catch (BitcasaException e) {
-            e.printStackTrace();
-            assertTrue(false);
+            Assert.fail();
         } finally {
-            assertNotNull(user);
+            junit.framework.Assert.assertNotNull(user);
         }
 
-        assertNotNull(user.getEmail());
-        assertNotNull(user.getFirstName());
-        assertNotNull(user.getLastName());
-        assertNotNull(user.getId());
-        assertNotNull(user.getUsername());
-        assertEquals(username, user.getUsername());
-        assertNotNull(user.getLastLogin());
-        assertTrue(user.getLastLogin().getTime() > 0);
-        assertNotNull(user.getCreatedAt());
-        assertTrue(user.getCreatedAt().getTime() > 0);
+        Assert.assertNotNull(user.getEmail());
+        Assert.assertNotNull(user.getFirstName());
+        Assert.assertNotNull(user.getLastName());
+        Assert.assertNotNull(user.getId());
+        Assert.assertNotNull(user.getUsername());
+        junit.framework.Assert.assertEquals(BaseTest.username, user.getUsername());
+        Assert.assertNotNull(user.getLastLogin());
+        junit.framework.Assert.assertTrue(user.getLastLogin().getTime() > 0);
+        Assert.assertNotNull(user.getCreatedAt());
+        Assert.assertTrue(user.getCreatedAt().getTime() > 0);
     }
 }
 

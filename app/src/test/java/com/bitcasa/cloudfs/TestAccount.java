@@ -2,14 +2,10 @@ package com.bitcasa.cloudfs;
 
 import com.bitcasa.cloudfs.exception.BitcasaException;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
-
-import java.io.IOException;
-
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.assertTrue;
 
 @RunWith(RobolectricTestRunner.class)
 public class TestAccount extends BaseTest {
@@ -21,59 +17,55 @@ public class TestAccount extends BaseTest {
     public void testAccount() {
         Account account = null;
         try {
-            account = session.account();
-        } catch (IOException e) {
-            e.printStackTrace();
-            assertTrue(false);
-        } catch (BitcasaException e) {
-            assertNotNull(account);
+            account = BaseTest.session.account();
+        } catch (final BitcasaException e) {
+            Assert.fail();
         } finally {
-            assertNotNull(account);
+            Assert.assertNotNull(account);
         }
 
-        assertNotNull(account.getId());
-        assertNotNull(account.getAccountLocale());
-        assertNotNull(account.getPlanDisplayName());
-        assertNotNull(account.getPlanId());
-        assertNotNull(account.getSessionLocale());
-        assertNotNull(account.getStateDisplayName());
-        assertNotNull(account.getStateId());
-        assertNotNull(account.getStorageLimit());
-        assertNotNull(account.getStorageUsage());
-        assertNotNull(account.getOverStorageLimit());
+        Assert.assertNotNull(account.getId());
+        Assert.assertNotNull(account.getAccountLocale());
+        Assert.assertNotNull(account.getPlanDisplayName());
+        Assert.assertNotNull(account.getPlanId());
+        Assert.assertNotNull(account.getSessionLocale());
+        Assert.assertNotNull(account.getStateDisplayName());
+        Assert.assertNotNull(account.getStateId());
+        Assert.assertNotNull(account.getStorageLimit());
+        Assert.assertNotNull(account.getStorageUsage());
+        Assert.assertNotNull(account.getOverStorageLimit());
     }
 
     /**
      * Tests getSessionLocation method.
      */
     @Test
-    public void testGetSessionLocale() throws Throwable {
+    public void testGetSessionLocale() throws BitcasaException {
         Account account = null;
         try {
-            account = session.account();
-        } catch (IOException e) {
-            e.printStackTrace();
-            assertTrue(false);
+            account = BaseTest.session.account();
+        } catch (final BitcasaException e) {
+            Assert.fail();
         } finally {
-            assertNotNull(account);
+            Assert.assertNotNull(account);
         }
-        assertNotNull(account.getSessionLocale());
+        Assert.assertNotNull(account.getSessionLocale());
     }
 
     /**
      * Tests getAccountLocation method.
      */
     @Test
-    public void testGetAccountLocale() throws Throwable {
+    public void testGetAccountLocale() throws BitcasaException {
         Account account = null;
         try {
-            account = session.account();
-        } catch (IOException e) {
+            account = BaseTest.session.account();
+        } catch (final BitcasaException e) {
             e.printStackTrace();
-            assertTrue(false);
+            Assert.fail();
         } finally {
-            assertNotNull(account);
+            Assert.assertNotNull(account);
         }
-        assertNotNull(account.getAccountLocale());
+        Assert.assertNotNull(account.getAccountLocale());
     }
 }

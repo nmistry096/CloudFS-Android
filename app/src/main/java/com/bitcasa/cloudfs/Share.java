@@ -1,31 +1,36 @@
 /**
  * Bitcasa Client Android SDK
  * Copyright (C) 2015 Bitcasa, Inc.
- * 215 Castro Street, 2nd Floor
- * Mountain View, CA 94041
+ * 1200 Park Place,
+ * Suite 350 San Mateo, CA 94403.
  *
  * This file contains an SDK in Java for accessing the Bitcasa infinite drive in Android platform.
  *
- * For support, please send email to support@bitcasa.com.
+ * For support, please send email to sdks@bitcasa.com.
  */
 
 package com.bitcasa.cloudfs;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import com.bitcasa.cloudfs.Utils.BitcasaRESTConstants;
 import com.bitcasa.cloudfs.api.RESTAdapter;
 import com.bitcasa.cloudfs.exception.BitcasaException;
-import com.bitcasa.cloudfs.model.ApplicationData;
 import com.bitcasa.cloudfs.model.ItemMeta;
 import com.bitcasa.cloudfs.model.ShareItem;
+import com.google.gson.JsonObject;
 
 import java.io.IOException;
+import java.util.AbstractMap;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The Share class provides accessibility to CloudFS Share.
  */
-public class Share {
+public class Share implements Parcelable{
 
     /**
      * The Share Key.
@@ -76,13 +81,80 @@ public class Share {
      */
     public Share(final RESTAdapter restAdapter, final ShareItem shareItem, final ItemMeta meta) {
         this.restAdapter = restAdapter;
-        shareKey = shareItem.getShareKey();
-        name = shareItem.getName();
-        url = shareItem.getUrl();
-        shortUrl = shareItem.getShortUrl();
-        size = shareItem.getSize();
-        dateCreated = shareItem.getDateCreated();
+        this.shareKey = shareItem.getShareKey();
+        this.name = shareItem.getName();
+        this.url = shareItem.getUrl();
+        this.shortUrl = shareItem.getShortUrl();
+        this.size = shareItem.getSize();
+        this.dateCreated = shareItem.getDateCreated();
         this.meta = meta;
+    }
+
+    public Share() {
+
+    }
+
+    public static final Parcelable.Creator<Share> CREATOR = new Parcelable.Creator<Share>() {
+
+        /**
+         * Create a new instance of the Parcelable class, instantiating it from the given Parcel whose data had previously been written by Parcelable.writeToParcel()
+         * @param source The Parcel to read the object's data from.
+         * @return Returns a new instance of the Parcelable class.
+         */
+        @Override
+        public Share createFromParcel(Parcel source) {
+            return new Share(source);
+        }
+
+        /**
+         * Create a new array of the Parcelable class
+         * @param size Size of the array
+         * @return Returns an array of the Parcelable class, with every entry initialized to null
+         */
+        @Override
+        public Share[] newArray(int size) {
+            return new Share[size];
+        }
+    };
+
+    public Share(Parcel source) {
+        restAdapter = (RESTAdapter)source.readValue(RESTAdapter.class.getClassLoader());
+        shareKey = source.readString();
+        name = source.readString();
+        url = source.readString();
+        shortUrl = source.readString();
+        size = source.readLong();
+        dateCreated = source.readLong();
+        this.meta = (ItemMeta) source.readValue(ItemMeta.class.getClassLoader());
+    }
+
+    /**
+     * Describe the kinds of special objects contained in this Parcelable's marshalled representation
+     *
+     * @return a bitmask indicating the set of special object types marshalled by the Parcelable
+     * Restricted constructor.
+     */
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    /**
+     * Flatten this object in to a Parcel.
+     *
+     * @param out   The Parcel in which the object should be written.
+     * @param flags Additional flags about how the object should be written. May be 0 or PARCELABLE_WRITE_RETURN_VALUE
+     */
+    @Override
+    public void writeToParcel(Parcel out, int flags) {
+        out.writeValue(restAdapter);
+        out.writeString(shareKey);
+        out.writeString(name);
+        out.writeString(url);
+        out.writeString(shortUrl);
+        out.writeLong(size);
+        out.writeLong(dateCreated);
+        out.writeValue(this.meta);
     }
 
     /**
@@ -91,7 +163,7 @@ public class Share {
      * @return The share key.
      */
     public String getShareKey() {
-        return shareKey;
+        return this.shareKey;
     }
 
     /**
@@ -100,7 +172,7 @@ public class Share {
      * @return The share name.
      */
     public String getName() {
-        return name;
+        return this.name;
     }
 
     /**
@@ -108,7 +180,7 @@ public class Share {
      *
      * @param name The share name.
      */
-    public void setName(String name) {
+    public void setName(final String name) {
         this.name = name;
     }
 
@@ -118,7 +190,7 @@ public class Share {
      * @return The share url.
      */
     public String getUrl() {
-        return url;
+        return this.url;
     }
 
     /**
@@ -127,7 +199,7 @@ public class Share {
      * @return The share size.
      */
     public long getSize() {
-        return size;
+        return this.size;
     }
 
     /**
@@ -135,8 +207,8 @@ public class Share {
      *
      * @return The share's application data.
      */
-    public ApplicationData getApplicationData() {
-        return meta.getApplicationData();
+    public JsonObject getApplicationData() {
+        return this.meta.getApplicationData();
     }
 
     /**
@@ -145,7 +217,7 @@ public class Share {
      * @return The content last modified date.
      */
     public Date getDateContentLastModified() {
-        return new Date(meta.getDateContentLastModified());
+        return new Date(this.meta.getDateContentLastModified());
     }
 
     /**
@@ -154,7 +226,7 @@ public class Share {
      * @return The share's meta last modified date.
      */
     public Date getDateMetaLastModified() {
-        return new Date(meta.getDateMetaLastModified());
+        return new Date(this.meta.getDateMetaLastModified());
     }
 
     /**
@@ -166,10 +238,10 @@ public class Share {
      * @throws IOException      If a network error occurs.
      * @throws BitcasaException If a CloudFS API error occurs.
      */
-    public boolean setName(String newName, String password) throws IOException, BitcasaException {
-        HashMap<String, String> params = new HashMap<String, String>();
+    public boolean setName(final String newName, final String password) throws IOException, BitcasaException {
+        final AbstractMap<String, String> params = new HashMap<String, String>();
         params.put(BitcasaRESTConstants.PARAM_NAME, newName);
-        return changeAttributes(params, password);
+        return this.changeAttributes(params, password);
     }
 
     /**
@@ -181,11 +253,11 @@ public class Share {
      * @throws IOException      If a network error occurs.
      * @throws BitcasaException If a CloudFS API error occurs.
      */
-    public boolean setPassword(String newPassword, String oldPassword)
+    public boolean setPassword(final String newPassword, final String oldPassword)
             throws IOException, BitcasaException {
-        HashMap<String, String> params = new HashMap<String, String>();
+        final AbstractMap<String, String> params = new HashMap<String, String>();
         params.put(BitcasaRESTConstants.PARAM_PASSWORD, newPassword);
-        return changeAttributes(params, oldPassword);
+        return this.changeAttributes(params, oldPassword);
     }
 
     /**
@@ -196,9 +268,9 @@ public class Share {
     @Override
     public String toString() {
 
-        return "\nshare_key[" + shareKey + "] \nname[" + name + "] \nurl[" + url +
-                "] \nshort_url[" + shortUrl + "] \nsize[" + Long.toString(size) +
-                "] \ndate_created[" + Long.toString(dateCreated) + "]*****";
+        return "\nshare_key[" + this.shareKey + "] \nname[" + this.name + "] \nurl[" + this.url +
+                "] \nshort_url[" + this.shortUrl + "] \nsize[" + Long.toString(this.size) +
+                "] \ndate_created[" + Long.toString(this.dateCreated) + "]*****";
     }
 
     /**
@@ -210,9 +282,9 @@ public class Share {
      * @throws IOException      If a network error occurs.
      * @throws BitcasaException If a CloudFS API error occurs.
      */
-    public boolean changeAttributes(HashMap<String, String> values, String sharePassword)
+    public boolean changeAttributes(final Map<String, String> values, final String sharePassword)
             throws IOException, BitcasaException {
-        Share share = restAdapter.alterShare(this.getShareKey(), values, sharePassword);
+        final Share share = this.restAdapter.alterShare(this.getShareKey(), values, sharePassword);
         return share != null;
     }
 
@@ -224,7 +296,7 @@ public class Share {
      * @throws BitcasaException If a CloudFS API error occurs.
      */
     public Item[] list() throws IOException, BitcasaException {
-        return restAdapter.browseShare(this.getShareKey(), null);
+        return this.restAdapter.browseShare(this.getShareKey(), null);
     }
 
     /**
@@ -236,9 +308,9 @@ public class Share {
      * @throws IOException      If a network error occurs.
      * @throws BitcasaException If a CloudFS API error occurs.
      */
-    public Item[] receive(String path, BitcasaRESTConstants.Exists exists)
+    public Item[] receive(final String path, final BitcasaRESTConstants.Exists exists)
             throws IOException, BitcasaException {
-        return restAdapter.receiveShare(this.getShareKey(), path, exists);
+        return this.restAdapter.receiveShare(this.getShareKey(), path, exists);
     }
 
     /**
@@ -248,7 +320,7 @@ public class Share {
      * @throws BitcasaException If a CloudFS API error occurs.
      */
     public boolean delete() throws BitcasaException {
-        return restAdapter.deleteShare(this.getShareKey());
+        return this.restAdapter.deleteShare(this.getShareKey());
     }
 
 }

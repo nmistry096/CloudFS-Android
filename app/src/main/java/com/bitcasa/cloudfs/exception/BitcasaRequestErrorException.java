@@ -1,12 +1,12 @@
 /**
  * Bitcasa Client Android SDK
- * Copyright (C) 2013 Bitcasa, Inc.
- * 215 Castro Street, 2nd Floor
- * Mountain View, CA 94041
+ * Copyright (C) 2015 Bitcasa, Inc.
+ * 1200 Park Place,
+ * Suite 350 San Mateo, CA 94403.
  *
  * This file contains an SDK in Java for accessing the Bitcasa infinite drive in Android platform.
  *
- * For support, please send email to support@bitcasa.com.
+ * For support, please send email to sdks@bitcasa.com.
  */
 
 package com.bitcasa.cloudfs.exception;
@@ -30,7 +30,7 @@ public class BitcasaRequestErrorException extends BitcasaException {
      *
      * @param message The error message.
      */
-    public BitcasaRequestErrorException(String message) {
+    public BitcasaRequestErrorException(final String message) {
         super(message);
     }
 
@@ -40,7 +40,7 @@ public class BitcasaRequestErrorException extends BitcasaException {
      * @param code    The error code.
      * @param message The error message.
      */
-    public BitcasaRequestErrorException(int code, String message) {
+    public BitcasaRequestErrorException(final int code, final String message) {
         super(code, message);
     }
 
@@ -49,7 +49,7 @@ public class BitcasaRequestErrorException extends BitcasaException {
      *
      * @param error The error object.
      */
-    public BitcasaRequestErrorException(BitcasaError error) {
+    public BitcasaRequestErrorException(final BitcasaError error) {
         super(error);
     }
 

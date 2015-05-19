@@ -1,3 +1,7 @@
+.. java:import:: android.os Parcel
+
+.. java:import:: android.os Parcelable
+
 .. java:import:: com.bitcasa.cloudfs.api RESTAdapter
 
 .. java:import:: com.bitcasa.cloudfs.model UserProfile
@@ -8,9 +12,17 @@ Account
 .. java:package:: com.bitcasa.cloudfs
    :noindex:
 
-.. java:type:: public class Account
+.. java:type:: public class Account implements Parcelable
 
    The Account class provides accessibility to CloudFS Account.
+
+Fields
+------
+CREATOR
+^^^^^^^
+
+.. java:field:: public static final Parcelable.Creator<Account> CREATOR
+   :outertype: Account
 
 Constructors
 ------------
@@ -25,8 +37,28 @@ Account
    :param restAdapter: The REST Adapter instance.
    :param profile: The user profile.
 
+Account
+^^^^^^^
+
+.. java:constructor:: public Account(Parcel in)
+   :outertype: Account
+
+   Initializes the Account instance using a Parcel.
+
+   :param in: The parcel object.
+
 Methods
 -------
+describeContents
+^^^^^^^^^^^^^^^^
+
+.. java:method:: @Override public int describeContents()
+   :outertype: Account
+
+   Describe the kinds of special objects contained in this Parcelable's marshalled representation
+
+   :return: a bitmask indicating the set of special object types marshalled by the Parcelable
+
 getAccountLocale
 ^^^^^^^^^^^^^^^^
 
@@ -127,6 +159,26 @@ getStorageUsage
 
    :return: The storage used by the account.
 
+setStorageLimit
+^^^^^^^^^^^^^^^
+
+.. java:method:: public void setStorageLimit(long storageLimit)
+   :outertype: Account
+
+   Sets the account's storage limit.
+
+   :param storageLimit: The storage limit to be set.
+
+setStorageUsage
+^^^^^^^^^^^^^^^
+
+.. java:method:: public void setStorageUsage(long storageUsage)
+   :outertype: Account
+
+   Sets the account's storage usage.
+
+   :param storageUsage:
+
 toString
 ^^^^^^^^
 
@@ -136,4 +188,15 @@ toString
    Creates a string containing a concise, human-readable description of Account object.
 
    :return: The printable representation of Account object.
+
+writeToParcel
+^^^^^^^^^^^^^
+
+.. java:method:: @Override public void writeToParcel(Parcel out, int flags)
+   :outertype: Account
+
+   Flatten this object in to a Parcel.
+
+   :param out: The Parcel in which the object should be written.
+   :param flags: Additional flags about how the object should be written. May be 0 or PARCELABLE_WRITE_RETURN_VALUE
 

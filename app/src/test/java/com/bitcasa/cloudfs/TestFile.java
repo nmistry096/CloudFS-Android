@@ -1,12 +1,17 @@
 package com.bitcasa.cloudfs;
 
+import android.util.Log;
+
+import com.bitcasa.cloudfs.Utils.BitcasaProgressListener;
 import com.bitcasa.cloudfs.Utils.BitcasaRESTConstants;
 import com.bitcasa.cloudfs.exception.BitcasaException;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.MethodSorters;
 import org.robolectric.RobolectricTestRunner;
 
 import java.io.BufferedReader;
@@ -17,83 +22,90 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.assertTrue;
-
 
 @RunWith(RobolectricTestRunner.class)
-
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class TestFile extends BaseTest {
 
-    public File fileToBeDownloaded;
+    public File uploadedFile;
+    private final String uploadFileName = "Test.txt";
+    private Folder rootFolder;
+    private Folder sourceFolder;
+    private Item item;
 
     @Before
-    public void setUp() {
-        Item[] result = null;
-        try {
-            result = session.getRestAdapter().getList(null, 0, 1, null);
-            assertNotNull(result);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (BitcasaException e) {
-            e.printStackTrace();
-        }
+    public void setUp() throws BitcasaException, IOException {
+        this.item = BaseTest.getSDKTestFolder();
+        if(this.item.getType().equals(Item.FileType.FOLDER)){
+            this.rootFolder = BaseTest.getSDKTestFolder();
+            final BitcasaProgressListener listener = new BitcasaProgressListener() {
 
-        for (int i = 1; i < result.length; i++) {
-            if (result[i].getType().equals(Item.FileType.FILE)) {
-                fileToBeDownloaded = (File) result[i];
-                break;
-            }
+                @Override
+                public void onProgressUpdate(final String file, final int percentage,
+                                             final BitcasaProgressListener.ProgressAction action) {
+                    Log.d("test Upload", file + " percentage: " + percentage);
+
+                }
+
+                @Override
+                public void canceled(final String file, final BitcasaProgressListener.ProgressAction action) {
+
+                }
+
+            };
+            this.sourceFolder = this.rootFolder.createFolder("sourceFolder", BitcasaRESTConstants.Exists.OVERWRITE);
+            final java.io.File textFile = this.temporaryFolder.newFile(this.uploadFileName);
+            final BufferedWriter output = new BufferedWriter(new FileWriter(textFile));
+            final String text = "Test file CloudFS Android ADK.";
+            output.write(text);
+            output.close();
+            this.uploadedFile = this.sourceFolder.upload(textFile.getAbsolutePath(), listener, BitcasaRESTConstants.Exists.OVERWRITE);
         }
     }
 
     @Test
     public void testDownloadUrl(){
         try {
-           assertNotNull(fileToBeDownloaded.downloadUrl());
-        } catch (IOException e) {
-            assertTrue(false);
-        } catch (BitcasaException e) {
-            assertTrue(false);
+           Assert.assertNotNull(this.uploadedFile.downloadUrl());
+        } catch (final BitcasaException e) {
+            Assert.fail();
         }
     }
 
 
-    //@Test
+    @Test
     public void testGetExtension(){
-        fileToBeDownloaded.getExtension();
+        this.uploadedFile.getExtension();
     }
 
-    //@Test
-    public void testGetMime(){
-        fileToBeDownloaded.getMime();
-    }
+    @Test
+    public void testGetMime(){this.uploadedFile.getMime();}
 
-    //@Test
+    @Test
     public void testGetSize(){
-        fileToBeDownloaded.getSize();
+        this.uploadedFile.getSize();
     }
 
-   // @Test
+    @Test
     public void testRead() throws InterruptedException, BitcasaException, IOException {
-        fileToBeDownloaded.read();
+        this.uploadedFile.read();
     }
 
     @Test
     public void testDownload() throws BitcasaException, IOException {
-        String uploadFileName = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()) + ".txt";
-        Folder testFolder = this.getSDKTestFolder();
+        final String uploadFileName = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()) + ".txt";
+        final Folder testFolder = BaseTest.getSDKTestFolder();
         File file = null;
 
-        java.io.File textFile = temporaryFolder.newFile(uploadFileName);
-        BufferedWriter output = new BufferedWriter(new FileWriter(textFile));
+        final java.io.File textFile = this.temporaryFolder.newFile(uploadFileName);
+        final BufferedWriter output = new BufferedWriter(new FileWriter(textFile));
         output.write(uploadFileName);
         output.close();
         testFolder.upload(textFile.getAbsolutePath(), null, BitcasaRESTConstants.Exists.OVERWRITE);
 
         //Gets the uploaded file.
-        Item[] testFolderItems = testFolder.list();
-        for (Item item : testFolderItems) {
+        final Item[] testFolderItems = testFolder.list();
+        for (final Item item : testFolderItems) {
             if (item.getName().equalsIgnoreCase(uploadFileName)) {
                 file = (File)item;
                 break;
@@ -101,14 +113,14 @@ public class TestFile extends BaseTest {
         }
 
         textFile.delete();
-        String downloadFilePath = temporaryFolder.newFile(uploadFileName).getAbsolutePath();
+        final String downloadFilePath = this.temporaryFolder.newFile(uploadFileName).getAbsolutePath();
         if (textFile.delete()) {
             file.download(downloadFilePath, null);
         }
 
-        java.io.File downloadedFile = new java.io.File(downloadFilePath);
-        StringBuilder text = new StringBuilder();
-        BufferedReader reader = new BufferedReader(new FileReader(downloadedFile));
+        final java.io.File downloadedFile = new java.io.File(downloadFilePath);
+        final StringBuilder text = new StringBuilder();
+        final BufferedReader reader = new BufferedReader(new FileReader(downloadedFile));
         String line;
 
         while ((line = reader.readLine()) != null) {

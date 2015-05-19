@@ -2,6 +2,7 @@ package com.bitcasa.cloudfs;
 
 import com.bitcasa.cloudfs.exception.BitcasaException;
 
+import org.junit.Assert;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -9,10 +10,6 @@ import org.junit.runners.MethodSorters;
 import org.robolectric.RobolectricTestRunner;
 
 import java.io.IOException;
-
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.assertTrue;
 
 @RunWith(RobolectricTestRunner.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -25,14 +22,14 @@ public class TestSession extends BaseTest {
      */
     @Test
     public void test1Authenticate() {
-        mBitcasaSession = new Session(cloudfsEndpoint, clientId, clientSecret);
+        this.mBitcasaSession = new Session(BaseTest.cloudfsEndpoint, BaseTest.clientId, BaseTest.clientSecret);
         try {
-            mBitcasaSession.authenticate(username, password);
-        } catch (IOException e) {
-            assertTrue(false);
+            this.mBitcasaSession.authenticate(BaseTest.username, BaseTest.password);
+        } catch (final IOException e) {
+            Assert.fail();
             e.printStackTrace();
-        } catch (BitcasaException e) {
-            assertTrue(false);
+        } catch (final BitcasaException e) {
+            Assert.fail();
             e.printStackTrace();
         }
     }
@@ -42,17 +39,17 @@ public class TestSession extends BaseTest {
      */
     @Test
     public void test2IsLinked() {
-        mBitcasaSession = new Session(cloudfsEndpoint, clientId, clientSecret);
+        this.mBitcasaSession = new Session(BaseTest.cloudfsEndpoint, BaseTest.clientId, BaseTest.clientSecret);
         try {
-            mBitcasaSession.authenticate(username, password);
-        } catch (IOException e) {
-            assertTrue(false);
+            this.mBitcasaSession.authenticate(BaseTest.username, BaseTest.password);
+        } catch (final IOException e) {
+            Assert.fail();
             e.printStackTrace();
-        } catch (BitcasaException e) {
-            assertTrue(false);
+        } catch (final BitcasaException e) {
+            Assert.fail();
             e.printStackTrace();
         }
-        assertTrue(mBitcasaSession.isLinked());
+        junit.framework.Assert.assertTrue(this.mBitcasaSession.isLinked());
     }
 
     /**
@@ -60,18 +57,18 @@ public class TestSession extends BaseTest {
      */
     @Test
     public void test3Unlink() {
-        mBitcasaSession = new Session(cloudfsEndpoint, clientId, clientSecret);
+        this.mBitcasaSession = new Session(BaseTest.cloudfsEndpoint, BaseTest.clientId, BaseTest.clientSecret);
         try {
-            mBitcasaSession.authenticate(username, password);
-        } catch (IOException e) {
-            assertTrue(false);
+            this.mBitcasaSession.authenticate(BaseTest.username, BaseTest.password);
+        } catch (final IOException e) {
+            Assert.fail();
             e.printStackTrace();
-        } catch (BitcasaException e) {
-            assertTrue(false);
+        } catch (final BitcasaException e) {
+            Assert.fail();
             e.printStackTrace();
         }
-        mBitcasaSession.unlink();
-        assertTrue(!mBitcasaSession.isLinked());
+        this.mBitcasaSession.unlink();
+        Assert.assertTrue(!this.mBitcasaSession.isLinked());
     }
 
     /**
@@ -79,24 +76,21 @@ public class TestSession extends BaseTest {
      */
     @Test
     public void test4User() {
-        mBitcasaSession = new Session(cloudfsEndpoint, clientId, clientSecret);
+        this.mBitcasaSession = new Session(BaseTest.cloudfsEndpoint, BaseTest.clientId, BaseTest.clientSecret);
         try {
-            mBitcasaSession.authenticate(username, password);
-        } catch (IOException e) {
-            assertTrue(false);
+            this.mBitcasaSession.authenticate(BaseTest.username, BaseTest.password);
+        } catch (final IOException e) {
+            Assert.fail();
             e.printStackTrace();
-        } catch (BitcasaException e) {
-            assertTrue(false);
+        } catch (final BitcasaException e) {
+            Assert.fail();
             e.printStackTrace();
         }
 
         try {
-            assertNotNull(mBitcasaSession.user());
-        } catch (IOException e) {
-            assertTrue(false);
-            e.printStackTrace();
-        } catch (BitcasaException e) {
-            assertTrue(false);
+            junit.framework.Assert.assertNotNull(this.mBitcasaSession.user());
+        } catch (final BitcasaException e) {
+            Assert.fail();
             e.printStackTrace();
         }
     }
@@ -106,23 +100,20 @@ public class TestSession extends BaseTest {
      */
     @Test
     public void test5Account() {
-        mBitcasaSession = new Session(cloudfsEndpoint, clientId, clientSecret);
+        this.mBitcasaSession = new Session(BaseTest.cloudfsEndpoint, BaseTest.clientId, BaseTest.clientSecret);
         try {
-            mBitcasaSession.authenticate(username, password);
-        } catch (IOException e) {
-            assertTrue(false);
+            this.mBitcasaSession.authenticate(BaseTest.username, BaseTest.password);
+        } catch (final IOException e) {
+            Assert.fail();
             e.printStackTrace();
-        } catch (BitcasaException e) {
-            assertTrue(false);
+        } catch (final BitcasaException e) {
+            Assert.fail();
             e.printStackTrace();
         }
         try {
-            assertNotNull(mBitcasaSession.account());
-        } catch (IOException e) {
-            assertTrue(false);
-            e.printStackTrace();
-        } catch (BitcasaException e) {
-            assertTrue(false);
+            Assert.assertNotNull(this.mBitcasaSession.account());
+        } catch (final BitcasaException e) {
+            Assert.fail();
             e.printStackTrace();
         }
     }
@@ -132,17 +123,17 @@ public class TestSession extends BaseTest {
      */
     @Test
     public void test6FileSystem() {
-        mBitcasaSession = new Session(cloudfsEndpoint, clientId, clientSecret);
+        this.mBitcasaSession = new Session(BaseTest.cloudfsEndpoint, BaseTest.clientId, BaseTest.clientSecret);
         try {
-            mBitcasaSession.authenticate(username, password);
-        } catch (IOException e) {
-            assertTrue(false);
+            this.mBitcasaSession.authenticate(BaseTest.username, BaseTest.password);
+        } catch (final IOException e) {
+            Assert.fail();
             e.printStackTrace();
-        } catch (BitcasaException e) {
-            assertTrue(false);
+        } catch (final BitcasaException e) {
+            Assert.fail();
             e.printStackTrace();
         }
-        assertNotNull(mBitcasaSession.filesystem());
+        Assert.assertNotNull(this.mBitcasaSession.filesystem());
     }
 
     /**
@@ -150,24 +141,24 @@ public class TestSession extends BaseTest {
      */
     @Test
     public void test7ActionHistory() {
-        mBitcasaSession = new Session(cloudfsEndpoint, clientId, clientSecret);
+        this.mBitcasaSession = new Session(BaseTest.cloudfsEndpoint, BaseTest.clientId, BaseTest.clientSecret);
         try {
-            mBitcasaSession.authenticate(username, password);
-        } catch (IOException e) {
-            assertTrue(false);
+            this.mBitcasaSession.authenticate(BaseTest.username, BaseTest.password);
+        } catch (final IOException e) {
+            Assert.fail();
             e.printStackTrace();
-        } catch (BitcasaException e) {
-            assertTrue(false);
+        } catch (final BitcasaException e) {
+            Assert.fail();
             e.printStackTrace();
         }
         try {
-            ActionHistory actionHistory = mBitcasaSession.actionHistory(-10, 10);
-            assertNotNull(actionHistory);
-        } catch (IOException e) {
-            assertTrue(false);
+            final ActionHistory actionHistory = this.mBitcasaSession.actionHistory(9, 10);
+            Assert.assertNotNull(actionHistory);
+        } catch (final IOException e) {
+            Assert.fail();
             e.printStackTrace();
-        } catch (BitcasaException e) {
-            assertTrue(false);
+        } catch (final BitcasaException e) {
+            Assert.fail();
             e.printStackTrace();
         }
     }
@@ -177,28 +168,28 @@ public class TestSession extends BaseTest {
      */
     @Test
     public void test8UserCreate() {
-        mBitcasaSession = new Session(cloudfsEndpoint, clientId, clientSecret);
+        this.mBitcasaSession = new Session(BaseTest.cloudfsEndpoint, BaseTest.clientId, BaseTest.clientSecret);
         try {
-            mBitcasaSession.authenticate(username, password);
-        } catch (IOException e) {
-            assertTrue(false);
+            this.mBitcasaSession.authenticate(BaseTest.username, BaseTest.password);
+        } catch (final IOException e) {
+            Assert.fail();
             e.printStackTrace();
-        } catch (BitcasaException e) {
-            assertTrue(false);
+        } catch (final BitcasaException e) {
+            Assert.fail();
             e.printStackTrace();
         }
-        mBitcasaSession.setAdminCredentials(adminId, adminSecret);
-        String email = String.valueOf(System.currentTimeMillis()) + "@unique.com";
+        this.mBitcasaSession.setAdminCredentials(BaseTest.adminId, BaseTest.adminSecret);
+        final String email = System.currentTimeMillis() + "@unique.com";
 
         User user = null;
         try {
-            user = mBitcasaSession.createAccount(email, "123456", email, "First", "Last", false);
-        } catch (IOException e) {
+            user = this.mBitcasaSession.createAccount(email, "123456", email, "First", "Last", false);
+        } catch (final IOException e) {
             e.printStackTrace();
-        } catch (BitcasaException e) {
+        } catch (final BitcasaException e) {
             e.printStackTrace();
         }
-        assertNotNull(user);
-        assertEquals(user.getUsername(), email);
+        Assert.assertNotNull(user);
+        junit.framework.Assert.assertEquals(user.getUsername(), email);
     }
 }

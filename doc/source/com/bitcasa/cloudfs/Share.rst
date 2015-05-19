@@ -1,20 +1,28 @@
+.. java:import:: android.os Parcel
+
+.. java:import:: android.os Parcelable
+
 .. java:import:: com.bitcasa.cloudfs Utils.BitcasaRESTConstants
 
 .. java:import:: com.bitcasa.cloudfs.api RESTAdapter
 
 .. java:import:: com.bitcasa.cloudfs.exception BitcasaException
 
-.. java:import:: com.bitcasa.cloudfs.model ApplicationData
-
 .. java:import:: com.bitcasa.cloudfs.model ItemMeta
 
 .. java:import:: com.bitcasa.cloudfs.model ShareItem
 
+.. java:import:: com.google.gson JsonObject
+
 .. java:import:: java.io IOException
+
+.. java:import:: java.util AbstractMap
 
 .. java:import:: java.util Date
 
 .. java:import:: java.util HashMap
+
+.. java:import:: java.util Map
 
 Share
 =====
@@ -22,9 +30,17 @@ Share
 .. java:package:: com.bitcasa.cloudfs
    :noindex:
 
-.. java:type:: public class Share
+.. java:type:: public class Share implements Parcelable
 
    The Share class provides accessibility to CloudFS Share.
+
+Fields
+------
+CREATOR
+^^^^^^^
+
+.. java:field:: public static final Parcelable.Creator<Share> CREATOR
+   :outertype: Share
 
 Constructors
 ------------
@@ -40,12 +56,24 @@ Share
    :param shareItem: Information of the shared item.
    :param meta: The share meta data returned from REST Adapter.
 
+Share
+^^^^^
+
+.. java:constructor:: public Share()
+   :outertype: Share
+
+Share
+^^^^^
+
+.. java:constructor:: public Share(Parcel source)
+   :outertype: Share
+
 Methods
 -------
 changeAttributes
 ^^^^^^^^^^^^^^^^
 
-.. java:method:: public boolean changeAttributes(HashMap<String, String> values, String sharePassword) throws IOException, BitcasaException
+.. java:method:: public boolean changeAttributes(Map<String, String> values, String sharePassword) throws IOException, BitcasaException
    :outertype: Share
 
    Changes the share attributes according to the values provided.
@@ -67,10 +95,20 @@ delete
    :throws BitcasaException: If a CloudFS API error occurs.
    :return: The value indicating whether the operation was successful or not.
 
+describeContents
+^^^^^^^^^^^^^^^^
+
+.. java:method:: @Override public int describeContents()
+   :outertype: Share
+
+   Describe the kinds of special objects contained in this Parcelable's marshalled representation
+
+   :return: a bitmask indicating the set of special object types marshalled by the Parcelable Restricted constructor.
+
 getApplicationData
 ^^^^^^^^^^^^^^^^^^
 
-.. java:method:: public ApplicationData getApplicationData()
+.. java:method:: public JsonObject getApplicationData()
    :outertype: Share
 
    Gets the share's application data.
@@ -210,4 +248,15 @@ toString
    Creates a string containing a concise, human-readable description of Share object.
 
    :return: The printable representation of Share object.
+
+writeToParcel
+^^^^^^^^^^^^^
+
+.. java:method:: @Override public void writeToParcel(Parcel out, int flags)
+   :outertype: Share
+
+   Flatten this object in to a Parcel.
+
+   :param out: The Parcel in which the object should be written.
+   :param flags: Additional flags about how the object should be written. May be 0 or PARCELABLE_WRITE_RETURN_VALUE
 

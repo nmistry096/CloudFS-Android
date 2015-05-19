@@ -94,6 +94,12 @@ BODY_TO
 .. java:field:: public static final String BODY_TO
    :outertype: BitcasaRESTConstants
 
+CONNECTION_TIME_OUT
+^^^^^^^^^^^^^^^^^^^
+
+.. java:field:: public static final int CONNECTION_TIME_OUT
+   :outertype: BitcasaRESTConstants
+
 DATE_FORMAT
 ^^^^^^^^^^^
 
@@ -226,6 +232,30 @@ HTTPS
 ^^^^^
 
 .. java:field:: public static final String HTTPS
+   :outertype: BitcasaRESTConstants
+
+ITEM_STATE_DEAD
+^^^^^^^^^^^^^^^
+
+.. java:field:: public static final String ITEM_STATE_DEAD
+   :outertype: BitcasaRESTConstants
+
+ITEM_STATE_NORMAL
+^^^^^^^^^^^^^^^^^
+
+.. java:field:: public static final String ITEM_STATE_NORMAL
+   :outertype: BitcasaRESTConstants
+
+ITEM_STATE_SHARE
+^^^^^^^^^^^^^^^^
+
+.. java:field:: public static final String ITEM_STATE_SHARE
+   :outertype: BitcasaRESTConstants
+
+ITEM_STATE_TRASH
+^^^^^^^^^^^^^^^^
+
+.. java:field:: public static final String ITEM_STATE_TRASH
    :outertype: BitcasaRESTConstants
 
 LIMIT

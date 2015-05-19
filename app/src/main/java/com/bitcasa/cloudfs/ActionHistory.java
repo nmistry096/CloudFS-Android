@@ -1,20 +1,20 @@
 /**
  * Bitcasa Client Android SDK
  * Copyright (C) 2015 Bitcasa, Inc.
- * 215 Castro Street, 2nd Floor
- * Mountain View, CA 94041
+ * 1200 Park Place,
+ * Suite 350 San Mateo, CA 94403.
  *
  * This file contains an SDK in Java for accessing the Bitcasa infinite drive in Android platform.
  *
- * For support, please send email to support@bitcasa.com.
+ * For support, please send email to sdks@bitcasa.com.
  */
 
 package com.bitcasa.cloudfs;
 
 import com.bitcasa.cloudfs.model.BaseAction;
 
+import java.util.AbstractMap;
 import java.util.HashMap;
-import java.util.List;
 
 /**
  * The ActionHistory class provides accessibility to CloudFS ActionHistory.
@@ -24,17 +24,17 @@ public class ActionHistory {
     /**
      * The actions list.
      */
-    private HashMap<String, BaseAction> actions;
+    private final AbstractMap<String, BaseAction> actions;
 
     /**
      * Initializes a new instance of ActionHistory.
      *
      * @param actionList List of actions to be added to this instance.
      */
-    public ActionHistory(final List<BaseAction> actionList) {
-        actions = new HashMap<String, BaseAction>();
-        for (BaseAction action : actionList) {
-            addAction(action);
+    public ActionHistory(final Iterable<BaseAction> actionList) {
+        this.actions = new HashMap<String, BaseAction>();
+        for (final BaseAction action : actionList) {
+            this.addAction(action);
         }
     }
 
@@ -42,7 +42,7 @@ public class ActionHistory {
      * Initializes an empty instance of the ActionHistory class.
      */
     public ActionHistory() {
-        actions = new HashMap<String, BaseAction>();
+        this.actions = new HashMap<String, BaseAction>();
     }
 
     /**
@@ -53,7 +53,7 @@ public class ActionHistory {
      * @return The key of the action history.
      */
     public final String getKey(final HistoryActions action, final int version) {
-        return action.name() + "-" + version;
+        return action.name() + '-' + version;
     }
 
     /**
@@ -62,7 +62,7 @@ public class ActionHistory {
      * @param action The action to be added.
      */
     public final void addAction(final BaseAction action) {
-        actions.put(getKey(action.getAction(), action.getVersion()), action);
+        this.actions.put(this.getKey(action.getAction(), action.getVersion()), action);
     }
 
     /**
@@ -71,14 +71,14 @@ public class ActionHistory {
      * @param key The action key to be removed.
      */
     public final void removeAction(final String key) {
-        actions.remove(key);
+        this.actions.remove(key);
     }
 
     /**
      * Removes all the actions from action history.
      */
     public final void removeAll() {
-        actions.clear();
+        this.actions.clear();
     }
 
     /**
@@ -87,6 +87,6 @@ public class ActionHistory {
      * @return The action history size.
      */
     public final int getSize() {
-        return actions.size();
+        return this.actions.size();
     }
 }

@@ -1,6 +1,18 @@
+/**
+ * Bitcasa Client Android SDK
+ * Copyright (C) 2015 Bitcasa, Inc.
+ * 1200 Park Place,
+ * Suite 350 San Mateo, CA 94403.
+ *
+ * This file contains an SDK in Java for accessing the Bitcasa infinite drive in Android platform.
+ *
+ * For support, please send email to sdks@bitcasa.com.
+ */
 package com.bitcasa.cloudfs.api;
 
 import android.net.Uri;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.util.Log;
 
 import com.bitcasa.cloudfs.Account;
@@ -13,12 +25,9 @@ import com.bitcasa.cloudfs.Share;
 import com.bitcasa.cloudfs.User;
 import com.bitcasa.cloudfs.Utils.BitcasaProgressListener;
 import com.bitcasa.cloudfs.Utils.BitcasaRESTConstants;
-import com.bitcasa.cloudfs.Utils.BitcasaRESTConstants.Exists;
-import com.bitcasa.cloudfs.Utils.BitcasaRESTConstants.VersionExists;
 import com.bitcasa.cloudfs.exception.BitcasaAuthenticationException;
 import com.bitcasa.cloudfs.exception.BitcasaClientException;
 import com.bitcasa.cloudfs.exception.BitcasaException;
-import com.bitcasa.cloudfs.exception.BitcasaFileException;
 import com.bitcasa.cloudfs.model.AccessToken;
 import com.bitcasa.cloudfs.model.ActionData;
 import com.bitcasa.cloudfs.model.ActionDataAlter;
@@ -33,10 +42,12 @@ import com.bitcasa.cloudfs.model.UserProfile;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -45,6 +56,7 @@ import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.ProtocolException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.security.InvalidKeyException;
@@ -65,7 +77,7 @@ import javax.net.ssl.HttpsURLConnection;
 /**
  * Entry point to all CloudFS API requests.
  */
-public class RESTAdapter {
+public class RESTAdapter implements Parcelable,Cloneable{
 
     private static final String TAG = RESTAdapter.class.getSimpleName();
     private static final String MISSING_PARAM = "Missing required parameter : ";
@@ -74,13 +86,88 @@ public class RESTAdapter {
     private final Credential credential;
 
     /**
+     * The file download buffer data array size.
+     */
+    private static final int BUFFERED_INPUTSTREAM_DATA_ARRAY_SIZE = 1024;
+
+    /**
+     * The bitcasa authentication error message code
+     */
+    private static final int BITCASA_AUTHENTICATION_ERROR_CODE = 1020;
+
+    /**
      * Constructor, takes in a credential instance and initialises the RESTAdapter instance.
      *
      * @param credential Application Credentials.
      */
-    public RESTAdapter(Credential credential) {
-        bitcasaRESTUtility = new BitcasaRESTUtility();
+    public RESTAdapter(final Credential credential) {
+        this.bitcasaRESTUtility = new BitcasaRESTUtility();
         this.credential = credential;
+    }
+
+    /**
+     * Initializes the credential instance using a Parcel.
+     *
+     * @param in The parcel object.
+     */
+    public RESTAdapter(Parcel in) {
+        credential = (Credential) in.readValue(Credential.class.getClassLoader());
+        bitcasaRESTUtility = new BitcasaRESTUtility();
+    }
+
+    /**
+     * Describe the kinds of special objects contained in this Parcelable's marshalled representation
+     *
+     * @return a bitmask indicating the set of special object types marshalled by the Parcelable
+     */
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    /**
+     * Flatten this object in to a Parcel.
+     *
+     * @param out   The Parcel in which the object should be written.
+     * @param flags Additional flags about how the object should be written. May be 0 or PARCELABLE_WRITE_RETURN_VALUE
+     */
+    @Override
+    public void writeToParcel(Parcel out, int flags) {
+        out.writeValue(credential);
+    }
+
+    public static final Parcelable.Creator<RESTAdapter> CREATOR = new Parcelable.Creator<RESTAdapter>() {
+
+        /**
+         *Create a new instance of the Parcelable class, instantiating it from the given Parcel whose data had previously been written by Parcelable.writeToParcel()
+         * @param source The Parcel to read the object's data from.
+         * @return Returns a new instance of the Parcelable class.
+         */
+        @Override
+        public RESTAdapter createFromParcel(Parcel source) {
+            return new RESTAdapter(source);
+        }
+
+        /**
+         *Create a new array of the Parcelable class
+         * @param size Size of the array
+         * @return Returns an array of the Parcelable class, with every entry initialized to null
+         */
+        @Override
+        public RESTAdapter[] newArray(int size) {
+            return new RESTAdapter[size];
+        }
+    };
+
+    /**
+     * Returns a clone of the RESTAdapter.
+     *
+     * @return A clone of RESTAdapter.
+     */
+    public RESTAdapter clone()
+    {
+        RESTAdapter restAdapter = new RESTAdapter(this.credential);
+        return  restAdapter;
     }
 
     /**
@@ -89,8 +176,8 @@ public class RESTAdapter {
      * @param parameter The parameter to validate.
      * @return The validate result, if the string is null or empty, return true and if not false.
      */
-    private static boolean stringParameterNotValid(String parameter) {
-        return (parameter == null || parameter.isEmpty());
+    private static boolean stringParameterNotValid(final String parameter) {
+        return (parameter == null) || parameter.isEmpty();
     }
 
     /**
@@ -99,7 +186,7 @@ public class RESTAdapter {
      * @param parameter The parameter to validate.
      * @return The validate result, if the object is null return true and if not false.
      */
-    private static boolean objectParameterNotValid(Object parameter) {
+    private static boolean objectParameterNotValid(final Object parameter) {
         return parameter == null;
     }
 
@@ -113,14 +200,14 @@ public class RESTAdapter {
      * @throws BitcasaException         If a CloudFS API error occurs.
      * @throws IllegalArgumentException If the parameters are invalid or misused.
      */
-    public void authenticate(Session session, String username, String password)
+    public void authenticate(final Session session, final String username, final String password)
             throws IOException, BitcasaException, IllegalArgumentException {
-        if (stringParameterNotValid(username)) {
-            throw new IllegalArgumentException(MISSING_PARAM + "username");
+        if (RESTAdapter.stringParameterNotValid(username)) {
+            throw new IllegalArgumentException(RESTAdapter.MISSING_PARAM + "username");
         }
 
-        if (stringParameterNotValid(password)) {
-            throw new IllegalArgumentException(MISSING_PARAM + "password");
+        if (RESTAdapter.stringParameterNotValid(password)) {
+            throw new IllegalArgumentException(RESTAdapter.MISSING_PARAM + "password");
         }
 
         HttpsURLConnection connection = null;
@@ -128,38 +215,38 @@ public class RESTAdapter {
         InputStream inputStream = null;
 
         try {
-            SimpleDateFormat dateFormat = new SimpleDateFormat(BitcasaRESTConstants.DATE_FORMAT,
+            final SimpleDateFormat dateFormat = new SimpleDateFormat(BitcasaRESTConstants.DATE_FORMAT,
                     Locale.US);
             dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
             String date = dateFormat.format(Calendar.getInstance(Locale.US).getTime());
-            int index = date.lastIndexOf("+");
+            int index = date.lastIndexOf('+');
             if (index == -1) {
                 index = date.length();
             }
             date = date.substring(0, index);
 
-            TreeMap<String, String> bodyParams = new TreeMap<String, String>();
+            final Map<String, String> bodyParams = new TreeMap<String, String>();
             bodyParams.put(BitcasaRESTConstants.PARAM_GRANT_TYPE,
                     Uri.encode(BitcasaRESTConstants.PARAM_PASSWORD, " "));
             bodyParams.put(BitcasaRESTConstants.PARAM_USERNAME, Uri.encode(username, " "));
             bodyParams.put(BitcasaRESTConstants.PARAM_PASSWORD, Uri.encode(password, " "));
 
-            String parameters = bitcasaRESTUtility.generateParamsString(bodyParams);
-            String url = bitcasaRESTUtility.getRequestUrl(credential,
+            final String parameters = this.bitcasaRESTUtility.generateParamsString(bodyParams);
+            final String url = this.bitcasaRESTUtility.getRequestUrl(this.credential,
                     BitcasaRESTConstants.METHOD_OAUTH2, BitcasaRESTConstants.METHOD_TOKEN, null);
             //generate authorization value
-            String uri = BitcasaRESTConstants.API_VERSION_2 + BitcasaRESTConstants.METHOD_OAUTH2 +
+            final String uri = BitcasaRESTConstants.API_VERSION_2 + BitcasaRESTConstants.METHOD_OAUTH2 +
                     BitcasaRESTConstants.METHOD_TOKEN;
-            String authorizationValue = bitcasaRESTUtility.generateAuthorizationValue(session, uri,
+            final String authorizationValue = this.bitcasaRESTUtility.generateAuthorizationValue(session, uri,
                     parameters, date);
 
-            Log.d(TAG, "getAccessToken URL: " + url);
+            Log.d(RESTAdapter.TAG, "getAccessToken URL: " + url);
             connection = (HttpsURLConnection) new URL(url).openConnection();
             connection.setRequestMethod(BitcasaRESTConstants.REQUEST_METHOD_POST);
             connection.setDoOutput(true);
             connection.setDoInput(true);
-            connection.setReadTimeout(300000);
-            connection.setConnectTimeout(300000);
+            connection.setReadTimeout(BitcasaRESTConstants.CONNECTION_TIME_OUT);
+            connection.setConnectTimeout(BitcasaRESTConstants.CONNECTION_TIME_OUT);
             connection.setUseCaches(false);
             connection.setRequestProperty(BitcasaRESTConstants.HEADER_CONTENT_TYPE,
                     BitcasaRESTConstants.FORM_URLENCODED);
@@ -169,7 +256,7 @@ public class RESTAdapter {
 
             if (parameters != null) {
                 outputStream = connection.getOutputStream();
-                Log.d(TAG, "POST string: " + parameters);
+                Log.d(RESTAdapter.TAG, "POST string: " + parameters);
                 outputStream.write(parameters.getBytes());
             }
 
@@ -178,21 +265,21 @@ public class RESTAdapter {
 
             if (responseCode == HttpsURLConnection.HTTP_OK) {
                 inputStream = connection.getInputStream();
-            } else if (responseCode == HttpsURLConnection.HTTP_NOT_FOUND || responseCode ==
-                    HttpsURLConnection.HTTP_BAD_REQUEST) {
+            } else if ((responseCode == HttpsURLConnection.HTTP_NOT_FOUND) || (responseCode ==
+                    HttpsURLConnection.HTTP_BAD_REQUEST)) {
                 inputStream = connection.getErrorStream();
             }
 
             AccessToken accessToken = new AccessToken();
             if (inputStream != null) {
-                String response = bitcasaRESTUtility.getResponseFromInputStream(inputStream);
+                final String response = this.bitcasaRESTUtility.getResponseFromInputStream(inputStream);
                 accessToken = new Gson().fromJson(response, AccessToken.class);
             }
             if (responseCode == HttpsURLConnection.HTTP_OK) {
-                if (credential != null) {
+                if (this.credential != null) {
                     this.credential.setAccessToken(accessToken.getAccessToken());
                 }
-                if (credential != null) {
+                if (this.credential != null) {
                     this.credential.setTokenType(accessToken.getTokenType());
                 }
             } else {
@@ -200,9 +287,9 @@ public class RESTAdapter {
             }
 
 
-        } catch (InvalidKeyException e) {
+        } catch (final InvalidKeyException e) {
             throw new BitcasaException(e);
-        } catch (NoSuchAlgorithmException e) {
+        } catch (final NoSuchAlgorithmException e) {
             throw new BitcasaException(e);
         } finally {
             if (outputStream != null) {
@@ -223,42 +310,51 @@ public class RESTAdapter {
      * Requests to retrieve account information from the CloudFS server.
      *
      * @return Bitcasa Account object.
-     * @throws IOException      If a network error occurs.
      * @throws BitcasaException If a CloudFS API error occurs.
      */
-    public Account requestAccountInfo() throws IOException, BitcasaException {
-        Account account = null;
-        String url = bitcasaRESTUtility.getRequestUrl(credential, BitcasaRESTConstants.METHOD_USER,
+    public Account requestAccountInfo() throws BitcasaException {
+        final String url = this.bitcasaRESTUtility.getRequestUrl(this.credential, BitcasaRESTConstants.METHOD_USER,
                 BitcasaRESTConstants.METHOD_PROFILE, null);
 
-        Log.d(TAG, "getProfile URL: " + url);
+        Log.d(RESTAdapter.TAG, "getProfile URL: " + url);
         HttpsURLConnection connection = null;
 
+        Account account = null;
         try {
             connection = (HttpsURLConnection) new URL(url)
                     .openConnection();
             connection.setDoInput(true);
             connection.setRequestMethod(BitcasaRESTConstants.REQUEST_METHOD_GET);
-            bitcasaRESTUtility.setRequestHeaders(credential, connection, null);
+            this.bitcasaRESTUtility.setRequestHeaders(this.credential, connection, null);
 
-            BitcasaError error = bitcasaRESTUtility.checkRequestResponse(connection);
+            final BitcasaError error = this.bitcasaRESTUtility.checkRequestResponse(connection);
 
             if (error == null) {
 
-                String response = bitcasaRESTUtility.getResponseFromInputStream(connection.getInputStream());
-                BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
+                final String response = this.bitcasaRESTUtility.getResponseFromInputStream(connection.getInputStream());
+                long limit = Long.valueOf(connection.getHeaderField("X-BCS-Account-Storage-Limit")).longValue();
+                long usage = Long.valueOf(connection.getHeaderField("X-BCS-Account-Storage-Usage")).longValue();
+
+                final BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
 
                 if (!bitcasaResponse.getResult().isJsonNull()) {
-                    UserProfile userProfile = new Gson().fromJson(bitcasaResponse.getResult(),
+                    final UserProfile userProfile = new Gson().fromJson(bitcasaResponse.getResult(),
                             UserProfile.class);
-                    account = new Account(this, userProfile);
+                    account = new Account(this.clone(), userProfile);
+                    account.setStorageLimit(limit);
+                    account.setStorageUsage(usage);
+
                 } else {
                     throw new BitcasaException(bitcasaResponse.getError().getCode(),
                             bitcasaResponse.getError().getMessage());
                 }
             }
 
-        } catch (IOException ioe) {
+        } catch (final ProtocolException e) {
+            throw new BitcasaException(e);
+        } catch (final MalformedURLException e) {
+            throw new BitcasaException(e);
+        } catch (final IOException ioe) {
             throw new BitcasaException(ioe);
         } finally {
             if (connection != null) {
@@ -272,42 +368,49 @@ public class RESTAdapter {
      * Requests to retrieve user information from the CloudFS server.
      *
      * @return Bitcasa User object.
-     * @throws IOException      If a network error occurs.
      * @throws BitcasaException If a CloudFS API error occurs.
      */
-    public User requestUserInfo() throws IOException, BitcasaException {
-        User user = null;
-        String url = bitcasaRESTUtility.getRequestUrl(credential, BitcasaRESTConstants.METHOD_USER,
+    public User requestUserInfo() throws BitcasaException {
+        final String url = this.bitcasaRESTUtility.getRequestUrl(this.credential, BitcasaRESTConstants.METHOD_USER,
                 BitcasaRESTConstants.METHOD_PROFILE, null);
 
-        Log.d(TAG, "getProfile URL: " + url);
+        Log.d(RESTAdapter.TAG, "getProfile URL: " + url);
         HttpsURLConnection connection = null;
 
+        User user = null;
         try {
             connection = (HttpsURLConnection) new URL(url).openConnection();
             connection.setDoInput(true);
             connection.setRequestMethod(BitcasaRESTConstants.REQUEST_METHOD_GET);
-            bitcasaRESTUtility.setRequestHeaders(credential, connection, null);
+            this.bitcasaRESTUtility.setRequestHeaders(this.credential, connection, null);
 
-            BitcasaError error = bitcasaRESTUtility.checkRequestResponse(connection);
+            final BitcasaError error = this.bitcasaRESTUtility.checkRequestResponse(connection);
             if (error == null) {
 
-                String response = bitcasaRESTUtility.getResponseFromInputStream(connection.getInputStream());
-                BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
+                final String response = this.bitcasaRESTUtility.getResponseFromInputStream(connection.getInputStream());
+                final BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
 
                 if (!bitcasaResponse.getResult().isJsonNull()) {
-                    UserProfile userProfile = new Gson().fromJson(bitcasaResponse.getResult(),
+                    final UserProfile userProfile = new Gson().fromJson(bitcasaResponse.getResult(),
                             UserProfile.class);
-                    user = new User(this, userProfile);
+                    user = new User(this.clone(), userProfile);
                 } else {
                     throw new BitcasaException(bitcasaResponse.getError().getCode(),
                             bitcasaResponse.getError().getMessage());
                 }
             }
 
-        } catch (IOException ioe) {
+        } catch (final MalformedURLException e) {
+            throw new BitcasaException(e);
+        } catch (final ProtocolException e) {
+            throw new BitcasaException(e);
+        } catch (final IOException ioe) {
             throw new BitcasaException(ioe);
-        } catch (Exception e) {
+        } catch (final BitcasaException e) {
+            throw new BitcasaException(e);
+        } catch (final JsonSyntaxException e) {
+            throw new BitcasaException(e);
+        } catch (final RuntimeException e) {
             throw new BitcasaException(e);
         } finally {
             if (connection != null) {
@@ -332,51 +435,49 @@ public class RESTAdapter {
      * @throws IllegalArgumentException If the parameters are invalid or misused.
      * @throws BitcasaException         If a CloudFS API error occurs.
      */
-    public User createAccount(Session session, String username, String password, String email,
-                              String firstName, String lastName) throws IOException,
+    public User createAccount(final Session session, final String username, final String password, final String email,
+                              final String firstName, final String lastName) throws IOException,
             IllegalArgumentException, BitcasaException {
-        if (stringParameterNotValid(username)) {
-            throw new IllegalArgumentException(MISSING_PARAM + "username");
+        if (RESTAdapter.stringParameterNotValid(username)) {
+            throw new IllegalArgumentException(RESTAdapter.MISSING_PARAM + "username");
         }
-        if (stringParameterNotValid(password)) {
-            throw new IllegalArgumentException(MISSING_PARAM + "password");
+        if (RESTAdapter.stringParameterNotValid(password)) {
+            throw new IllegalArgumentException(RESTAdapter.MISSING_PARAM + "password");
         }
 
-        User user = null;
-
-        String endpoint = BitcasaRESTConstants.METHOD_ADMIN + BitcasaRESTConstants.METHOD_CLOUDFS +
-                BitcasaRESTConstants.METHOD_CUSTOMERS;
-
-        TreeMap<String, String> parameters = new TreeMap<String, String>();
-        TreeMap<String, String> queryParams = new TreeMap<String, String>();
+        final Map<String, String> parameters = new TreeMap<String, String>();
+        final Map<String, String> queryParams = new TreeMap<String, String>();
 
         parameters.put(BitcasaRESTConstants.PARAM_USERNAME, Uri.encode(username, " "));
         parameters.put(BitcasaRESTConstants.PARAM_PASSWORD, Uri.encode(password, " "));
 
-        if (email != null && !email.isEmpty()) {
+        if ((email != null) && !email.isEmpty()) {
             parameters.put(BitcasaRESTConstants.PARAM_EMAIL, Uri.encode(email));
         }
-        if (firstName != null && !firstName.isEmpty()) {
+        if ((firstName != null) && !firstName.isEmpty()) {
             parameters.put(BitcasaRESTConstants.PARAM_FIRSTNAME, Uri.encode(firstName, " "));
         }
-        if (lastName != null && !lastName.isEmpty()) {
+        if ((lastName != null) && !lastName.isEmpty()) {
             parameters.put(BitcasaRESTConstants.PARAM_LASTNAME, Uri.encode(lastName, " "));
         }
 
-        String body = bitcasaRESTUtility.generateParamsString(parameters);
+        final String body = this.bitcasaRESTUtility.generateParamsString(parameters);
 
-        String url = bitcasaRESTUtility.getRequestUrl(credential, endpoint, null, queryParams);
-        Log.d(TAG, "createAccount: " + url + " body: " + body);
+        final String endpoint = BitcasaRESTConstants.METHOD_ADMIN + BitcasaRESTConstants.METHOD_CLOUDFS +
+                BitcasaRESTConstants.METHOD_CUSTOMERS;
+        final String url = this.bitcasaRESTUtility.getRequestUrl(this.credential, endpoint, null, queryParams);
+        Log.d(RESTAdapter.TAG, "createAccount: " + url + " body: " + body);
         HttpsURLConnection connection = null;
         OutputStream outputStream = null;
         InputStream inputStream = null;
 
+        User user = null;
         try {
-            SimpleDateFormat sdf = new SimpleDateFormat(BitcasaRESTConstants.DATE_FORMAT,
+            final SimpleDateFormat sdf = new SimpleDateFormat(BitcasaRESTConstants.DATE_FORMAT,
                     Locale.US);
             sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
             String date = sdf.format(Calendar.getInstance(Locale.US).getTime());
-            int index = date.lastIndexOf("+");
+            int index = date.lastIndexOf('+');
             if (index == -1) {
                 index = date.length();
             }
@@ -386,10 +487,10 @@ public class RESTAdapter {
             connection.setRequestMethod(BitcasaRESTConstants.REQUEST_METHOD_POST);
 
 
-            String uri = BitcasaRESTConstants.API_VERSION_2 + BitcasaRESTConstants.METHOD_ADMIN
+            final String uri = BitcasaRESTConstants.API_VERSION_2 + BitcasaRESTConstants.METHOD_ADMIN
                     + BitcasaRESTConstants.METHOD_CLOUDFS + BitcasaRESTConstants.METHOD_CUSTOMERS;
 
-            String authorizationValue = bitcasaRESTUtility.generateAdminAuthorizationValue(session,
+            final String authorizationValue = this.bitcasaRESTUtility.generateAdminAuthorizationValue(session,
                     uri, body, date);
             connection.setRequestProperty(BitcasaRESTConstants.HEADER_AUTORIZATION,
                     authorizationValue);
@@ -403,29 +504,33 @@ public class RESTAdapter {
                 outputStream.write(body.getBytes());
             }
 
-            BitcasaError error = bitcasaRESTUtility.checkRequestResponse(connection);
+            final BitcasaError error = this.bitcasaRESTUtility.checkRequestResponse(connection);
             if (error == null) {
                 inputStream = connection.getInputStream();
-                String response = bitcasaRESTUtility.getResponseFromInputStream(inputStream);
-                BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
+                final String response = this.bitcasaRESTUtility.getResponseFromInputStream(inputStream);
+                final BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
 
                 if (!bitcasaResponse.getResult().isJsonNull()) {
-                    UserProfile userProfile = new Gson().fromJson(bitcasaResponse.getResult(),
+                    final UserProfile userProfile = new Gson().fromJson(bitcasaResponse.getResult(),
                             UserProfile.class);
-                    user = new User(this, userProfile);
+                    user = new User(this.clone(), userProfile);
                 } else {
                     throw new BitcasaException(bitcasaResponse.getError().getCode(),
                             bitcasaResponse.getError().getMessage());
                 }
             }
 
-        } catch (MalformedURLException e) {
+        } catch (final MalformedURLException e) {
             throw new BitcasaException(e);
-        } catch (IOException ioe) {
+        } catch (final ProtocolException e) {
+            throw new BitcasaException(e);
+        } catch (final UnsupportedEncodingException e) {
+            throw new BitcasaException(e);
+        } catch (final IOException ioe) {
             throw new BitcasaException(ioe);
-        } catch (NoSuchAlgorithmException e) {
+        } catch (final NoSuchAlgorithmException e) {
             throw new BitcasaException(e);
-        } catch (InvalidKeyException e) {
+        } catch (final InvalidKeyException e) {
             throw new BitcasaException(e);
         } finally {
             if (outputStream != null) {
@@ -446,18 +551,18 @@ public class RESTAdapter {
     /**
      * Lists all the files and folders under the given folder path.
      *
-     * @param folderPath String folder path.
-     * @param version    String version.
-     * @param depth      Integer depth.
-     * @param filter     String filter.
+     * @param folderPath String folder path to get the list.
+     * @param version    String version of the folder.
+     * @param depth      Integer folder depth to read.
+     * @param filter     String filter to be applied when reading the list.
      * @return Item array of files and folders.
      * @throws IOException      If a network error occurs.
      * @throws BitcasaException If a CloudFS API error occurs.
      */
-    public Item[] getList(String folderPath, int version, int depth, String filter) throws
+    public Item[] getList(final String folderPath, final int version, final int depth, final String filter) throws
             IOException, BitcasaException {
-        ArrayList<Item> items = new ArrayList<Item>();
-        StringBuilder endpoint = new StringBuilder();
+        final ArrayList<Item> items = new ArrayList<Item>();
+        final StringBuilder endpoint = new StringBuilder();
 
         endpoint.append(BitcasaRESTConstants.METHOD_FOLDERS);
         if (folderPath != null) {
@@ -466,7 +571,7 @@ public class RESTAdapter {
             endpoint.append(File.separator);
         }
 
-        TreeMap<String, String> parameters = new TreeMap<String, String>();
+        final Map<String, String> parameters = new TreeMap<String, String>();
         if (version >= 0) {
             parameters.put(BitcasaRESTConstants.PARAM_VERSION, Integer.toString(version));
         }
@@ -477,10 +582,10 @@ public class RESTAdapter {
             parameters.put(BitcasaRESTConstants.PARAM_FILTER, filter);
         }
 
-        String url = bitcasaRESTUtility.getRequestUrl(credential, endpoint.toString(), null,
-                parameters.size() > 0 ? parameters : null);
+        final String url = this.bitcasaRESTUtility.getRequestUrl(this.credential, endpoint.toString(), null,
+                (!parameters.isEmpty()) ? parameters : null);
 
-        Log.d(TAG, "getList URL: " + url);
+        Log.d(RESTAdapter.TAG, "getList URL: " + url);
         HttpsURLConnection connection = null;
         InputStream inputStream = null;
 
@@ -488,23 +593,23 @@ public class RESTAdapter {
             connection = (HttpsURLConnection) new URL(url)
                     .openConnection();
             connection.setRequestMethod(BitcasaRESTConstants.REQUEST_METHOD_GET);
-            bitcasaRESTUtility.setRequestHeaders(credential, connection, null);
+            this.bitcasaRESTUtility.setRequestHeaders(this.credential, connection, null);
 
-            BitcasaError error = bitcasaRESTUtility.checkRequestResponse(connection);
+            final BitcasaError error = this.bitcasaRESTUtility.checkRequestResponse(connection);
             if (error == null) {
                 inputStream = connection.getInputStream();
-                String response = bitcasaRESTUtility.getResponseFromInputStream(connection.getInputStream());
-                BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
+                final String response = this.bitcasaRESTUtility.getResponseFromInputStream(connection.getInputStream());
+                final BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
 
                 if (!bitcasaResponse.getResult().isJsonNull()) {
-                    ItemList itemList = new Gson().fromJson(bitcasaResponse.getResult(),
+                    final ItemList itemList = new Gson().fromJson(bitcasaResponse.getResult(),
                             ItemList.class);
 
-                    for (ItemMeta meta : itemList.getItems()) {
+                    for (final ItemMeta meta : itemList.getItems()) {
                         if (meta.isFolder()) {
-                            items.add(new Folder(this, meta, folderPath));
+                            items.add(new Folder(this.clone(), meta, folderPath, BitcasaRESTConstants.ITEM_STATE_NORMAL, null));
                         } else {
-                            items.add(new com.bitcasa.cloudfs.File(this, meta, folderPath));
+                            items.add(new com.bitcasa.cloudfs.File(this.clone(), meta, folderPath, BitcasaRESTConstants.ITEM_STATE_NORMAL, null));
                         }
                     }
                 } else {
@@ -513,15 +618,23 @@ public class RESTAdapter {
                 }
             }
 
-        } catch (IOException ioe) {
+        } catch (final ProtocolException e) {
+            throw new BitcasaException(e);
+        } catch (final MalformedURLException e) {
+            throw new BitcasaException(e);
+        } catch (final IOException ioe) {
             if (ioe.getMessage().contains("authentication challenge")) {
-                throw new BitcasaAuthenticationException(1020, "Authorization code not recognized");
+                throw new BitcasaAuthenticationException(RESTAdapter.BITCASA_AUTHENTICATION_ERROR_CODE, "Authorization code not recognized");
             } else {
                 if (ioe != null) {
                     throw new BitcasaException(ioe);
                 }
             }
-        } catch (Exception e) {
+        } catch (final BitcasaException e) {
+            throw new BitcasaException(e);
+        } catch (final JsonSyntaxException e) {
+            throw new BitcasaException(e);
+        } catch (final RuntimeException e) {
             if (e != null) {
                 throw new BitcasaException(e);
             }
@@ -542,59 +655,57 @@ public class RESTAdapter {
      *
      * @param file             Bitcasa Item with valid bitcasa file path and file name.
      * @param range            Any valid content range. No less than 0, no greater than the
-     *                         filesize.
+     *                         file size.
      * @param localDestination Device file location with file path and name.
      * @param listener         The progress listener to listen to the file download progress.
      * @throws BitcasaException If a CloudFS API error occurs.
      * @throws IOException      If a network error occurs.
      */
-    public void downloadFile(com.bitcasa.cloudfs.File file, long range, String localDestination,
-                             BitcasaProgressListener listener) throws BitcasaException,
+    public void downloadFile(final com.bitcasa.cloudfs.File file, final long range, final String localDestination,
+                             final BitcasaProgressListener listener) throws BitcasaException,
             IOException {
-        if (stringParameterNotValid(localDestination)) {
-            throw new IllegalArgumentException(MISSING_PARAM + "localDestination");
+        if (RESTAdapter.stringParameterNotValid(localDestination)) {
+            throw new IllegalArgumentException(RESTAdapter.MISSING_PARAM + "localDestination");
         }
 
-        File local = new File(localDestination);
+        final File local = new File(localDestination);
         //create file
         local.createNewFile();
 
-        String url;
-        url = bitcasaRESTUtility.getRequestUrl(credential, BitcasaRESTConstants.METHOD_FILES,
+        final String url = this.bitcasaRESTUtility.getRequestUrl(this.credential, BitcasaRESTConstants.METHOD_FILES,
                 file.getPath(), null);
 
-        HttpsURLConnection connection = null;
-        BufferedInputStream bufferedInputStream = null;
-        FileOutputStream fileOutputStream = null;
+        final Map<String, String> header = new TreeMap<String, String>();
+        header.put(BitcasaRESTConstants.HEADER_RANGE, "bytes=" + range + '-');
+
+        Log.d(RESTAdapter.TAG, "downloadFile url: " + url);
         BufferedOutputStream bufferedOutputStream = null;
-
-        TreeMap<String, String> header = new TreeMap<String, String>();
-        header.put(BitcasaRESTConstants.HEADER_RANGE, "bytes=" + range + "-");
-
-        Log.d(TAG, "downloadFile url: " + url);
+        FileOutputStream fileOutputStream = null;
+        BufferedInputStream bufferedInputStream = null;
+        HttpsURLConnection connection = null;
         try {
             HttpURLConnection.setFollowRedirects(true);
             connection = (HttpsURLConnection) new URL(url).openConnection();
             connection.setDoInput(true);
-            bitcasaRESTUtility.setRequestHeaders(credential, connection, header);
+            this.bitcasaRESTUtility.setRequestHeaders(this.credential, connection, header);
 
             // check response code first
-            BitcasaError error = bitcasaRESTUtility.checkRequestResponse(connection);
+            final BitcasaError error = this.bitcasaRESTUtility.checkRequestResponse(connection);
             if (error == null) {
                 // prepare for writing to file
                 bufferedInputStream = new BufferedInputStream(connection.getInputStream());
-                fileOutputStream = (range == 0) ? new FileOutputStream(local) : new FileOutputStream(local,
-                        true);    // if file exists append
+                fileOutputStream = range == 0 ? new FileOutputStream(local) :
+                        new FileOutputStream(local, true);    // if file exists append
                 bufferedOutputStream = new BufferedOutputStream(fileOutputStream);
 
                 // start writing
-                byte[] data = new byte[1024];
+                final byte[] data = new byte[RESTAdapter.BUFFERED_INPUTSTREAM_DATA_ARRAY_SIZE];
                 int x;
                 // use for progress update
-                BigInteger fileSize = new BigInteger(Long.toString(file.getSize()));
+                final BigInteger fileSize = new BigInteger(Long.toString(file.getSize()));
                 BigInteger dataReceived = BigInteger.valueOf(range);
                 long progressUpdateTimer = System.currentTimeMillis();
-                while ((x = bufferedInputStream.read(data, 0, 1024)) >= 0) {
+                while ((x = bufferedInputStream.read(data, 0, RESTAdapter.BUFFERED_INPUTSTREAM_DATA_ARRAY_SIZE)) >= 0) {
                     if (Thread.currentThread().isInterrupted()) {
                         if (listener != null) {
                             listener.canceled(file.getName(),
@@ -605,9 +716,9 @@ public class RESTAdapter {
                     bufferedOutputStream.write(data, 0, x);
                     dataReceived = dataReceived.add(BigInteger.valueOf(x));
                     // update progress
-                    if (listener != null && (System.currentTimeMillis() - progressUpdateTimer) >
-                            BitcasaRESTConstants.PROGRESS_UPDATE_INTERVAL) {
-                        int percentage = dataReceived.multiply(BigInteger.valueOf(100))
+                    if ((listener != null) && ((System.currentTimeMillis() - progressUpdateTimer) >
+                            BitcasaRESTConstants.PROGRESS_UPDATE_INTERVAL)) {
+                        final int percentage = dataReceived.multiply(BigInteger.valueOf(100))
                                 .divide(fileSize).intValue();
                         listener.onProgressUpdate(file.getName(), percentage,
                                 BitcasaProgressListener.ProgressAction.BITCASA_ACTION_DOWNLOAD);
@@ -619,11 +730,15 @@ public class RESTAdapter {
                 }
 
                 // make sure that we did download the whole file
-                Log.d(TAG, "local file size: " + local.length() + ", file size should be: " +
+                Log.d(RESTAdapter.TAG, "local file size: " + local.length() + ", file size should be: " +
                         fileSize);
             }
 
-        } catch (IOException ioe) {
+        } catch (final FileNotFoundException e) {
+            throw new BitcasaException(e);
+        } catch (final MalformedURLException e) {
+            throw new BitcasaException(e);
+        } catch (final IOException ioe) {
             throw new BitcasaException(ioe);
         } finally {
 
@@ -656,27 +771,25 @@ public class RESTAdapter {
      * @return The redirect url.
      * @throws IOException If a network error occurs.
      */
-    public String downloadUrl(String path, long size) throws IOException, BitcasaException {
+    public String downloadUrl(final String path, final long size) throws IOException {
 
-        String newpath = bitcasaRESTUtility.getRequestUrl(credential,
+        final String newPath = this.bitcasaRESTUtility.getRequestUrl(this.credential,
                 BitcasaRESTConstants.METHOD_FILES,
                 path, null);
 
-        HttpsURLConnection connection = null;
+        final Map<String, String> header = new TreeMap<String, String>();
+        header.put(BitcasaRESTConstants.HEADER_RANGE, "bytes=" + size + '-');
 
-        TreeMap<String, String> header = new TreeMap<String, String>();
-        header.put(BitcasaRESTConstants.HEADER_RANGE, "bytes=" + size + "-");
+        Log.d(RESTAdapter.TAG, "downloadFile url: " + newPath);
 
-        Log.d(TAG, "downloadFile url: " + newpath);
-
-        connection = (HttpsURLConnection) new URL(newpath).openConnection();
+        final HttpsURLConnection connection = (HttpsURLConnection) new URL(newPath).openConnection();
         connection.setInstanceFollowRedirects(false);
         HttpURLConnection.setFollowRedirects(false);
-        bitcasaRESTUtility.setRequestHeaders(credential, connection, header);
+        this.bitcasaRESTUtility.setRequestHeaders(this.credential, connection, header);
 
         boolean redirect = false;
 
-        int status = connection.getResponseCode();
+        final int status = connection.getResponseCode();
         if (status != HttpURLConnection.HTTP_OK) {
             if (status == HttpURLConnection.HTTP_MOVED_TEMP) {
                 redirect = true;
@@ -700,28 +813,29 @@ public class RESTAdapter {
      * @return InputStream of the downloaded file.
      * @throws BitcasaException If a CloudFS API error occurs.
      */
-    public InputStream download(Item file, long range) throws BitcasaException {
-        InputStream inputStream = null;
-        String url;
-        url = bitcasaRESTUtility.getRequestUrl(credential, BitcasaRESTConstants.METHOD_FILES,
+    public InputStream download(final Item file, final long range) throws BitcasaException {
+        final String url = this.bitcasaRESTUtility.getRequestUrl(this.credential, BitcasaRESTConstants.METHOD_FILES,
                 file.getAbsoluteParentPath(), null);
 
-        HttpsURLConnection connection = null;
-        TreeMap<String, String> header = new TreeMap<String, String>();
-        header.put(BitcasaRESTConstants.HEADER_RANGE, "bytes=" + range + "-");
+        final Map<String, String> header = new TreeMap<String, String>();
+        header.put(BitcasaRESTConstants.HEADER_RANGE, "bytes=" + range + '-');
 
-        Log.d(TAG, "download url: " + url);
+        Log.d(RESTAdapter.TAG, "download url: " + url);
+        HttpsURLConnection connection = null;
+        InputStream inputStream = null;
         try {
             connection = (HttpsURLConnection) new URL(url).openConnection();
             connection.setDoInput(true);
-            bitcasaRESTUtility.setRequestHeaders(credential, connection, header);
+            this.bitcasaRESTUtility.setRequestHeaders(this.credential, connection, header);
 
-            BitcasaError error = bitcasaRESTUtility.checkRequestResponse(connection);
+            final BitcasaError error = this.bitcasaRESTUtility.checkRequestResponse(connection);
             if (error == null) {
                 inputStream = connection.getInputStream();
             }
 
-        } catch (IOException ioe) {
+        } catch (final MalformedURLException e) {
+            throw new BitcasaException(e);
+        } catch (final IOException ioe) {
             throw new BitcasaException(ioe);
         } finally {
             if (connection != null) {
@@ -744,28 +858,28 @@ public class RESTAdapter {
      * @throws IOException      If a network error occurs.
      * @throws BitcasaException If a CloudFS API error occurs.
      */
-    public com.bitcasa.cloudfs.File uploadFile(Item folder, String sourceFilePath, Exists exists,
-                                               BitcasaProgressListener listener)
+    public com.bitcasa.cloudfs.File uploadFile(final Item folder, final String sourceFilePath, final BitcasaRESTConstants.Exists exists,
+                                               final BitcasaProgressListener listener)
             throws IOException, BitcasaException {
-        if (stringParameterNotValid(sourceFilePath)) {
-            throw new IllegalArgumentException(MISSING_PARAM + "sourceFilePath");
+        if (RESTAdapter.stringParameterNotValid(sourceFilePath)) {
+            throw new IllegalArgumentException(RESTAdapter.MISSING_PARAM + "sourceFilePath");
         }
 
-        com.bitcasa.cloudfs.File meta;
-        File sourceFile = new File(sourceFilePath);
+        final File sourceFile = new File(sourceFilePath);
         if (!sourceFile.exists() || !sourceFile.canRead()) {
             throw new BitcasaClientException("Unable to read file: " + sourceFilePath);
         }
         String path = File.separator;
-        if (folder != null && folder.getAbsoluteParentPath() != null) {
-            path = folder.getAbsoluteParentPath();
+        if ((folder != null) && (folder.getPath() != null && !(folder.getPath().equals(File.separator)))) {
+            path = folder.getPath() + File.separator;
         }
 
-        String urlRequest = bitcasaRESTUtility.getRequestUrl(credential,
-                BitcasaRESTConstants.METHOD_FILES, path, null);
-        Log.d(TAG, "uploadFile url: " + urlRequest);
 
-        String fieldValue;
+        final String urlRequest = this.bitcasaRESTUtility.getRequestUrl(this.credential,
+                BitcasaRESTConstants.METHOD_FILES, path, null);
+        Log.d(RESTAdapter.TAG, "uploadFile url: " + urlRequest);
+
+        final String fieldValue;
 
         if (exists == null) {
             fieldValue = BitcasaRESTConstants.EXISTS_FAIL;
@@ -787,16 +901,16 @@ public class RESTAdapter {
             }
         }
 
-        MultipartUpload mpUpload = new MultipartUpload(credential, urlRequest, bitcasaRESTUtility);
+        final MultipartUpload mpUpload = new MultipartUpload(this.credential, urlRequest, this.bitcasaRESTUtility);
         mpUpload.addUploadFormField(BitcasaRESTConstants.PARAM_EXISTS, fieldValue);
         mpUpload.addFile(sourceFile, listener);
-        meta = mpUpload.finishUpload(this);
-        return meta;
+        return mpUpload.finishUpload(this.clone(), folder.getPath());
     }
 
     /**
-     * Deletes the folder at given path.
+     * Deletes the folder from the CloudFS file system.
      *
+     * @param path   Path to the folder to be deleted.
      * @param commit If true, folder is deleted immediately. Otherwise, it is moved to the Trash.
      *               The default is false.
      * @param force  If true, folder is deleted even if it contains sub-items. The default is false.
@@ -804,25 +918,25 @@ public class RESTAdapter {
      * @throws IOException      If response data can not be read due to network errors.
      * @throws BitcasaException If a CloudFS API error occurs.
      */
-    public boolean deleteFolder(String path, boolean commit, boolean force)
+    public boolean deleteFolder(final String path, final boolean commit, final boolean force)
             throws IOException, BitcasaException {
 
-        return delete(path, Item.FileType.FOLDER, commit, force);
+        return this.delete(path, Item.FileType.FOLDER, commit, force);
     }
 
     /**
      * Deletes an existing file from the CloudFS file system.
      *
-     * @param path   String file path.
-     * @param commit if boolean false, transfer file to trash.
-     * @param force  if boolean true, deletes file without trashing.
-     * @return boolean flag whether the file was successfully deleted or not.
+     * @param path   Path to the file to be deleted.
+     * @param commit If true, folder is deleted immediately. Otherwise, it is moved to the Trash.
+     *               The default is false.
+     * @return Returns true if the file is deleted successfully, otherwise false.
      * @throws IOException      If response data can not be read due to network errors.
      * @throws BitcasaException If a CloudFS API error occurs.
      */
-    public boolean deleteFile(String path, boolean commit, boolean force) throws IOException,
+    public boolean deleteFile(final String path, final boolean commit) throws IOException,
             BitcasaException {
-        return delete(path, Item.FileType.FILE, commit, force);
+        return this.delete(path, Item.FileType.FILE, commit, false);
     }
 
     /**
@@ -837,38 +951,37 @@ public class RESTAdapter {
      * @throws IOException      If response data can not be read due to network errors.
      * @throws BitcasaException If a CloudFS API error occurs.
      */
-    private boolean delete(String path, String itemType, boolean commit, boolean force)
+    private boolean delete(final String path, final String itemType, final boolean commit, final boolean force)
             throws IOException, BitcasaException {
-        boolean result = false;
 
-        TreeMap<String, String> queryParam = new TreeMap<String, String>();
+        final Map<String, String> queryParam = new TreeMap<String, String>();
         queryParam.put(BitcasaRESTConstants.PARAM_COMMIT, commit ?
                 BitcasaRESTConstants.PARAM_TRUE : BitcasaRESTConstants.PARAM_FALSE);
 
         String request = BitcasaRESTConstants.METHOD_FILES;
         if (itemType.equals(Item.FileType.FOLDER)) {
-            queryParam.put(force ? BitcasaRESTConstants.PARAM_TRUE : BitcasaRESTConstants.PARAM_FALSE,
-                    BitcasaRESTConstants.PARAM_TRUE);
+            queryParam.put(BitcasaRESTConstants.PARAM_FORCE, force ? BitcasaRESTConstants.PARAM_TRUE : BitcasaRESTConstants.PARAM_FALSE);
 
             request = BitcasaRESTConstants.METHOD_FOLDERS;
         }
 
-        String url = bitcasaRESTUtility.getRequestUrl(credential, request, path, queryParam);
+        final String url = this.bitcasaRESTUtility.getRequestUrl(this.credential, request, path, queryParam);
 
-        Log.d(TAG, "delete: URL - " + url);
+        Log.d(RESTAdapter.TAG, "delete: URL - " + url);
         HttpsURLConnection connection = null;
         InputStream inputStream = null;
 
+        boolean result = false;
         try {
             connection = (HttpsURLConnection) new URL(url).openConnection();
             connection.setRequestMethod(BitcasaRESTConstants.REQUEST_METHOD_DELETE);
-            bitcasaRESTUtility.setRequestHeaders(credential, connection, null);
+            this.bitcasaRESTUtility.setRequestHeaders(this.credential, connection, null);
 
-            BitcasaError error = bitcasaRESTUtility.checkRequestResponse(connection);
+            final BitcasaError error = this.bitcasaRESTUtility.checkRequestResponse(connection);
             if (error == null) {
                 inputStream = connection.getInputStream();
-                String response = bitcasaRESTUtility.getResponseFromInputStream(inputStream);
-                BitcasaResponse bitcasaResponse = new Gson().fromJson(response,
+                final String response = this.bitcasaRESTUtility.getResponseFromInputStream(inputStream);
+                final BitcasaResponse bitcasaResponse = new Gson().fromJson(response,
                         BitcasaResponse.class);
 
                 if (!bitcasaResponse.getResult().isJsonNull()) {
@@ -901,22 +1014,20 @@ public class RESTAdapter {
      * @throws IOException      If a network error occurs.
      * @throws BitcasaException If a CloudFS API error occurs.
      */
-    public Folder createFolder(String folderName, Folder parentFolder, Exists exists)
+    public Folder createFolder(final String folderName, final Folder parentFolder, final BitcasaRESTConstants.Exists exists)
             throws IOException, BitcasaException {
 
-        if (stringParameterNotValid(folderName)) {
-            throw new IllegalArgumentException(MISSING_PARAM + "filename");
+        if (RESTAdapter.stringParameterNotValid(folderName)) {
+            throw new IllegalArgumentException(RESTAdapter.MISSING_PARAM + "filename");
         }
 
-        Folder newFolder = null;
-
-        StringBuilder request = new StringBuilder();
+        final StringBuilder request = new StringBuilder();
         request.append(BitcasaRESTConstants.METHOD_FOLDERS);
 
         request.append(parentFolder.getPath());
 
-        TreeMap<String, String> queryParams = new TreeMap<String, String>();
-        TreeMap<String, String> params = new TreeMap<String, String>();
+        final Map<String, String> queryParams = new TreeMap<String, String>();
+        final Map<String, String> params = new TreeMap<String, String>();
 
         queryParams.put(BitcasaRESTConstants.PARAM_OPERATION,
                 BitcasaRESTConstants.OPERATION_CREATE);
@@ -941,18 +1052,19 @@ public class RESTAdapter {
             }
         }
 
-        String body = bitcasaRESTUtility.generateParamsString(params);
-        String url = bitcasaRESTUtility.getRequestUrl(credential, request.toString(), null,
+        final String body = this.bitcasaRESTUtility.generateParamsString(params);
+        final String url = this.bitcasaRESTUtility.getRequestUrl(this.credential, request.toString(), null,
                 queryParams);
 
         HttpsURLConnection connection = null;
         OutputStream outputStream = null;
         InputStream inputStream = null;
 
+        Folder newFolder = null;
         try {
-            connection = (HttpsURLConnection) (new URL(url).openConnection());
+            connection = (HttpsURLConnection) new URL(url).openConnection();
             connection.setRequestMethod(BitcasaRESTConstants.REQUEST_METHOD_POST);
-            bitcasaRESTUtility.setRequestHeaders(credential, connection, null);
+            this.bitcasaRESTUtility.setRequestHeaders(this.credential, connection, null);
 
             if (body != null) {
                 connection.setDoOutput(true);
@@ -960,19 +1072,19 @@ public class RESTAdapter {
                 outputStream.write(body.getBytes());
             }
 
-            BitcasaError error = bitcasaRESTUtility.checkRequestResponse(connection);
+            final BitcasaError error = this.bitcasaRESTUtility.checkRequestResponse(connection);
             if (error == null) {
                 inputStream = connection.getInputStream();
-                String response = bitcasaRESTUtility.getResponseFromInputStream(inputStream);
-                BitcasaResponse bitcasaResponse = new Gson().fromJson(response,
+                final String response = this.bitcasaRESTUtility.getResponseFromInputStream(inputStream);
+                final BitcasaResponse bitcasaResponse = new Gson().fromJson(response,
                         BitcasaResponse.class);
 
                 if (!bitcasaResponse.getResult().isJsonNull()) {
-                    ItemList items = new Gson().fromJson(bitcasaResponse.getResult(),
+                    final ItemList items = new Gson().fromJson(bitcasaResponse.getResult(),
                             ItemList.class);
                     if (items.getItems().length > 0) {
-                        ItemMeta meta = items.getItems()[0];
-                        newFolder = new Folder(this, meta, parentFolder.getPath());
+                        final ItemMeta meta = items.getItems()[0];
+                        newFolder = new Folder(this.clone(), meta, parentFolder.getPath(), BitcasaRESTConstants.ITEM_STATE_NORMAL, null);
                     } else {
                         throw new BitcasaException(0, "Failed to create the folder.");
                     }
@@ -1006,37 +1118,35 @@ public class RESTAdapter {
      * @throws IOException      If response data can not be read due to network errors.
      * @throws BitcasaException If the server can not copy the item due to an error.
      */
-    public Item copy(Item item, String destinationPath, String newName, Exists exists)
+    public Item copy(final Item item, final String destinationPath, final String newName, final BitcasaRESTConstants.Exists exists)
             throws IOException, BitcasaException {
-        if (stringParameterNotValid(destinationPath)) {
-            throw new IllegalArgumentException(MISSING_PARAM + "destinationPath");
+        if (RESTAdapter.stringParameterNotValid(destinationPath)) {
+            throw new IllegalArgumentException(RESTAdapter.MISSING_PARAM + "destinationPath");
         }
 
-        Item resultItem = null;
-
-        StringBuilder request = new StringBuilder();
+        final StringBuilder request = new StringBuilder();
         if (item.getType().equals(Item.FileType.FOLDER)) {
             request.append(BitcasaRESTConstants.METHOD_FOLDERS);
         } else {
             request.append(BitcasaRESTConstants.METHOD_FILES);
         }
 
-        String parent;
-        if (item != null && item.getPath() != null) {
+        final String parent;
+        if ((item != null) && (item.getPath() != null)) {
             parent = item.getPath();
         } else {
             parent = File.separator;
         }
         request.append(parent);
 
-        TreeMap<String, String> queryParams = new TreeMap<String, String>();
-        TreeMap<String, String> params = new TreeMap<String, String>();
+        final Map<String, String> queryParams = new TreeMap<String, String>();
+        final Map<String, String> params = new TreeMap<String, String>();
 
         queryParams.put(BitcasaRESTConstants.PARAM_OPERATION,
                 BitcasaRESTConstants.OPERATION_COPY);
         params.put(BitcasaRESTConstants.BODY_TO, URLEncoder.encode(destinationPath,
                 BitcasaRESTConstants.UTF_8_ENCODING));
-        if (newName != null && newName.length() > 0) {
+        if ((newName != null) && (!newName.isEmpty())) {
             params.put(BitcasaRESTConstants.BODY_NAME, URLEncoder.encode(newName,
                     BitcasaRESTConstants.UTF_8_ENCODING));
         } else {
@@ -1061,18 +1171,19 @@ public class RESTAdapter {
             }
         }
 
-        String body = bitcasaRESTUtility.generateParamsString(params);
+        final String body = this.bitcasaRESTUtility.generateParamsString(params);
 
-        String url = bitcasaRESTUtility.getRequestUrl(credential, request.toString(), null,
+        final String url = this.bitcasaRESTUtility.getRequestUrl(this.credential, request.toString(), null,
                 queryParams);
-        Log.d(TAG, "copy: " + url + " body: " + body);
+        Log.d(RESTAdapter.TAG, "copy: " + url + " body: " + body);
         HttpsURLConnection connection = null;
         OutputStream outputStream = null;
         InputStream inputStream = null;
+        Item resultItem = null;
         try {
             connection = (HttpsURLConnection) new URL(url).openConnection();
             connection.setRequestMethod(BitcasaRESTConstants.REQUEST_METHOD_POST);
-            bitcasaRESTUtility.setRequestHeaders(credential, connection, null);
+            this.bitcasaRESTUtility.setRequestHeaders(this.credential, connection, null);
 
             if (body != null) {
                 connection.setDoOutput(true);
@@ -1080,22 +1191,22 @@ public class RESTAdapter {
                 outputStream.write(body.getBytes());
             }
 
-            BitcasaError error = bitcasaRESTUtility.checkRequestResponse(connection);
+            final BitcasaError error = this.bitcasaRESTUtility.checkRequestResponse(connection);
             if (error == null) {
                 inputStream = connection.getInputStream();
-                String response = bitcasaRESTUtility.getResponseFromInputStream(inputStream);
-                BitcasaResponse bitcasaResponse = new Gson().fromJson(response,
+                final String response = this.bitcasaRESTUtility.getResponseFromInputStream(inputStream);
+                final BitcasaResponse bitcasaResponse = new Gson().fromJson(response,
                         BitcasaResponse.class);
 
                 if (!bitcasaResponse.getResult().isJsonNull()) {
-                    ItemList itemList = new Gson().fromJson(bitcasaResponse.getResult(),
+                    final ItemList itemList = new Gson().fromJson(bitcasaResponse.getResult(),
                             ItemList.class);
-                    ItemMeta meta = itemList.getMeta();
+                    final ItemMeta meta = itemList.getMeta();
                     if (meta != null) {
                         if (meta.isFolder()) {
-                            resultItem = new Folder(this, meta, destinationPath);
+                            resultItem = new Folder(this.clone(), meta, destinationPath, BitcasaRESTConstants.ITEM_STATE_NORMAL, null);
                         } else {
-                            resultItem = new com.bitcasa.cloudfs.File(this, meta, destinationPath);
+                            resultItem = new com.bitcasa.cloudfs.File(this.clone(), meta, destinationPath, BitcasaRESTConstants.ITEM_STATE_NORMAL, null);
                         }
                     } else {
                         throw new BitcasaException(0, "Failed to copy the item.");
@@ -1131,39 +1242,37 @@ public class RESTAdapter {
      * @throws IOException      If response data can not be read.
      * @throws BitcasaException If the server can not move the item due to an error.
      */
-    public Item move(Item item, String destinationPath, String newName,
-                     BitcasaRESTConstants.Exists exists)
+    public Item move(final Item item, final String destinationPath, final String newName,
+                     final BitcasaRESTConstants.Exists exists)
             throws IOException, BitcasaException {
 
-        if (stringParameterNotValid(destinationPath)) {
-            throw new IllegalArgumentException(MISSING_PARAM + "destinationPath");
+        if (RESTAdapter.stringParameterNotValid(destinationPath)) {
+            throw new IllegalArgumentException(RESTAdapter.MISSING_PARAM + "destinationPath");
         }
 
-        Item resultItem = null;
-
-        StringBuilder request = new StringBuilder();
+        final StringBuilder request = new StringBuilder();
         if (item.getType().equals(Item.FileType.FOLDER)) {
             request.append(BitcasaRESTConstants.METHOD_FOLDERS);
         } else {
             request.append(BitcasaRESTConstants.METHOD_FILES);
         }
 
-        String parent;
-        if (item != null && item.getPath() != null) {
+        final String parent;
+        if ((item != null) && (item.getPath() != null)) {
             parent = item.getPath();
         } else {
             parent = File.separator;
         }
         request.append(parent);
 
-        TreeMap<String, String> queryParams = new TreeMap<String, String>();
-        TreeMap<String, String> params = new TreeMap<String, String>();
+        final Map<String, String> queryParams = new TreeMap<String, String>();
+        final Map<String, String> params = new TreeMap<String, String>();
 
         queryParams.put(BitcasaRESTConstants.PARAM_OPERATION,
                 BitcasaRESTConstants.OPERATION_MOVE);
         params.put(BitcasaRESTConstants.BODY_TO, URLEncoder.encode(destinationPath,
                 BitcasaRESTConstants.UTF_8_ENCODING));
-        if (newName != null && newName.length() > 0) {
+        if ((newName != null) && (!newName.isEmpty())) {
             params.put(BitcasaRESTConstants.BODY_NAME, URLEncoder.encode(newName,
                     BitcasaRESTConstants.UTF_8_ENCODING));
         } else {
@@ -1188,18 +1297,19 @@ public class RESTAdapter {
             }
         }
 
-        String body = bitcasaRESTUtility.generateParamsString(params);
+        final String body = this.bitcasaRESTUtility.generateParamsString(params);
 
-        String url = bitcasaRESTUtility.getRequestUrl(credential, request.toString(), null,
+        final String url = this.bitcasaRESTUtility.getRequestUrl(this.credential, request.toString(), null,
                 queryParams);
-        Log.d(TAG, "move: " + url + " body: " + body);
+        Log.d(RESTAdapter.TAG, "move: " + url + " body: " + body);
         HttpsURLConnection connection = null;
         OutputStream outputStream = null;
         InputStream inputStream = null;
+        Item resultItem = null;
         try {
             connection = (HttpsURLConnection) new URL(url).openConnection();
             connection.setRequestMethod(BitcasaRESTConstants.REQUEST_METHOD_POST);
-            bitcasaRESTUtility.setRequestHeaders(credential, connection, null);
+            this.bitcasaRESTUtility.setRequestHeaders(this.credential, connection, null);
 
             if (body != null) {
                 connection.setDoOutput(true);
@@ -1207,22 +1317,22 @@ public class RESTAdapter {
                 outputStream.write(body.getBytes());
             }
 
-            BitcasaError error = bitcasaRESTUtility.checkRequestResponse(connection);
+            final BitcasaError error = this.bitcasaRESTUtility.checkRequestResponse(connection);
             if (error == null) {
                 inputStream = connection.getInputStream();
-                String response = bitcasaRESTUtility.getResponseFromInputStream(inputStream);
-                BitcasaResponse bitcasaResponse = new Gson().fromJson(response,
+                final String response = this.bitcasaRESTUtility.getResponseFromInputStream(inputStream);
+                final BitcasaResponse bitcasaResponse = new Gson().fromJson(response,
                         BitcasaResponse.class);
 
                 if (!bitcasaResponse.getResult().isJsonNull()) {
-                    ItemList itemList = new Gson().fromJson(bitcasaResponse.getResult(),
+                    final ItemList itemList = new Gson().fromJson(bitcasaResponse.getResult(),
                             ItemList.class);
-                    ItemMeta meta = itemList.getMeta();
+                    final ItemMeta meta = itemList.getMeta();
                     if (meta != null) {
                         if (meta.isFolder()) {
-                            resultItem = new Folder(this, meta, destinationPath);
+                            resultItem = new Folder(this.clone(), meta, destinationPath, BitcasaRESTConstants.ITEM_STATE_NORMAL, null);
                         } else {
-                            resultItem = new com.bitcasa.cloudfs.File(this, meta, destinationPath);
+                            resultItem = new com.bitcasa.cloudfs.File(this.clone(), meta, destinationPath, BitcasaRESTConstants.ITEM_STATE_NORMAL, null);
                         }
                     } else {
                         throw new BitcasaException(0, "Failed to move the item.");
@@ -1249,56 +1359,58 @@ public class RESTAdapter {
 
 
     /**
-     * Get Folder Meta.
+     * Gets the Meta data of the folder.
      *
-     * @param absolutePath String file location
+     * @param absolutePath Location of the folder whose meta data is to be obtained.
      * @return Folder object at the given path.
      * @throws BitcasaAuthenticationException If user not authenticated
-     * @throws IOException                    If a network error occurs
      * @throws BitcasaException               If a CloudFS API error occurs.
      */
-    public Folder getFolderMeta(String absolutePath) throws
-            BitcasaException, IOException {
-        Folder meta = null;
-        StringBuilder endpoint = new StringBuilder();
+    public Folder getFolderMeta(final String absolutePath) throws
+            BitcasaException {
+        final StringBuilder endpoint = new StringBuilder();
         endpoint.append(BitcasaRESTConstants.METHOD_FOLDERS);
 
         endpoint.append(absolutePath);
-        String url = bitcasaRESTUtility.getRequestUrl(credential, endpoint.toString(),
+        final String url = this.bitcasaRESTUtility.getRequestUrl(this.credential, endpoint.toString(),
                 BitcasaRESTConstants.METHOD_META, null);
 
-        Log.d(TAG, "getMeta URL: " + url);
+        Log.d(RESTAdapter.TAG, "getMeta URL: " + url);
         HttpsURLConnection connection = null;
 
+        Folder meta = null;
         try {
             connection = (HttpsURLConnection) new URL(url)
                     .openConnection();
             connection.setRequestMethod(BitcasaRESTConstants.REQUEST_METHOD_GET);
-            bitcasaRESTUtility.setRequestHeaders(credential, connection, null);
-            BitcasaError error = bitcasaRESTUtility.checkRequestResponse(connection);
+            this.bitcasaRESTUtility.setRequestHeaders(this.credential, connection, null);
+            final BitcasaError error = this.bitcasaRESTUtility.checkRequestResponse(connection);
 
             if (error == null) {
-                String response = bitcasaRESTUtility.getResponseFromInputStream(connection.getInputStream());
-                BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
+                final String response = this.bitcasaRESTUtility.getResponseFromInputStream(connection.getInputStream());
+                final BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
 
                 if (!bitcasaResponse.getResult().isJsonNull()) {
-                    ItemList itemList = new Gson().fromJson(bitcasaResponse.getResult(),
+                    final ItemList itemList = new Gson().fromJson(bitcasaResponse.getResult(),
                             ItemList.class);
-                    meta = new Folder(this, itemList.getMeta(), absolutePath);
+                    String absoluteParentPath = absolutePath.equals("/") ? absolutePath : absolutePath.substring(0, absolutePath.lastIndexOf('/'));
+                    meta = new Folder(this.clone(), itemList.getMeta(), absoluteParentPath, BitcasaRESTConstants.ITEM_STATE_NORMAL, null);
                 } else {
                     throw new BitcasaException(bitcasaResponse.getError().getCode(),
                             bitcasaResponse.getError().getMessage());
                 }
             }
 
-        } catch (IOException ioe) {
+        } catch (final ProtocolException e) {
+            throw new BitcasaException(e);
+        } catch (final MalformedURLException e) {
+            throw new BitcasaException(e);
+        } catch (final IOException ioe) {
             if (ioe.getMessage().contains("authentication challenge")) {
-                throw new BitcasaAuthenticationException(1020, "Authorization code not recognized");
+                throw new BitcasaAuthenticationException(RESTAdapter.BITCASA_AUTHENTICATION_ERROR_CODE, "Authorization code not recognized");
             } else {
                 throw new BitcasaException(ioe);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         } finally {
             if (connection != null) {
                 connection.disconnect();
@@ -1310,44 +1422,44 @@ public class RESTAdapter {
     }
 
     /**
-     * Get Item Meta.
+     * Gets the meta data of an item.
      *
-     * @param absolutePath String file location.
+     * @param absolutePath Location of the item whose meta data is to be obtained.
      * @return Item object at the given path.
      * @throws BitcasaAuthenticationException If user not authenticated.
-     * @throws IOException                    If a network error occurs.
      * @throws BitcasaException               If a CloudFS API error occurs.
      */
-    public Item getItemMeta(String absolutePath) throws
-            BitcasaException, IOException {
-        Item meta = null;
-        StringBuilder endpoint = new StringBuilder();
+    public Item getItemMeta(final String absolutePath) throws
+            BitcasaException {
+        final StringBuilder endpoint = new StringBuilder();
         endpoint.append(BitcasaRESTConstants.METHOD_ITEM);
         endpoint.append(absolutePath);
-        String url = bitcasaRESTUtility.getRequestUrl(credential, endpoint.toString(),
+        final String url = this.bitcasaRESTUtility.getRequestUrl(this.credential, endpoint.toString(),
                 BitcasaRESTConstants.METHOD_META, null);
 
-        Log.d(TAG, "getMeta URL: " + url);
+        Log.d(RESTAdapter.TAG, "getMeta URL: " + url);
         HttpsURLConnection connection = null;
 
+        Item meta = null;
         try {
             connection = (HttpsURLConnection) new URL(url)
                     .openConnection();
             connection.setRequestMethod(BitcasaRESTConstants.REQUEST_METHOD_GET);
-            bitcasaRESTUtility.setRequestHeaders(credential, connection, null);
-            BitcasaError error = bitcasaRESTUtility.checkRequestResponse(connection);
+            this.bitcasaRESTUtility.setRequestHeaders(this.credential, connection, null);
+            final BitcasaError error = this.bitcasaRESTUtility.checkRequestResponse(connection);
 
             if (error == null) {
-                String response = bitcasaRESTUtility.getResponseFromInputStream(connection.getInputStream());
-                BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
+                final String response = this.bitcasaRESTUtility.getResponseFromInputStream(connection.getInputStream());
+                final BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
 
                 if (!bitcasaResponse.getResult().isJsonNull()) {
-                    ItemMeta itemMeta = new Gson().fromJson(bitcasaResponse.getResult(),
+                    final ItemMeta itemMeta = new Gson().fromJson(bitcasaResponse.getResult(),
                             ItemMeta.class);
+                    String absoluteParentPath = absolutePath.equals("/") ? absolutePath : absolutePath.substring(0, absolutePath.lastIndexOf('/'));
                     if (itemMeta.isFolder()) {
-                        meta = new Folder(this, itemMeta, absolutePath);
+                        meta = new Folder(this.clone(), itemMeta, absoluteParentPath, BitcasaRESTConstants.ITEM_STATE_NORMAL, null);
                     } else {
-                        meta = new com.bitcasa.cloudfs.File(this, itemMeta, absolutePath);
+                        meta = new com.bitcasa.cloudfs.File(this.clone(), itemMeta, absoluteParentPath, BitcasaRESTConstants.ITEM_STATE_NORMAL, null);
                     }
 
                 } else {
@@ -1356,14 +1468,16 @@ public class RESTAdapter {
                 }
             }
 
-        } catch (IOException ioe) {
+        } catch (final ProtocolException e) {
+            throw new BitcasaException(e);
+        } catch (final MalformedURLException e) {
+            throw new BitcasaException(e);
+        } catch (final IOException ioe) {
             if (ioe.getMessage().contains("authentication challenge")) {
-                throw new BitcasaAuthenticationException(1020, "Authorization code not recognized");
+                throw new BitcasaAuthenticationException(RESTAdapter.BITCASA_AUTHENTICATION_ERROR_CODE, "Authorization code not recognized");
             } else {
                 throw new BitcasaException(ioe);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         } finally {
             if (connection != null) {
                 connection.disconnect();
@@ -1374,25 +1488,23 @@ public class RESTAdapter {
     }
 
     /**
-     * Alter File Meta
+     * Changes the specified item's meta data.
      *
-     * @param meta          Item object of file meta
-     * @param changes       String map of meta changes
-     * @param version       Integer version
-     * @param versionExists VersionExists enum
-     * @return Item object with altered meta
-     * @throws BitcasaAuthenticationException If user not authenticated
-     * @throws IOException                    If a network error occurs
+     * @param meta          Item object to be changed.
+     * @param changes       Meta data to be changed.
+     * @param version       Version of the item to be changed.
+     * @param versionExists The action to perform if the version exists at the destination.
+     * @return Item object with altered meta data.
+     * @throws BitcasaAuthenticationException If user not authenticated.
      * @throws BitcasaException               If a CloudFS API error occurs.
      */
-    public Item alterMeta(Item meta, Map<String, String> changes, int version,
-                          VersionExists versionExists) throws BitcasaException, IOException {
-        if (objectParameterNotValid(changes)) {
-            throw new IllegalArgumentException(MISSING_PARAM + "changes");
+    public Item alterMeta(final Item meta, final Map<String, String> changes, final int version,
+                          final BitcasaRESTConstants.VersionExists versionExists) throws BitcasaException {
+        if (RESTAdapter.objectParameterNotValid(changes)) {
+            throw new IllegalArgumentException(RESTAdapter.MISSING_PARAM + "changes");
         }
 
-        Item item = null;
-        StringBuilder endpoint = new StringBuilder();
+        final StringBuilder endpoint = new StringBuilder();
         if (meta.getType().equals(Item.FileType.FOLDER)) {
             endpoint.append(BitcasaRESTConstants.METHOD_FOLDERS);
         } else if (meta.getType().equals(Item.FileType.FILE)) {
@@ -1400,50 +1512,49 @@ public class RESTAdapter {
         }
 
         endpoint.append(meta.getPath());
-        String url = bitcasaRESTUtility.getRequestUrl(credential, endpoint.toString(),
+        final String url = this.bitcasaRESTUtility.getRequestUrl(this.credential, endpoint.toString(),
                 BitcasaRESTConstants.METHOD_META, null);
 
         String versionConflict = BitcasaRESTConstants.VERSION_FAIL;
-        if (versionExists != null && versionExists == BitcasaRESTConstants.VersionExists.IGNORE) {
+        if ((versionExists != null) && (versionExists == BitcasaRESTConstants.VersionExists.IGNORE)) {
             versionConflict = BitcasaRESTConstants.VERSION_IGNORE;
         }
 
-        TreeMap<String, String> formParams = new TreeMap<String, String>();
+        final Map<String, String> formParams = new TreeMap<String, String>();
         formParams.put(BitcasaRESTConstants.PARAM_VERSION, Integer.toString(version));
         if (versionExists != null) {
             formParams.put(BitcasaRESTConstants.PARAM_VERSION_CONFLICT, versionConflict);
         }
 
         formParams.putAll(changes);
-        Log.d(TAG, "alterMeta URL: " + url);
+        Log.d(RESTAdapter.TAG, "alterMeta URL: " + url);
         HttpsURLConnection connection = null;
-        InputStream inputStream = null;
-        OutputStream outputStream;
 
+        Item item = null;
         try {
             connection = (HttpsURLConnection) new URL(url).openConnection();
             connection.setDoOutput(true);
             connection.setRequestMethod(BitcasaRESTConstants.REQUEST_METHOD_POST);
-            bitcasaRESTUtility.setRequestHeaders(credential, connection, null);
+            this.bitcasaRESTUtility.setRequestHeaders(this.credential, connection, null);
             connection.setDoOutput(true);
 
-            outputStream = connection.getOutputStream();
-            outputStream.write(bitcasaRESTUtility.generateParamsString(formParams).getBytes());
-            BitcasaError error = bitcasaRESTUtility.checkRequestResponse(connection);
+            final OutputStream outputStream = connection.getOutputStream();
+            outputStream.write(this.bitcasaRESTUtility.generateParamsString(formParams).getBytes());
+            final BitcasaError error = this.bitcasaRESTUtility.checkRequestResponse(connection);
 
             if (error == null) {
-                String response = bitcasaRESTUtility.getResponseFromInputStream(connection.getInputStream());
-                BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
+                final String response = this.bitcasaRESTUtility.getResponseFromInputStream(connection.getInputStream());
+                final BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
 
                 if (!bitcasaResponse.getResult().isJsonNull()) {
-                    ItemList itemList = new Gson().fromJson(bitcasaResponse.getResult(),
+                    final ItemList itemList = new Gson().fromJson(bitcasaResponse.getResult(),
                             ItemList.class);
-                    ItemMeta itemMeta = itemList.getMeta();
+                    final ItemMeta itemMeta = itemList.getMeta();
 
                     if (itemMeta.isFolder()) {
-                        item = new Folder(this, itemMeta, meta.getAbsoluteParentPath());
+                        item = new Folder(this.clone(), itemMeta, meta.getAbsoluteParentPath(), BitcasaRESTConstants.ITEM_STATE_NORMAL, null);
                     } else {
-                        item = new com.bitcasa.cloudfs.File(this, itemMeta, meta.getAbsoluteParentPath());
+                        item = new com.bitcasa.cloudfs.File(this.clone(), itemMeta, meta.getAbsoluteParentPath(), BitcasaRESTConstants.ITEM_STATE_NORMAL, null);
                     }
 
                 } else {
@@ -1452,18 +1563,23 @@ public class RESTAdapter {
                 }
             }
 
-        } catch (IOException ioe) {
+        } catch (final ProtocolException e) {
+            throw new BitcasaException(e);
+        } catch (final MalformedURLException e) {
+            throw new BitcasaException(e);
+        } catch (final IOException ioe) {
             if (ioe.getMessage().contains("authentication challenge")) {
-                throw new BitcasaAuthenticationException(1020, "Authorization code not recognized");
+                throw new BitcasaAuthenticationException(RESTAdapter.BITCASA_AUTHENTICATION_ERROR_CODE, "Authorization code not recognized");
             } else {
                 throw new BitcasaException(ioe);
             }
-        } catch (Exception e) {
+        } catch (final BitcasaException e) {
+            throw new BitcasaException(e);
+        } catch (final JsonSyntaxException e) {
+            throw new BitcasaException(e);
+        } catch (final RuntimeException e) {
             throw new BitcasaException(e);
         } finally {
-            if (inputStream != null) {
-                inputStream.close();
-            }
             if (connection != null) {
                 connection.disconnect();
             }
@@ -1473,66 +1589,63 @@ public class RESTAdapter {
     }
 
     /**
-     * Alter File Meta
+     * Changes the specified file's meta data.
      *
-     * @param meta          Item object of file meta
-     * @param changes       String map of meta changes
-     * @param version       Integer version
-     * @param versionExists VersionExists enum
-     * @return Item object with altered meta
-     * @throws BitcasaAuthenticationException If user not authenticated
-     * @throws IOException                    If a network error occurs
+     * @param meta          Item object to be changed.
+     * @param changes       Meta data to be changed.
+     * @param version       Version of the item to be changed.
+     * @param versionExists The action to perform if the version exists at the destination.
+     * @return File object with altered meta data.
+     * @throws BitcasaAuthenticationException If user not authenticated.
      * @throws BitcasaException               If a CloudFS API error occurs.
      */
-    public com.bitcasa.cloudfs.File alterFileMeta(Item meta, Map<String, String> changes, int version,
-                          VersionExists versionExists) throws BitcasaException, IOException {
-        if (objectParameterNotValid(changes)) {
-            throw new IllegalArgumentException(MISSING_PARAM + "changes");
+    public com.bitcasa.cloudfs.File alterFileMeta(final Item meta, final Map<String, String> changes, final int version,
+                                                  final BitcasaRESTConstants.VersionExists versionExists) throws BitcasaException {
+        if (RESTAdapter.objectParameterNotValid(changes)) {
+            throw new IllegalArgumentException(RESTAdapter.MISSING_PARAM + "changes");
         }
 
-        com.bitcasa.cloudfs.File file = null;
-        StringBuilder endpoint = new StringBuilder();
+        final StringBuilder endpoint = new StringBuilder();
         endpoint.append(BitcasaRESTConstants.METHOD_FILES);
         endpoint.append(meta.getPath());
-        String url = bitcasaRESTUtility.getRequestUrl(credential, endpoint.toString(),
+        final String url = this.bitcasaRESTUtility.getRequestUrl(this.credential, endpoint.toString(),
                 BitcasaRESTConstants.METHOD_META, null);
 
         String versionConflict = BitcasaRESTConstants.VERSION_FAIL;
-        if (versionExists != null && versionExists == BitcasaRESTConstants.VersionExists.IGNORE) {
+        if ((versionExists != null) && (versionExists == BitcasaRESTConstants.VersionExists.IGNORE)) {
             versionConflict = BitcasaRESTConstants.VERSION_IGNORE;
         }
 
-        TreeMap<String, String> formParams = new TreeMap<String, String>();
+        final Map<String, String> formParams = new TreeMap<String, String>();
         formParams.put(BitcasaRESTConstants.PARAM_VERSION, Integer.toString(version));
         if (versionExists != null) {
             formParams.put(BitcasaRESTConstants.PARAM_VERSION_CONFLICT, versionConflict);
         }
 
         formParams.putAll(changes);
-        Log.d(TAG, "alterFileMeta URL: " + url);
+        Log.d(RESTAdapter.TAG, "alterFileMeta URL: " + url);
         HttpsURLConnection connection = null;
-        InputStream inputStream = null;
-        OutputStream outputStream;
 
+        com.bitcasa.cloudfs.File file = null;
         try {
             connection = (HttpsURLConnection) new URL(url).openConnection();
             connection.setDoOutput(true);
             connection.setRequestMethod(BitcasaRESTConstants.REQUEST_METHOD_POST);
-            bitcasaRESTUtility.setRequestHeaders(credential, connection, null);
+            this.bitcasaRESTUtility.setRequestHeaders(this.credential, connection, null);
             connection.setDoOutput(true);
 
-            outputStream = connection.getOutputStream();
-            outputStream.write(bitcasaRESTUtility.generateParamsString(formParams).getBytes());
-            BitcasaError error = bitcasaRESTUtility.checkRequestResponse(connection);
+            final OutputStream outputStream = connection.getOutputStream();
+            outputStream.write(this.bitcasaRESTUtility.generateParamsString(formParams).getBytes());
+            final BitcasaError error = this.bitcasaRESTUtility.checkRequestResponse(connection);
 
             if (error == null) {
-                String response = bitcasaRESTUtility.getResponseFromInputStream(connection.getInputStream());
-                BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
+                final String response = this.bitcasaRESTUtility.getResponseFromInputStream(connection.getInputStream());
+                final BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
 
                 if (!bitcasaResponse.getResult().isJsonNull()) {
-                    ItemMeta itemMeta = new Gson().fromJson(bitcasaResponse.getResult(),
+                    final ItemMeta itemMeta = new Gson().fromJson(bitcasaResponse.getResult(),
                             ItemMeta.class);
-                    file = new com.bitcasa.cloudfs.File(this, itemMeta, meta.getAbsoluteParentPath());
+                    file = new com.bitcasa.cloudfs.File(this.clone(), itemMeta, meta.getAbsoluteParentPath(), BitcasaRESTConstants.ITEM_STATE_NORMAL, null);
 
                 } else {
                     throw new BitcasaException(bitcasaResponse.getError().getCode(),
@@ -1540,18 +1653,19 @@ public class RESTAdapter {
                 }
             }
 
-        } catch (IOException ioe) {
+        } catch (final ProtocolException e) {
+            throw new BitcasaException(e);
+        } catch (final MalformedURLException e) {
+            throw new BitcasaException(e);
+        } catch (final IOException ioe) {
             if (ioe.getMessage().contains("authentication challenge")) {
-                throw new BitcasaAuthenticationException(1020, "Authorization code not recognized");
+                throw new BitcasaAuthenticationException(RESTAdapter.BITCASA_AUTHENTICATION_ERROR_CODE, "Authorization code not recognized");
             } else {
                 throw new BitcasaException(ioe);
             }
-        } catch (Exception e) {
+        } catch (final BitcasaException e) {
             throw new BitcasaException(e);
         } finally {
-            if (inputStream != null) {
-                inputStream.close();
-            }
             if (connection != null) {
                 connection.disconnect();
             }
@@ -1561,68 +1675,65 @@ public class RESTAdapter {
     }
 
     /**
-     * Alter Folder Meta
+     * Changes the specified folder's meta data.
      *
-     * @param meta          Item object of folder meta
-     * @param changes       String map of meta changes
-     * @param version       Integer version
-     * @param versionExists VersionExists enum
-     * @return Item object with altered meta
-     * @throws BitcasaAuthenticationException If user not authenticated
-     * @throws IOException                    If a network error occurs
+     * @param meta          Item object to be changed.
+     * @param changes       Meta data to be changed.
+     * @param version       Version of the item to be changed.
+     * @param versionExists The action to perform if the version exists at the destination.
+     * @return Folder object with altered meta
+     * @throws BitcasaAuthenticationException If user not authenticated.
      * @throws BitcasaException               If a CloudFS API error occurs.
      */
-    public Folder alterFolderMeta(Item meta, Map<String, String> changes, int version,
-                          VersionExists versionExists) throws BitcasaException, IOException {
-        if (objectParameterNotValid(changes)) {
-            throw new IllegalArgumentException(MISSING_PARAM + "changes");
+    public Folder alterFolderMeta(final Item meta, final Map<String, String> changes, final int version,
+                                  final BitcasaRESTConstants.VersionExists versionExists) throws BitcasaException {
+        if (RESTAdapter.objectParameterNotValid(changes)) {
+            throw new IllegalArgumentException(RESTAdapter.MISSING_PARAM + "changes");
         }
 
-        Folder folder = null;
-        StringBuilder endpoint = new StringBuilder();
+        final StringBuilder endpoint = new StringBuilder();
         endpoint.append(BitcasaRESTConstants.METHOD_FOLDERS);
         endpoint.append(meta.getPath());
-        String url = bitcasaRESTUtility.getRequestUrl(credential, endpoint.toString(),
+        final String url = this.bitcasaRESTUtility.getRequestUrl(this.credential, endpoint.toString(),
                 BitcasaRESTConstants.METHOD_META, null);
 
         String versionConflict = BitcasaRESTConstants.VERSION_FAIL;
-        if (versionExists != null && versionExists == BitcasaRESTConstants.VersionExists.IGNORE) {
+        if ((versionExists != null) && (versionExists == BitcasaRESTConstants.VersionExists.IGNORE)) {
             versionConflict = BitcasaRESTConstants.VERSION_IGNORE;
         }
 
-        TreeMap<String, String> formParams = new TreeMap<String, String>();
+        final Map<String, String> formParams = new TreeMap<String, String>();
         formParams.put(BitcasaRESTConstants.PARAM_VERSION, Integer.toString(version));
         if (versionExists != null) {
             formParams.put(BitcasaRESTConstants.PARAM_VERSION_CONFLICT, versionConflict);
         }
 
         formParams.putAll(changes);
-        Log.d(TAG, "alterFolderMeta URL: " + url);
+        Log.d(RESTAdapter.TAG, "alterFolderMeta URL: " + url);
         HttpsURLConnection connection = null;
-        InputStream inputStream = null;
-        OutputStream outputStream;
 
+        Folder folder = null;
         try {
             connection = (HttpsURLConnection) new URL(url).openConnection();
             connection.setDoOutput(true);
             connection.setRequestMethod(BitcasaRESTConstants.REQUEST_METHOD_POST);
-            bitcasaRESTUtility.setRequestHeaders(credential, connection, null);
+            this.bitcasaRESTUtility.setRequestHeaders(this.credential, connection, null);
             connection.setDoOutput(true);
 
-            outputStream = connection.getOutputStream();
-            outputStream.write(bitcasaRESTUtility.generateParamsString(formParams).getBytes());
-            BitcasaError error = bitcasaRESTUtility.checkRequestResponse(connection);
+            final OutputStream outputStream = connection.getOutputStream();
+            outputStream.write(this.bitcasaRESTUtility.generateParamsString(formParams).getBytes());
+            final BitcasaError error = this.bitcasaRESTUtility.checkRequestResponse(connection);
 
             if (error == null) {
-                String response = bitcasaRESTUtility.getResponseFromInputStream(connection.getInputStream());
-                BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
+                final String response = this.bitcasaRESTUtility.getResponseFromInputStream(connection.getInputStream());
+                final BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
 
                 if (!bitcasaResponse.getResult().isJsonNull()) {
-                    ItemList itemList = new Gson().fromJson(bitcasaResponse.getResult(),
+                    final ItemList itemList = new Gson().fromJson(bitcasaResponse.getResult(),
                             ItemList.class);
-                    ItemMeta itemMeta = itemList.getMeta();
+                    final ItemMeta itemMeta = itemList.getMeta();
 
-                    folder = new Folder(this, itemMeta, meta.getAbsoluteParentPath());
+                    folder = new Folder(this.clone(), itemMeta, meta.getAbsoluteParentPath(), BitcasaRESTConstants.ITEM_STATE_NORMAL, null);
 
                 } else {
                     throw new BitcasaException(bitcasaResponse.getError().getCode(),
@@ -1630,18 +1741,23 @@ public class RESTAdapter {
                 }
             }
 
-        } catch (IOException ioe) {
+        } catch (final ProtocolException e) {
+            throw new BitcasaException(e);
+        } catch (final MalformedURLException e) {
+            throw new BitcasaException(e);
+        } catch (final IOException ioe) {
             if (ioe.getMessage().contains("authentication challenge")) {
-                throw new BitcasaAuthenticationException(1020, "Authorization code not recognized");
+                throw new BitcasaAuthenticationException(RESTAdapter.BITCASA_AUTHENTICATION_ERROR_CODE, "Authorization code not recognized");
             } else {
                 throw new BitcasaException(ioe);
             }
-        } catch (Exception e) {
+        } catch (final BitcasaException e) {
+            throw new BitcasaException(e);
+        } catch (final JsonSyntaxException e) {
+            throw new BitcasaException(e);
+        } catch (final RuntimeException e) {
             throw new BitcasaException(e);
         } finally {
-            if (inputStream != null) {
-                inputStream.close();
-            }
             if (connection != null) {
                 connection.disconnect();
             }
@@ -1651,25 +1767,24 @@ public class RESTAdapter {
     }
 
     /**
-     * List File Versions
+     * List the versions of specified file.
      *
-     * @param path         String file path
-     * @param startVersion Integer starting file version
-     * @param stopVersion  Integer Ending  version
-     * @param limit        Integer file Limit
+     * @param path         File path of the file whose versions are to be listed.
+     * @param startVersion Start version of the version list.
+     * @param stopVersion  End version of the version list.
+     * @param limit        Limits the number of versions to be listed down in results.
      * @return A list of file meta data results, as they have been recorded in the file version
-     *         history after successful meta data changes.
+     * history after successful meta data changes.
      * @throws IOException      If a network error occurs.
      * @throws BitcasaException If a CloudFS API error occurs.
      */
-    public com.bitcasa.cloudfs.File[] listFileVersions(String path,
-                                                       int startVersion,
-                                                       int stopVersion,
-                                                       int limit)
+    public com.bitcasa.cloudfs.File[] listFileVersions(final String path,
+                                                       final int startVersion,
+                                                       final int stopVersion,
+                                                       final int limit)
             throws BitcasaException, IOException {
-        com.bitcasa.cloudfs.File[] versions = null;
 
-        TreeMap<String, String> queryParams = new TreeMap<String, String>();
+        final Map<String, String> queryParams = new TreeMap<String, String>();
         if (startVersion >= 0) {
             queryParams.put(URLEncoder.encode(BitcasaRESTConstants.START_VERSION,
                     BitcasaRESTConstants.UTF_8_ENCODING), Integer.toString(startVersion));
@@ -1683,24 +1798,24 @@ public class RESTAdapter {
                     BitcasaRESTConstants.UTF_8_ENCODING), Integer.toString(limit));
         }
 
-        String requestSegment = path + BitcasaRESTConstants.PARAM_VERSIONS;
-        String url = bitcasaRESTUtility.getRequestUrl(credential, BitcasaRESTConstants.METHOD_FILES,
-                requestSegment, queryParams.size() > 0 ? queryParams : null);
+        final String requestSegment = path + BitcasaRESTConstants.PARAM_VERSIONS;
+        final String url = this.bitcasaRESTUtility.getRequestUrl(this.credential, BitcasaRESTConstants.METHOD_FILES,
+                requestSegment, (!queryParams.isEmpty()) ? queryParams : null);
 
-        Log.d(TAG, "listFileVersions: " + url);
+        Log.d(RESTAdapter.TAG, "listFileVersions: " + url);
         HttpsURLConnection connection = null;
-        InputStream inputStream = null;
 
+        com.bitcasa.cloudfs.File[] versions = null;
         try {
             connection = (HttpsURLConnection) new URL(url).openConnection();
             connection.setRequestMethod(BitcasaRESTConstants.REQUEST_METHOD_GET);
-            bitcasaRESTUtility.setRequestHeaders(credential, connection, null);
-            BitcasaError error = bitcasaRESTUtility.checkRequestResponse(connection);
+            this.bitcasaRESTUtility.setRequestHeaders(this.credential, connection, null);
+            final BitcasaError error = this.bitcasaRESTUtility.checkRequestResponse(connection);
 
             if (error == null) {
 
-                String response = bitcasaRESTUtility.getResponseFromInputStream(connection.getInputStream());
-                BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
+                final String response = this.bitcasaRESTUtility.getResponseFromInputStream(connection.getInputStream());
+                final BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
 
                 if (!bitcasaResponse.getResult().isJsonNull()) {
                     versions = new Gson().fromJson(bitcasaResponse.getResult(),
@@ -1711,16 +1826,17 @@ public class RESTAdapter {
                             bitcasaResponse.getError().getMessage());
                 }
             }
-        } catch (IOException ioe) {
+        } catch (final ProtocolException e) {
+            throw new BitcasaException(e);
+        } catch (final MalformedURLException e) {
+            throw new BitcasaException(e);
+        } catch (final IOException ioe) {
             if (ioe.getMessage().contains("authentication challenge")) {
-                throw new BitcasaAuthenticationException(1020, "Authorization code not recognized");
+                throw new BitcasaAuthenticationException(RESTAdapter.BITCASA_AUTHENTICATION_ERROR_CODE, "Authorization code not recognized");
             } else {
                 throw new BitcasaException(ioe);
             }
         } finally {
-            if (inputStream != null) {
-                inputStream.close();
-            }
             if (connection != null) {
                 connection.disconnect();
             }
@@ -1730,18 +1846,18 @@ public class RESTAdapter {
     }
 
     /**
-     * List History
+     * List the action history associated with current account.
      *
-     * @param startVersion Integer starting file version
-     * @param stopVersion  Integer Ending  version
-     * @return ActionHistory object
-     * @throws IOException      If a network error occurs
+     * @param startVersion Version to start the list from.
+     * @param stopVersion  Version to end the list.
+     * @return ActionHistory object containing actions associated with current account.
+     * @throws IOException      If a network error occurs.
      * @throws BitcasaException If a CloudFS API error occurs.
      */
-    public List<BaseAction> listHistory(int startVersion, int stopVersion)
+    public List<BaseAction> listHistory(final int startVersion, final int stopVersion)
             throws IOException, BitcasaException {
-        ArrayList<BaseAction> actions = new ArrayList<BaseAction>();
-        HashMap<String, String> queryParams = new HashMap<String, String>();
+        final List<BaseAction> actions = new ArrayList<BaseAction>();
+        final Map<String, String> queryParams = new HashMap<String, String>();
         if (startVersion >= 0) {
             queryParams.put(BitcasaRESTConstants.PARAM_START, Integer.toString(startVersion));
         }
@@ -1749,11 +1865,10 @@ public class RESTAdapter {
             queryParams.put(BitcasaRESTConstants.PARAM_STOP, Integer.toString(stopVersion));
         }
 
-        String url = bitcasaRESTUtility.getRequestUrl(credential,
-                BitcasaRESTConstants.METHOD_HISTORY, null, (queryParams.size() > 0) ?
-                        queryParams : null);
+        final String url = this.bitcasaRESTUtility.getRequestUrl(this.credential,
+                BitcasaRESTConstants.METHOD_HISTORY, null, (!queryParams.isEmpty()) ? queryParams : null);
 
-        Log.d(TAG, "listHistory URL: " + url);
+        Log.d(RESTAdapter.TAG, "listHistory URL: " + url);
         HttpsURLConnection connection = null;
         InputStream inputStream = null;
 
@@ -1762,22 +1877,22 @@ public class RESTAdapter {
                     .openConnection();
             connection.setDoInput(true);
             connection.setRequestMethod(BitcasaRESTConstants.REQUEST_METHOD_GET);
-            bitcasaRESTUtility.setRequestHeaders(credential, connection, null);
+            this.bitcasaRESTUtility.setRequestHeaders(this.credential, connection, null);
 
-            BitcasaError error = bitcasaRESTUtility.checkRequestResponse(connection);
+            final BitcasaError error = this.bitcasaRESTUtility.checkRequestResponse(connection);
             if (error == null) {
                 inputStream = connection.getInputStream();
-                String response = bitcasaRESTUtility.getResponseFromInputStream(connection.getInputStream());
-                BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
+                final String response = this.bitcasaRESTUtility.getResponseFromInputStream(connection.getInputStream());
+                final BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
                 if (!bitcasaResponse.getResult().isJsonNull()) {
-                    ArrayList<JsonObject> results = new ArrayList<JsonObject>();
+                    final List<JsonObject> results = new ArrayList<JsonObject>();
                     for (int i = 0; i < bitcasaResponse.getResult().getAsJsonArray().size(); i++) {
                         results.add(bitcasaResponse.getResult().getAsJsonArray().get(i).getAsJsonObject());
                     }
 
-                    Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
-                    for (JsonObject result : results) {
-                        BaseAction action = gson.fromJson(result, BaseAction.class);
+                    final Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
+                    for (final JsonObject result : results) {
+                        final BaseAction action = gson.fromJson(result, BaseAction.class);
                         if (Arrays.asList(BitcasaRESTConstants.DEFAULT_ACTIONS).contains(action.getActionString().toLowerCase())) {
                             action.setData(new ActionData(new Gson().fromJson(result.get(BitcasaRESTConstants.ATTRIBUTE_DATA), ActionDataDefault.class)));
                         } else if (Arrays.asList(BitcasaRESTConstants.ALTER_ACTIONS).contains(action.getActionString().toLowerCase())) {
@@ -1791,9 +1906,17 @@ public class RESTAdapter {
                             bitcasaResponse.getError().getMessage());
                 }
             }
-        } catch (IOException ioe) {
+        } catch (final ProtocolException e) {
+            throw new BitcasaException(e);
+        } catch (final MalformedURLException e) {
+            throw new BitcasaException(e);
+        } catch (final IOException ioe) {
             throw new BitcasaException(ioe);
-        } catch (Exception e) {
+        } catch (final BitcasaException e) {
+            throw new BitcasaException(e);
+        } catch (final JsonSyntaxException e) {
+            throw new BitcasaException(e);
+        } catch (final RuntimeException e) {
             throw new BitcasaException(e);
         } finally {
             if (inputStream != null) {
@@ -1810,16 +1933,15 @@ public class RESTAdapter {
     /**
      * Lists the shares the user has created.
      *
-     * @return list of ShareItem
-     * @throws IOException      If a network error occurs
+     * @return List of shares associated with current account.
      * @throws BitcasaException If a CloudFS API error occurs.
      */
-    public Share[] listShare() throws IOException, BitcasaException {
-        ArrayList<Share> listShares = new ArrayList<Share>();
-        String url = bitcasaRESTUtility.getRequestUrl(credential,
+    public Share[] listShare() throws BitcasaException {
+        final ArrayList<Share> listShares = new ArrayList<Share>();
+        final String url = this.bitcasaRESTUtility.getRequestUrl(this.credential,
                 BitcasaRESTConstants.METHOD_SHARES, null, null);
 
-        Log.d(TAG, "listShare URL: " + url);
+        Log.d(RESTAdapter.TAG, "listShare URL: " + url);
         HttpsURLConnection connection = null;
 
         try {
@@ -1827,20 +1949,20 @@ public class RESTAdapter {
                     .openConnection();
             connection.setDoInput(true);
             connection.setRequestMethod(BitcasaRESTConstants.REQUEST_METHOD_GET);
-            bitcasaRESTUtility.setRequestHeaders(credential, connection, null);
+            this.bitcasaRESTUtility.setRequestHeaders(this.credential, connection, null);
 
-            BitcasaError error = bitcasaRESTUtility.checkRequestResponse(connection);
+            final BitcasaError error = this.bitcasaRESTUtility.checkRequestResponse(connection);
 
             if (error == null) {
-                String response = bitcasaRESTUtility.getResponseFromInputStream(connection.getInputStream());
-                BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
+                final String response = this.bitcasaRESTUtility.getResponseFromInputStream(connection.getInputStream());
+                final BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
 
                 if (!bitcasaResponse.getResult().isJsonNull()) {
-                    ShareItem[] shareItem = new Gson().fromJson(bitcasaResponse.getResult(),
+                    final ShareItem[] shareItem = new Gson().fromJson(bitcasaResponse.getResult(),
                             ShareItem[].class);
 
-                    for (ShareItem item : shareItem) {
-                        listShares.add(new Share(this, item, null));
+                    for (final ShareItem item : shareItem) {
+                        listShares.add(new Share(this.clone(), item, null));
                     }
 
                 } else {
@@ -1849,9 +1971,17 @@ public class RESTAdapter {
                 }
             }
 
-        } catch (IOException ioe) {
+        } catch (final ProtocolException e) {
+            throw new BitcasaException(e);
+        } catch (final MalformedURLException e) {
+            throw new BitcasaException(e);
+        } catch (final IOException ioe) {
             throw new BitcasaException(ioe);
-        } catch (Exception e) {
+        } catch (final BitcasaException e) {
+            throw new BitcasaException(e);
+        } catch (final JsonSyntaxException e) {
+            throw new BitcasaException(e);
+        } catch (final RuntimeException e) {
             throw new BitcasaException(e);
         } finally {
             if (connection != null) {
@@ -1865,25 +1995,21 @@ public class RESTAdapter {
     /**
      * Creates a share including the item in the path specified.
      *
-     * @param path     String file path
-     * @param password String password
-     * @return Share object created
+     * @param path     Path to the item to be shared.
+     * @param password Password to access the share to be created.
+     * @return The created share object.
      * @throws IOException      If a network error occurs
      * @throws BitcasaException If a CloudFS API error occurs.
      */
-    public Share createShare(String path, String password) throws IOException, BitcasaException {
-        if (stringParameterNotValid(path)) {
-            throw new IllegalArgumentException(MISSING_PARAM + "path");
+    public Share createShare(final String path, final String password) throws IOException, BitcasaException {
+        if (RESTAdapter.stringParameterNotValid(path)) {
+            throw new IllegalArgumentException(RESTAdapter.MISSING_PARAM + "path");
         }
-        Share share = null;
-        String url = bitcasaRESTUtility.getRequestUrl(credential,
+        final String url = this.bitcasaRESTUtility.getRequestUrl(this.credential,
                 BitcasaRESTConstants.METHOD_SHARES, null, null);
 
-        Log.d(TAG, "createShare URL: " + url);
-        HttpsURLConnection connection = null;
-        InputStream inputStream = null;
-        OutputStream outputStream = null;
-        TreeMap<String, String> formParams = new TreeMap<String, String>();
+        Log.d(RESTAdapter.TAG, "createShare URL: " + url);
+        final Map<String, String> formParams = new TreeMap<String, String>();
         formParams.put(BitcasaRESTConstants.BODY_PATH, URLEncoder.encode(path,
                 BitcasaRESTConstants.UTF_8_ENCODING));
         if (password != null) {
@@ -1891,41 +2017,53 @@ public class RESTAdapter {
                     BitcasaRESTConstants.UTF_8_ENCODING));
         }
 
+        OutputStream outputStream = null;
+        InputStream inputStream = null;
+        HttpsURLConnection connection = null;
+        Share share = null;
         try {
             connection = (HttpsURLConnection) new URL(url).openConnection();
             connection.setDoInput(true);
             connection.setDoOutput(true);
             connection.setRequestMethod(BitcasaRESTConstants.REQUEST_METHOD_POST);
-            connection.setReadTimeout(300000); // Constants
-            connection.setConnectTimeout(300000);
+            connection.setReadTimeout(BitcasaRESTConstants.CONNECTION_TIME_OUT);
+            connection.setConnectTimeout(BitcasaRESTConstants.CONNECTION_TIME_OUT);
             connection.setUseCaches(false);
-            bitcasaRESTUtility.setRequestHeaders(credential, connection, null);
-            String parameters = bitcasaRESTUtility.generateParamsString(formParams);
+            this.bitcasaRESTUtility.setRequestHeaders(this.credential, connection, null);
+            final String parameters = this.bitcasaRESTUtility.generateParamsString(formParams);
             if (parameters != null) {
                 outputStream = connection.getOutputStream();
-                Log.d(TAG, "POST string: " + parameters);
+                Log.d(RESTAdapter.TAG, "POST string: " + parameters);
                 outputStream.write(parameters.getBytes());
             }
 
-            BitcasaError error = bitcasaRESTUtility.checkRequestResponse(connection);
+            final BitcasaError error = this.bitcasaRESTUtility.checkRequestResponse(connection);
             if (error == null) {
                 inputStream = connection.getInputStream();
-                String response = bitcasaRESTUtility.getResponseFromInputStream(connection.getInputStream());
-                BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
+                final String response = this.bitcasaRESTUtility.getResponseFromInputStream(connection.getInputStream());
+                final BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
 
                 if (!bitcasaResponse.getResult().isJsonNull()) {
-                    ShareItem shareItem = new Gson().fromJson(bitcasaResponse.getResult(),
+                    final ShareItem shareItem = new Gson().fromJson(bitcasaResponse.getResult(),
                             ShareItem.class);
-                    share = new Share(this, shareItem, null);
+                    share = new Share(this.clone(), shareItem, null);
                 } else {
                     throw new BitcasaException(bitcasaResponse.getError().getCode(),
                             bitcasaResponse.getError().getMessage());
                 }
             }
 
-        } catch (IOException ioe) {
+        } catch (final ProtocolException e) {
+            throw new BitcasaException(e);
+        } catch (final MalformedURLException e) {
+            throw new BitcasaException(e);
+        } catch (final IOException ioe) {
             throw new BitcasaException(ioe);
-        } catch (Exception e) {
+        } catch (final BitcasaException e) {
+            throw new BitcasaException(e);
+        } catch (final JsonSyntaxException e) {
+            throw new BitcasaException(e);
+        } catch (final RuntimeException e) {
             throw new BitcasaException(e);
         } finally {
             if (inputStream != null) {
@@ -1941,35 +2079,128 @@ public class RESTAdapter {
         return share;
     }
 
-
     /**
-     * Given the sharekey and the path to any folder/file under share, browseShare method will
-     * return the item list for that share.
-     * Make sure unlockShare is called before browseShare
+     * Creates a share including the item in the path specified.
      *
-     * @param shareKey String share key of the share
-     * @param path     String file path
-     * @return Share object
+     * @param paths     Paths to the items to be shared.
+     * @param password Password to access the share to be created.
+     * @return The created share object.
      * @throws IOException      If a network error occurs
      * @throws BitcasaException If a CloudFS API error occurs.
      */
-    public Item[] browseShare(String shareKey, String path) throws IOException, BitcasaException {
-        if (stringParameterNotValid(shareKey)) {
-            throw new IllegalArgumentException(MISSING_PARAM + "shareKey");
+    public Share createShare(final String [] paths, final String password) throws IOException, BitcasaException {
+        if (paths.length == 0 || paths == null) {
+            throw new IllegalArgumentException(RESTAdapter.MISSING_PARAM + "path");
         }
-        SharedFolder sharedFolder = null;
-        ArrayList<Item> items = new ArrayList<Item>();
+        final String url = this.bitcasaRESTUtility.getRequestUrl(this.credential,
+                BitcasaRESTConstants.METHOD_SHARES, null, null);
 
-        StringBuilder sb = new StringBuilder();
+        Log.d(RESTAdapter.TAG, "createShare URL: " + url);
+        final Map<String, Object> formParams = new TreeMap<String, Object>();
+        String[] pathValue = new String[paths.length];
+        int count = 0;
+        for (String path : paths) {
+            pathValue[count] = URLEncoder.encode(path, BitcasaRESTConstants.UTF_8_ENCODING);
+            count++;
+
+        }
+
+        formParams.put(BitcasaRESTConstants.BODY_PATH, pathValue);
+
+        if (password != null) {
+            formParams.put(BitcasaRESTConstants.PARAM_PASSWORD, URLEncoder.encode(password,
+                    BitcasaRESTConstants.UTF_8_ENCODING));
+        }
+
+        OutputStream outputStream = null;
+        InputStream inputStream = null;
+        HttpsURLConnection connection = null;
+        Share share = null;
+        try {
+            connection = (HttpsURLConnection) new URL(url).openConnection();
+            connection.setDoInput(true);
+            connection.setDoOutput(true);
+            connection.setRequestMethod(BitcasaRESTConstants.REQUEST_METHOD_POST);
+            connection.setReadTimeout(BitcasaRESTConstants.CONNECTION_TIME_OUT);
+            connection.setConnectTimeout(BitcasaRESTConstants.CONNECTION_TIME_OUT);
+            connection.setUseCaches(false);
+            this.bitcasaRESTUtility.setRequestHeaders(this.credential, connection, null);
+            final String parameters = this.bitcasaRESTUtility.generateParamsString(formParams);
+            if (parameters != null) {
+                outputStream = connection.getOutputStream();
+                Log.d(RESTAdapter.TAG, "POST string: " + parameters);
+                outputStream.write(parameters.getBytes());
+            }
+
+            final BitcasaError error = this.bitcasaRESTUtility.checkRequestResponse(connection);
+            if (error == null) {
+                inputStream = connection.getInputStream();
+                final String response = this.bitcasaRESTUtility.getResponseFromInputStream(connection.getInputStream());
+                final BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
+
+                if (!bitcasaResponse.getResult().isJsonNull()) {
+                    final ShareItem shareItem = new Gson().fromJson(bitcasaResponse.getResult(),
+                            ShareItem.class);
+                    share = new Share(this.clone(), shareItem, null);
+                } else {
+                    throw new BitcasaException(bitcasaResponse.getError().getCode(),
+                            bitcasaResponse.getError().getMessage());
+                }
+            }
+
+        } catch (final ProtocolException e) {
+            throw new BitcasaException(e);
+        } catch (final MalformedURLException e) {
+            throw new BitcasaException(e);
+        } catch (final IOException ioe) {
+            throw new BitcasaException(ioe);
+        } catch (final BitcasaException e) {
+            throw new BitcasaException(e);
+        } catch (final JsonSyntaxException e) {
+            throw new BitcasaException(e);
+        } catch (final RuntimeException e) {
+            throw new BitcasaException(e);
+        } finally {
+            if (inputStream != null) {
+                inputStream.close();
+            }
+            if (outputStream != null) {
+                outputStream.close();
+            }
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+        return share;
+    }
+
+    /**
+     * Given the shareKey and the path to any folder/file under share, browseShare method will
+     * return the item list for that share.
+     * Make sure unlockShare is called before browseShare
+     *
+     * @param shareKey The shareKey of the share to be browsed.
+     * @param path     Path to be browsed.
+     * @return Items list found at given share path.
+     * @throws IOException      If a network error occurs
+     * @throws BitcasaException If a CloudFS API error occurs.
+     */
+    public Item[] browseShare(final String shareKey, final String path) throws IOException, BitcasaException {
+        if (RESTAdapter.stringParameterNotValid(shareKey)) {
+            throw new IllegalArgumentException(RESTAdapter.MISSING_PARAM + "shareKey");
+        }
+        final ArrayList<Item> items = new ArrayList<Item>();
+
+        final StringBuilder sb = new StringBuilder();
         sb.append(shareKey);
         if (path != null) {
             sb.append(path);
         }
         sb.append(BitcasaRESTConstants.METHOD_META);
-        String url = bitcasaRESTUtility.getRequestUrl(credential,
+        final String url = this.bitcasaRESTUtility.getRequestUrl(this.credential,
                 BitcasaRESTConstants.METHOD_SHARES, sb.toString(), null);
 
-        Log.d(TAG, "browseShare URL: " + url);
+        Log.d(RESTAdapter.TAG, "browseShare URL: " + url);
         HttpsURLConnection connection = null;
         InputStream inputStream = null;
 
@@ -1978,22 +2209,22 @@ public class RESTAdapter {
                     .openConnection();
             connection.setDoInput(true);
             connection.setRequestMethod(BitcasaRESTConstants.REQUEST_METHOD_GET);
-            bitcasaRESTUtility.setRequestHeaders(credential, connection, null);
+            this.bitcasaRESTUtility.setRequestHeaders(this.credential, connection, null);
 
-            BitcasaError error = bitcasaRESTUtility.checkRequestResponse(connection);
+            final BitcasaError error = this.bitcasaRESTUtility.checkRequestResponse(connection);
             if (error == null) {
                 inputStream = connection.getInputStream();
-                String response = bitcasaRESTUtility.getResponseFromInputStream(inputStream);
-                BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
+                final String response = this.bitcasaRESTUtility.getResponseFromInputStream(inputStream);
+                final BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
 
                 if (!bitcasaResponse.getResult().isJsonNull()) {
-                    sharedFolder = new Gson().fromJson(bitcasaResponse.getResult(), SharedFolder.class);
+                    final SharedFolder sharedFolder = new Gson().fromJson(bitcasaResponse.getResult(), SharedFolder.class);
 
-                    for (ItemMeta meta : sharedFolder.getItems()) {
+                    for (final ItemMeta meta : sharedFolder.getItems()) {
                         if (meta.isFolder()) {
-                            items.add(new Folder(this, meta, null));
+                            items.add(new Folder(this.clone(), meta, null, BitcasaRESTConstants.ITEM_STATE_SHARE, shareKey));
                         } else {
-                            items.add(new com.bitcasa.cloudfs.File(this, meta, null));
+                            items.add(new com.bitcasa.cloudfs.File(this.clone(), meta, null, BitcasaRESTConstants.ITEM_STATE_SHARE, shareKey));
                         }
                     }
                 } else {
@@ -2001,9 +2232,17 @@ public class RESTAdapter {
                             bitcasaResponse.getError().getMessage());
                 }
             }
-        } catch (IOException ioe) {
+        } catch (final ProtocolException e) {
+            throw new BitcasaException(e);
+        } catch (final MalformedURLException e) {
+            throw new BitcasaException(e);
+        } catch (final IOException ioe) {
             throw new BitcasaException(ioe);
-        } catch (Exception e) {
+        } catch (final BitcasaException e) {
+            throw new BitcasaException(e);
+        } catch (final JsonSyntaxException e) {
+            throw new BitcasaException(e);
+        } catch (final RuntimeException e) {
             throw new BitcasaException(e);
         } finally {
             if (inputStream != null) {
@@ -2018,32 +2257,28 @@ public class RESTAdapter {
 
     /**
      * Given a valid location in a user's fileSystem, all items found in this share specified by
-     * the sharekey will be inserted into the given location.
+     * the shareKey will be inserted into the given location.
      * File collisions will be handled with the exist action specified.
      *
-     * @param shareKey          String share key of the share
-     * @param pathToInsertShare String path to insert share
-     * @param exists            Exists enum
-     * @return An array of container object
+     * @param shareKey          The shareKey of the share to be received.
+     * @param pathToInsertShare Path to save the received files and folders.
+     * @param exists            The action to perform if the version exists at the destination.
+     * @return An array of item objects received from share.
      * @throws IOException      If a network error occurs
      * @throws BitcasaException If a CloudFS API error occurs.
      */
-    public Item[] receiveShare(String shareKey, String pathToInsertShare,
-                               BitcasaRESTConstants.Exists exists)
+    public Item[] receiveShare(final String shareKey, final String pathToInsertShare,
+                               final BitcasaRESTConstants.Exists exists)
             throws IOException, BitcasaException {
-        if (stringParameterNotValid(shareKey)) {
-            throw new IllegalArgumentException(MISSING_PARAM + "shareKey");
+        if (RESTAdapter.stringParameterNotValid(shareKey)) {
+            throw new IllegalArgumentException(RESTAdapter.MISSING_PARAM + "shareKey");
         }
-        SharedFolder sharedFolder = null;
-        ArrayList<Item> items = new ArrayList<Item>();
-        String url = bitcasaRESTUtility.getRequestUrl(credential,
+        final ArrayList<Item> items = new ArrayList<Item>();
+        final String url = this.bitcasaRESTUtility.getRequestUrl(this.credential,
                 BitcasaRESTConstants.METHOD_SHARES, shareKey + File.separator, null);
 
-        Log.d(TAG, "receiveShare URL: " + url);
-        HttpsURLConnection connection = null;
-        InputStream inputStream = null;
-        OutputStream outputStream = null;
-        TreeMap<String, String> formParams = new TreeMap<String, String>();
+        Log.d(RESTAdapter.TAG, "receiveShare URL: " + url);
+        final Map<String, String> formParams = new TreeMap<String, String>();
         formParams.put(BitcasaRESTConstants.BODY_PATH, URLEncoder.encode(pathToInsertShare,
                 BitcasaRESTConstants.UTF_8_ENCODING));
         if (exists != null) {
@@ -2059,6 +2294,7 @@ public class RESTAdapter {
                 case REUSE:
                     formParams.put(BitcasaRESTConstants.BODY_EXISTS,
                             BitcasaRESTConstants.EXISTS_REUSE);
+                    break;
                 case RENAME:
                 default:
                     formParams.put(BitcasaRESTConstants.BODY_EXISTS,
@@ -2067,37 +2303,40 @@ public class RESTAdapter {
             }
         }
 
+        OutputStream outputStream = null;
+        InputStream inputStream = null;
+        HttpsURLConnection connection = null;
         try {
             connection = (HttpsURLConnection) new URL(url)
                     .openConnection();
             connection.setDoInput(true);
             connection.setDoOutput(true);
             connection.setRequestMethod(BitcasaRESTConstants.REQUEST_METHOD_POST);
-            connection.setReadTimeout(300000);
-            connection.setConnectTimeout(300000);
+            connection.setReadTimeout(BitcasaRESTConstants.CONNECTION_TIME_OUT);
+            connection.setConnectTimeout(BitcasaRESTConstants.CONNECTION_TIME_OUT);
             connection.setUseCaches(false);
-            bitcasaRESTUtility.setRequestHeaders(credential, connection, null);
-            String parameters = bitcasaRESTUtility.generateParamsString(formParams);
+            this.bitcasaRESTUtility.setRequestHeaders(this.credential, connection, null);
+            final String parameters = this.bitcasaRESTUtility.generateParamsString(formParams);
             if (parameters != null) {
                 outputStream = connection.getOutputStream();
-                Log.d(TAG, "POST string: " + parameters);
+                Log.d(RESTAdapter.TAG, "POST string: " + parameters);
                 outputStream.write(parameters.getBytes());
             }
 
-            BitcasaError error = bitcasaRESTUtility.checkRequestResponse(connection);
+            final BitcasaError error = this.bitcasaRESTUtility.checkRequestResponse(connection);
             if (error == null) {
                 inputStream = connection.getInputStream();
-                String response = bitcasaRESTUtility.getResponseFromInputStream(inputStream);
-                BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
+                final String response = this.bitcasaRESTUtility.getResponseFromInputStream(inputStream);
+                final BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
 
                 if (!bitcasaResponse.getResult().isJsonNull()) {
-                    sharedFolder = new Gson().fromJson(bitcasaResponse.getResult(), SharedFolder.class);
+                    final ItemMeta[] sharedItems = new Gson().fromJson(bitcasaResponse.getResult(), ItemMeta[].class);
 
-                    for (ItemMeta meta : sharedFolder.getItems()) {
+                    for (final ItemMeta meta : sharedItems) {
                         if (meta.isFolder()) {
-                            items.add(new Folder(this, meta, pathToInsertShare));
+                            items.add(new Folder(this.clone(), meta, pathToInsertShare, BitcasaRESTConstants.ITEM_STATE_NORMAL, null));
                         } else {
-                            items.add(new com.bitcasa.cloudfs.File(this, meta, pathToInsertShare));
+                            items.add(new com.bitcasa.cloudfs.File(this.clone(), meta, pathToInsertShare, BitcasaRESTConstants.ITEM_STATE_NORMAL, null));
                         }
                     }
                 } else {
@@ -2105,9 +2344,17 @@ public class RESTAdapter {
                             bitcasaResponse.getError().getMessage());
                 }
             }
-        } catch (IOException ioe) {
+        } catch (final ProtocolException e) {
+            throw new BitcasaException(e);
+        } catch (final MalformedURLException e) {
+            throw new BitcasaException(e);
+        } catch (final IOException ioe) {
             throw new BitcasaException(ioe);
-        } catch (Exception e) {
+        } catch (final BitcasaException e) {
+            throw new BitcasaException(e);
+        } catch (final JsonSyntaxException e) {
+            throw new BitcasaException(e);
+        } catch (final RuntimeException e) {
             throw new BitcasaException(e);
         } finally {
             if (inputStream != null) {
@@ -2124,54 +2371,54 @@ public class RESTAdapter {
     }
 
     /**
-     * Given a valid share and its password, this entrypoint will unlock the share for the login
+     * Given a valid share and its password, this entry point will unlock the share for the login
      * session.
      *
-     * @param shareKey String share key of the share
-     * @param password String password
-     * @return boolean of whether the share was unlocked or not
-     * @throws IOException      If a network error occurs
+     * @param shareKey The shareKey of the share need to be unlocked.
+     * @param password Password associated with the share need to be unlocked.
+     * @return Returns true if the share is unlocked successfully, otherwise false.
+     * @throws IOException      If a network error occurs.
      * @throws BitcasaException If a CloudFS API error occurs.
      */
-    public boolean unlockShare(String shareKey, String password)
+    public boolean unlockShare(final String shareKey, final String password)
             throws IOException, BitcasaException {
-        boolean booleanResult = false;
 
-        String sb = shareKey + BitcasaRESTConstants.METHOD_UNLOCK;
-        String url = bitcasaRESTUtility.getRequestUrl(credential,
+        final String sb = shareKey + BitcasaRESTConstants.METHOD_UNLOCK;
+        final String url = this.bitcasaRESTUtility.getRequestUrl(this.credential,
                 BitcasaRESTConstants.METHOD_SHARES, sb, null);
 
 
-        Log.d(TAG, "unlockShare URL: " + url);
-        HttpsURLConnection connection = null;
-        InputStream inputStream = null;
-        OutputStream outputStream = null;
-        TreeMap<String, String> formParams = new TreeMap<String, String>();
+        Log.d(RESTAdapter.TAG, "unlockShare URL: " + url);
+        final Map<String, String> formParams = new TreeMap<String, String>();
         formParams.put(BitcasaRESTConstants.PARAM_PASSWORD, URLEncoder.encode(password,
                 BitcasaRESTConstants.UTF_8_ENCODING));
 
+        OutputStream outputStream = null;
+        InputStream inputStream = null;
+        HttpsURLConnection connection = null;
+        boolean booleanResult = false;
         try {
             connection = (HttpsURLConnection) new URL(url)
                     .openConnection();
             connection.setDoInput(true);
             connection.setDoOutput(true);
             connection.setRequestMethod(BitcasaRESTConstants.REQUEST_METHOD_POST);
-            connection.setReadTimeout(300000);
-            connection.setConnectTimeout(300000);
+            connection.setReadTimeout(BitcasaRESTConstants.CONNECTION_TIME_OUT);
+            connection.setConnectTimeout(BitcasaRESTConstants.CONNECTION_TIME_OUT);
             connection.setUseCaches(false);
-            bitcasaRESTUtility.setRequestHeaders(credential, connection, null);
-            String parameters = bitcasaRESTUtility.generateParamsString(formParams);
+            this.bitcasaRESTUtility.setRequestHeaders(this.credential, connection, null);
+            final String parameters = this.bitcasaRESTUtility.generateParamsString(formParams);
             if (parameters != null) {
                 outputStream = connection.getOutputStream();
-                Log.d(TAG, "POST string: " + parameters);
+                Log.d(RESTAdapter.TAG, "POST string: " + parameters);
                 outputStream.write(parameters.getBytes());
             }
 
-            BitcasaError error = bitcasaRESTUtility.checkRequestResponse(connection);
+            final BitcasaError error = this.bitcasaRESTUtility.checkRequestResponse(connection);
             if (error == null) {
                 inputStream = connection.getInputStream();
-                String response = bitcasaRESTUtility.getResponseFromInputStream(connection.getInputStream());
-                BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
+                final String response = this.bitcasaRESTUtility.getResponseFromInputStream(connection.getInputStream());
+                final BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
 
                 if (!bitcasaResponse.getResult().isJsonNull()) {
                     booleanResult = true;
@@ -2181,9 +2428,17 @@ public class RESTAdapter {
                 }
             }
 
-        } catch (IOException ioe) {
+        } catch (final ProtocolException e) {
+            throw new BitcasaException(e);
+        } catch (final MalformedURLException e) {
+            throw new BitcasaException(e);
+        } catch (final IOException ioe) {
             throw new BitcasaException(ioe);
-        } catch (Exception e) {
+        } catch (final BitcasaException e) {
+            throw new BitcasaException(e);
+        } catch (final JsonSyntaxException e) {
+            throw new BitcasaException(e);
+        } catch (final RuntimeException e) {
             throw new BitcasaException(e);
         } finally {
             if (inputStream != null) {
@@ -2200,69 +2455,77 @@ public class RESTAdapter {
     }
 
     /**
-     * Alter Share Info
+     * Alter the share information associated with the given shareKey.
      *
-     * @param shareKey        String share key of the share
-     * @param currentPassword The current password of the share
-     * @param newPassword     The new password of the share
-     * @return Share object of the altered share info
-     * @throws IOException      If a network error occurs
+     * @param shareKey        The shareKey of the share which needs to be altered.
+     * @param currentPassword Password associated with the share which needs to be altered.
+     * @param newPassword     New password to be set to the current share.
+     * @return Share object with altered share info.
+     * @throws IOException      If a network error occurs.
      * @throws BitcasaException If a CloudFS API error occurs.
      */
-    public Share alterShareInfo(String shareKey, String currentPassword, String newPassword)
+    public Share alterShareInfo(final String shareKey, final String currentPassword, final String newPassword)
             throws IOException, BitcasaException {
-        Share share = null;
 
-        String sb = shareKey + BitcasaRESTConstants.METHOD_INFO;
-        String url = bitcasaRESTUtility.getRequestUrl(credential,
+        final String sb = shareKey + BitcasaRESTConstants.METHOD_INFO;
+        final String url = this.bitcasaRESTUtility.getRequestUrl(this.credential,
                 BitcasaRESTConstants.METHOD_SHARES, sb, null);
 
-        Log.d(TAG, "alterShareInfo URL: " + url);
-        HttpsURLConnection connection = null;
-        InputStream inputStream = null;
-        OutputStream outputStream = null;
-        TreeMap<String, String> formParams = new TreeMap<String, String>();
+        Log.d(RESTAdapter.TAG, "alterShareInfo URL: " + url);
+        final Map<String, String> formParams = new TreeMap<String, String>();
         formParams.put(BitcasaRESTConstants.PARAM_CURRENT_PASSWORD,
                 URLEncoder.encode(currentPassword, BitcasaRESTConstants.UTF_8_ENCODING));
         formParams.put(BitcasaRESTConstants.PARAM_PASSWORD, URLEncoder.encode(newPassword,
                 BitcasaRESTConstants.UTF_8_ENCODING));
 
+        OutputStream outputStream = null;
+        InputStream inputStream = null;
+        HttpsURLConnection connection = null;
+        Share share = null;
         try {
             connection = (HttpsURLConnection) new URL(url)
                     .openConnection();
             connection.setDoInput(true);
             connection.setDoOutput(true);
             connection.setRequestMethod(BitcasaRESTConstants.REQUEST_METHOD_POST);
-            connection.setReadTimeout(300000);
-            connection.setConnectTimeout(300000);
+            connection.setReadTimeout(BitcasaRESTConstants.CONNECTION_TIME_OUT);
+            connection.setConnectTimeout(BitcasaRESTConstants.CONNECTION_TIME_OUT);
             connection.setUseCaches(false);
-            bitcasaRESTUtility.setRequestHeaders(credential, connection, null);
-            String parameters = bitcasaRESTUtility.generateParamsString(formParams);
+            this.bitcasaRESTUtility.setRequestHeaders(this.credential, connection, null);
+            final String parameters = this.bitcasaRESTUtility.generateParamsString(formParams);
             if (parameters != null) {
                 outputStream = connection.getOutputStream();
-                Log.d(TAG, "POST string: " + parameters);
+                Log.d(RESTAdapter.TAG, "POST string: " + parameters);
                 outputStream.write(parameters.getBytes());
             }
 
-            BitcasaError error = bitcasaRESTUtility.checkRequestResponse(connection);
+            final BitcasaError error = this.bitcasaRESTUtility.checkRequestResponse(connection);
             if (error == null) {
                 inputStream = connection.getInputStream();
-                String response = bitcasaRESTUtility.getResponseFromInputStream(inputStream);
-                BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
+                final String response = this.bitcasaRESTUtility.getResponseFromInputStream(inputStream);
+                final BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
 
                 if (!bitcasaResponse.getResult().isJsonNull()) {
-                    ShareItem shareItem = new Gson().fromJson(bitcasaResponse.getResult(),
+                    final ShareItem shareItem = new Gson().fromJson(bitcasaResponse.getResult(),
                             ShareItem.class);
-                    share = new Share(this, shareItem, null);
+                    share = new Share(this.clone(), shareItem, null);
                 } else {
                     throw new BitcasaException(bitcasaResponse.getError().getCode(),
                             bitcasaResponse.getError().getMessage());
                 }
             }
 
-        } catch (IOException ioe) {
+        } catch (final ProtocolException e) {
+            throw new BitcasaException(e);
+        } catch (final MalformedURLException e) {
+            throw new BitcasaException(e);
+        } catch (final IOException ioe) {
             throw new BitcasaException(ioe);
-        } catch (Exception e) {
+        } catch (final BitcasaException e) {
+            throw new BitcasaException(e);
+        } catch (final JsonSyntaxException e) {
+            throw new BitcasaException(e);
+        } catch (final RuntimeException e) {
             throw new BitcasaException(e);
         } finally {
             if (inputStream != null) {
@@ -2279,70 +2542,78 @@ public class RESTAdapter {
     }
 
     /**
-     * Alters the Shares attributes.
+     * Alter the share attributes associated with the given shareKey.
      *
-     * @param shareKey        The share key of the specified share.
-     * @param changes         The changes to be updated.
-     * @param currentPassword The current password of the share.
-     * @return Share object of the altered share
-     * @throws IOException      If a network error occurs
+     * @param shareKey        The shareKey of the share to be altered.
+     * @param changes         The changes to be updated to the share associated with given shareKey.
+     * @param currentPassword Password associated with the share which needs to be altered.
+     * @return Share object with altered share attributes.
+     * @throws IOException      If a network error occurs.
      * @throws BitcasaException If a CloudFS API error occurs.
      */
-    public Share alterShare(String shareKey, Map<String, String> changes, String currentPassword)
+    public Share alterShare(final String shareKey, final Map<String, String> changes, final String currentPassword)
             throws IOException, BitcasaException {
-        if (objectParameterNotValid(changes)) {
-            throw new IllegalArgumentException(MISSING_PARAM + "changes");
+        if (RESTAdapter.objectParameterNotValid(changes)) {
+            throw new IllegalArgumentException(RESTAdapter.MISSING_PARAM + "changes");
         }
-        Share share = null;
 
-        String sb = shareKey + BitcasaRESTConstants.METHOD_INFO;
-        String url = bitcasaRESTUtility.getRequestUrl(credential,
+        final String sb = shareKey + BitcasaRESTConstants.METHOD_INFO;
+        final String url = this.bitcasaRESTUtility.getRequestUrl(this.credential,
                 BitcasaRESTConstants.METHOD_SHARES, sb, null);
 
-        Log.d(TAG, "alterShare URL: " + url);
-        HttpsURLConnection connection = null;
-        InputStream inputStream = null;
-        OutputStream outputStream = null;
-        TreeMap<String, String> formParams = new TreeMap<String, String>();
+        Log.d(RESTAdapter.TAG, "alterShare URL: " + url);
+        final Map<String, String> formParams = new TreeMap<String, String>();
         formParams.put(BitcasaRESTConstants.PARAM_CURRENT_PASSWORD,
                 URLEncoder.encode(currentPassword, BitcasaRESTConstants.UTF_8_ENCODING));
         formParams.putAll(changes);
+        OutputStream outputStream = null;
+        InputStream inputStream = null;
+        HttpsURLConnection connection = null;
+        Share share = null;
         try {
             connection = (HttpsURLConnection) new URL(url)
                     .openConnection();
             connection.setDoInput(true);
             connection.setDoOutput(true);
             connection.setRequestMethod(BitcasaRESTConstants.REQUEST_METHOD_POST);
-            connection.setReadTimeout(300000);
-            connection.setConnectTimeout(300000);
+            connection.setReadTimeout(BitcasaRESTConstants.CONNECTION_TIME_OUT);
+            connection.setConnectTimeout(BitcasaRESTConstants.CONNECTION_TIME_OUT);
             connection.setUseCaches(false);
-            bitcasaRESTUtility.setRequestHeaders(credential, connection, null);
-            String parameters = bitcasaRESTUtility.generateParamsString(formParams);
+            this.bitcasaRESTUtility.setRequestHeaders(this.credential, connection, null);
+            final String parameters = this.bitcasaRESTUtility.generateParamsString(formParams);
             if (parameters != null) {
                 outputStream = connection.getOutputStream();
-                Log.d(TAG, "POST string: " + parameters);
+                Log.d(RESTAdapter.TAG, "POST string: " + parameters);
                 outputStream.write(parameters.getBytes());
             }
 
-            BitcasaError error = bitcasaRESTUtility.checkRequestResponse(connection);
+            final BitcasaError error = this.bitcasaRESTUtility.checkRequestResponse(connection);
             if (error == null) {
                 inputStream = connection.getInputStream();
-                String response = bitcasaRESTUtility.getResponseFromInputStream(inputStream);
-                BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
+                final String response = this.bitcasaRESTUtility.getResponseFromInputStream(inputStream);
+                final BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
 
                 if (!bitcasaResponse.getResult().isJsonNull()) {
-                    ShareItem shareItem = new Gson().fromJson(bitcasaResponse.getResult(),
+                    final ShareItem shareItem = new Gson().fromJson(bitcasaResponse.getResult(),
                             ShareItem.class);
-                    share = new Share(this, shareItem, null);
+                    share = new Share(this.clone(), shareItem, null);
                 } else {
                     throw new BitcasaException(bitcasaResponse.getError().getCode(),
                             bitcasaResponse.getError().getMessage());
                 }
             }
 
-        } catch (IOException ioe) {
+        } catch (final ProtocolException e) {
+            throw new BitcasaException(e);
+        } catch (final MalformedURLException e) {
+            throw new BitcasaException(e);
+        } catch (final IOException ioe) {
             throw new BitcasaException(ioe);
-        } catch (Exception e) {
+        } catch (final BitcasaException e) {
+            throw new BitcasaException(e);
+        } catch (final JsonSyntaxException e) {
+            throw new BitcasaException(e);
+        } catch (final RuntimeException e) {
             throw new BitcasaException(e);
         } finally {
             if (inputStream != null) {
@@ -2359,35 +2630,39 @@ public class RESTAdapter {
     }
 
     /**
-     * Delete Share
+     * Delete the share associated with given shareKey.
      *
-     * @param shareKey String share key of the share
-     * @return Boolean if the share was deleted or not
+     * @param shareKey The shareKey of the share which needs to be deleted.
+     * @return Returns true if the share is deleted successfully, otherwise false.
      * @throws BitcasaException If a CloudFS API error occurs.
      */
-    public boolean deleteShare(String shareKey) throws BitcasaException {
-        boolean booleanResult = false;
+    public boolean deleteShare(final String shareKey) throws BitcasaException {
 
-        String sb = shareKey + File.separator;
-        String url = bitcasaRESTUtility.getRequestUrl(credential,
+        final String sb = shareKey + File.separator;
+        final String url = this.bitcasaRESTUtility.getRequestUrl(this.credential,
                 BitcasaRESTConstants.METHOD_SHARES, sb, null);
 
-        Log.d(TAG, "deleteShare URL: " + url);
+        Log.d(RESTAdapter.TAG, "deleteShare URL: " + url);
         HttpsURLConnection connection = null;
+        boolean booleanResult = false;
         try {
             connection = (HttpsURLConnection) new URL(url)
                     .openConnection();
             connection.setRequestMethod(BitcasaRESTConstants.REQUEST_METHOD_DELETE);
-            bitcasaRESTUtility.setRequestHeaders(credential, connection, null);
+            this.bitcasaRESTUtility.setRequestHeaders(this.credential, connection, null);
 
-            BitcasaError error = bitcasaRESTUtility.checkRequestResponse(connection);
+            final BitcasaError error = this.bitcasaRESTUtility.checkRequestResponse(connection);
             if (error == null) {
                 booleanResult = true;
             }
 
-        } catch (IOException ioe) {
+        } catch (final ProtocolException e) {
+            throw new BitcasaException(e);
+        } catch (final MalformedURLException e) {
+            throw new BitcasaException(e);
+        } catch (final IOException ioe) {
             throw new BitcasaException(ioe);
-        } catch (Exception e) {
+        } catch (final RuntimeException e) {
             throw new BitcasaException(e);
         } finally {
             if (connection != null) {
@@ -2401,18 +2676,17 @@ public class RESTAdapter {
     //region Trash Operations
 
     /**
-     * Browse Trash
+     * Browse the trash associated with current account.
      *
-     * @return An array of item objects
-     * @throws IOException      If a network error occurs
+     * @return An array of trash item objects found.
      * @throws BitcasaException If a CloudFS API error occurs.
      */
-    public Item[] browseTrash() throws IOException, BitcasaException {
-        ArrayList<Item> trash = new ArrayList<Item>();
-        String url = bitcasaRESTUtility.getRequestUrl(credential,
-                BitcasaRESTConstants.METHOD_TRASH, null, null);
+    public Item[] browseTrash(String path) throws BitcasaException {
+        final ArrayList<Item> trash = new ArrayList<Item>();
+        final String url = this.bitcasaRESTUtility.getRequestUrl(this.credential,
+                BitcasaRESTConstants.METHOD_TRASH, path, null);
 
-        Log.d(TAG, "browseTrash URL: " + url);
+        Log.d(RESTAdapter.TAG, "browseTrash URL: " + url);
         HttpsURLConnection connection = null;
 
         try {
@@ -2420,21 +2694,21 @@ public class RESTAdapter {
                     .openConnection();
             connection.setDoInput(true);
             connection.setRequestMethod(BitcasaRESTConstants.REQUEST_METHOD_GET);
-            bitcasaRESTUtility.setRequestHeaders(credential, connection, null);
-            BitcasaError error = bitcasaRESTUtility.checkRequestResponse(connection);
+            this.bitcasaRESTUtility.setRequestHeaders(this.credential, connection, null);
+            final BitcasaError error = this.bitcasaRESTUtility.checkRequestResponse(connection);
 
             if (error == null) {
-                String response = bitcasaRESTUtility.getResponseFromInputStream(connection.getInputStream());
-                BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
+                final String response = this.bitcasaRESTUtility.getResponseFromInputStream(connection.getInputStream());
+                final BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
                 if (!bitcasaResponse.getResult().isJsonNull()) {
-                    ItemList itemList = new Gson().fromJson(bitcasaResponse.getResult(),
+                    final ItemList itemList = new Gson().fromJson(bitcasaResponse.getResult(),
                             ItemList.class);
 
-                    for (ItemMeta meta : itemList.getItems()) {
+                    for (final ItemMeta meta : itemList.getItems()) {
                         if (meta.isFolder()) {
-                            trash.add(new Folder(this, meta, null));
+                            trash.add(new Folder(this.clone(), meta, null, BitcasaRESTConstants.ITEM_STATE_TRASH, null));
                         } else {
-                            trash.add(new com.bitcasa.cloudfs.File(this, meta, null));
+                            trash.add(new com.bitcasa.cloudfs.File(this.clone(), meta, null, BitcasaRESTConstants.ITEM_STATE_TRASH, null));
                         }
                     }
 
@@ -2445,9 +2719,17 @@ public class RESTAdapter {
             }
 
 
-        } catch (IOException ioe) {
+        } catch (final MalformedURLException e) {
+            throw new BitcasaException(e);
+        } catch (final ProtocolException e) {
+            throw new BitcasaException(e);
+        } catch (final IOException ioe) {
             throw new BitcasaException(ioe);
-        } catch (Exception e) {
+        } catch (final BitcasaException e) {
+            throw new BitcasaException(e);
+        } catch (final JsonSyntaxException e) {
+            throw new BitcasaException(e);
+        } catch (final RuntimeException e) {
             throw new BitcasaException(e);
         } finally {
             if (connection != null) {
@@ -2461,32 +2743,29 @@ public class RESTAdapter {
     /**
      * Recover Trash Item
      *
-     * @param path                 String file path
-     * @param restoreMethod        RestoreMethod enum
-     * @param rescueOrRecreatePath String path to rescue or recreate file
-     * @return Boolean whether the item was recovered from trash or not
-     * @throws UnsupportedEncodingException If encoding not supported
+     * @param trashItemId          Item id to be recovered from trash.
+     * @param restoreMethod        RestoreMethod to be used on the recover process.
+     * @param rescueOrRecreatePath Path to rescue or recreate the item to.
+     * @return Returns true if the item is recovered successfully, otherwise false.
+     * @throws UnsupportedEncodingException If encoding not supported.
      * @throws BitcasaException             If a CloudFS API error occurs.
      */
-    public boolean recoverTrashItem(String path, BitcasaRESTConstants.RestoreMethod restoreMethod,
-                                    String rescueOrRecreatePath) throws
+    public boolean recoverTrashItem(final String trashItemId, final BitcasaRESTConstants.RestoreMethod restoreMethod,
+                                    final String rescueOrRecreatePath) throws
             UnsupportedEncodingException, BitcasaException {
-        if (stringParameterNotValid(path)) {
-            throw new IllegalArgumentException(MISSING_PARAM + "path");
+        if (RESTAdapter.stringParameterNotValid(trashItemId)) {
+            throw new IllegalArgumentException(RESTAdapter.MISSING_PARAM + "path");
         }
-        boolean booleanResult = false;
-        StringBuilder sb = new StringBuilder();
-        if (path.startsWith(File.separator)) {
-            sb.append(path.substring(1));
+        final StringBuilder sb = new StringBuilder();
+        if (trashItemId.startsWith(File.separator)) {
+            sb.append(trashItemId.substring(1));
         } else {
-            sb.append(path);
+            sb.append(trashItemId);
         }
-        String url = bitcasaRESTUtility.getRequestUrl(credential, BitcasaRESTConstants.METHOD_TRASH,
+        final String url = this.bitcasaRESTUtility.getRequestUrl(this.credential, BitcasaRESTConstants.METHOD_TRASH,
                 sb.toString(), null);
 
-        TreeMap<String, String> formParams;
-
-        formParams = new TreeMap<String, String>();
+        final Map<String, String> formParams = new TreeMap<String, String>();
         switch (restoreMethod) {
             case FAIL:
                 formParams.put(BitcasaRESTConstants.BODY_RESTORE,
@@ -2509,29 +2788,33 @@ public class RESTAdapter {
         }
 
 
-        Log.d(TAG, "recoverTrashItem URL: " + url);
+        Log.d(RESTAdapter.TAG, "recoverTrashItem URL: " + url);
         HttpsURLConnection connection = null;
-        OutputStream outputStream;
+        boolean booleanResult = false;
         try {
             connection = (HttpsURLConnection) new URL(url)
                     .openConnection();
             connection.setRequestMethod(BitcasaRESTConstants.REQUEST_METHOD_POST);
-            bitcasaRESTUtility.setRequestHeaders(credential, connection, null);
+            this.bitcasaRESTUtility.setRequestHeaders(this.credential, connection, null);
             connection.setDoOutput(true);
-            outputStream = connection.getOutputStream();
+            final OutputStream outputStream = connection.getOutputStream();
 
-            String body = bitcasaRESTUtility.generateParamsString(formParams);
+            final String body = this.bitcasaRESTUtility.generateParamsString(formParams);
             Log.d("recoverTrashItem", "formParams: " + body);
             outputStream.write(body.getBytes());
 
-            BitcasaError error = bitcasaRESTUtility.checkRequestResponse(connection);
+            final BitcasaError error = this.bitcasaRESTUtility.checkRequestResponse(connection);
             if (error == null) {
                 booleanResult = true;
             }
 
-        } catch (IOException ioe) {
+        } catch (final ProtocolException e) {
+            throw new BitcasaException(e);
+        } catch (final MalformedURLException e) {
+            throw new BitcasaException(e);
+        } catch (final IOException ioe) {
             throw new BitcasaException(ioe);
-        } catch (Exception e) {
+        } catch (final RuntimeException e) {
             throw new BitcasaException(e);
         } finally {
             if (connection != null) {
@@ -2542,36 +2825,39 @@ public class RESTAdapter {
     }
 
     /**
-     * Delete Trash Item
+     * Delete the given item from trash.
      *
-     * @param path String file path
-     * @return Boolean whether the item in trash was deleted or not
+     * @param trashItemId Item id to be deleted from trash.
+     * @return Returns true if the item is deleted successfully, otherwise false.
      * @throws BitcasaException If a CloudFS API error occurs.
      */
-    public boolean deleteTrashItem(String path) throws BitcasaException {
-        boolean booleanResult = false;
+    public boolean deleteTrashItem(final String trashItemId) throws BitcasaException {
 
-        String url = bitcasaRESTUtility.getRequestUrl(credential, BitcasaRESTConstants.METHOD_TRASH,
-                path, null);
+        final String url = this.bitcasaRESTUtility.getRequestUrl(this.credential, BitcasaRESTConstants.METHOD_TRASH,
+                trashItemId, null);
 
-        Log.d(TAG, "deleteTrashItem URL: " + url);
+        Log.d(RESTAdapter.TAG, "deleteTrashItem URL: " + url);
         HttpsURLConnection connection = null;
+        boolean booleanResult = false;
         try {
             connection = (HttpsURLConnection) new URL(url)
                     .openConnection();
             connection.setRequestMethod(BitcasaRESTConstants.REQUEST_METHOD_DELETE);
-            bitcasaRESTUtility.setRequestHeaders(credential, connection, null);
+            this.bitcasaRESTUtility.setRequestHeaders(this.credential, connection, null);
             connection.setDoInput(true);
-            connection.setDoOutput(true);
 
-            BitcasaError error = bitcasaRESTUtility.checkRequestResponse(connection);
+            final BitcasaError error = this.bitcasaRESTUtility.checkRequestResponse(connection);
             if (error == null) {
                 booleanResult = true;
             }
 
-        } catch (IOException ioe) {
+        } catch (final ProtocolException e) {
+            throw new BitcasaException(e);
+        } catch (final MalformedURLException e) {
+            throw new BitcasaException(e);
+        } catch (final IOException ioe) {
             throw new BitcasaException(ioe);
-        } catch (Exception e) {
+        } catch (final RuntimeException e) {
             throw new BitcasaException(e);
         } finally {
             if (connection != null) {

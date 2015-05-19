@@ -2,6 +2,8 @@
 
 .. java:import:: com.bitcasa.cloudfs.exception BitcasaException
 
+.. java:import:: com.bitcasa.cloudfs.model ShareItem
+
 .. java:import:: java.io IOException
 
 FileSystem
@@ -42,41 +44,52 @@ createShare
    :throws IOException: If a network error occurs.
    :return: The new share instance.
 
+createShare
+^^^^^^^^^^^
+
+.. java:method:: public Share createShare(String[] paths, String password) throws IOException, BitcasaException
+   :outertype: FileSystem
+
+   Creates a new share.
+
+   :param paths: The full array paths of items to share.
+   :param password: The password of the share to be created.
+   :throws BitcasaException: If a CloudFS API error occurs.
+   :throws IOException: If a network error occurs.
+   :return: The new share instance.
+
 getItem
 ^^^^^^^
 
-.. java:method:: public Item getItem(String path) throws IOException, BitcasaException
+.. java:method:: public Item getItem(String path) throws BitcasaException
    :outertype: FileSystem
 
    Gets the item at the given path.
 
    :param path: The file system item path.
    :throws BitcasaException: If a CloudFS API error occurs.
-   :throws IOException: If a network error occurs.
    :return: The item at the given path.
 
 listShares
 ^^^^^^^^^^
 
-.. java:method:: public Share[] listShares() throws IOException, BitcasaException
+.. java:method:: public Share[] listShares() throws BitcasaException
    :outertype: FileSystem
 
    Lists the shares in the file system.
 
    :throws BitcasaException: If a CloudFS API error occurs.
-   :throws IOException: If a network error occurs
    :return: The list of shares in the file system.
 
 listTrash
 ^^^^^^^^^
 
-.. java:method:: public Item[] listTrash() throws IOException, BitcasaException
+.. java:method:: public Item[] listTrash() throws BitcasaException
    :outertype: FileSystem
 
    Lists the items in the trash.
 
    :throws BitcasaException: If a CloudFS API error occurs.
-   :throws IOException: If a network error occurs.
    :return: The list of trash items.
 
 retrieveShare
@@ -96,12 +109,11 @@ retrieveShare
 root
 ^^^^
 
-.. java:method:: public Folder root() throws IOException, BitcasaException
+.. java:method:: public Folder root() throws BitcasaException
    :outertype: FileSystem
 
    Gets the file system root folder.
 
    :throws BitcasaException: If a CloudFS API error occurs.
-   :throws IOException: If a network error occurs.
    :return: The file system root folder.
 

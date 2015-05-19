@@ -34,6 +34,8 @@
 
 .. java:import:: java.security InvalidKeyException
 
+.. java:import:: java.security Key
+
 .. java:import:: java.security NoSuchAlgorithmException
 
 .. java:import:: java.util Map
@@ -106,15 +108,15 @@ generateAuthorizationValue
    :param session: The current session object.
    :param params: The uri value.
    :param date: The date and time.
-   :throws UnsupportedEncodingException: If encoding not supported
-   :throws InvalidKeyException: If the key provided is invalid
-   :throws NoSuchAlgorithmException: If the algorithm does not exist
+   :throws UnsupportedEncodingException: If encoding not supported.
+   :throws InvalidKeyException: If the key provided is invalid.
+   :throws NoSuchAlgorithmException: If the algorithm does not exist.
    :return: String of the authorization value
 
 generateParamsString
 ^^^^^^^^^^^^^^^^^^^^
 
-.. java:method:: public String generateParamsString(Map<String, String> params)
+.. java:method:: public String generateParamsString(Map<String, ?> params)
    :outertype: BitcasaRESTUtility
 
    Generate parameter string from a map, encoding need to be done before calling generateParamsString.
@@ -172,9 +174,12 @@ sha1
 .. java:method:: public String sha1(String s, String keyString) throws UnsupportedEncodingException, NoSuchAlgorithmException, InvalidKeyException
    :outertype: BitcasaRESTUtility
 
-   :param s:
-   :param keyString:
-   :throws UnsupportedEncodingException:
-   :throws NoSuchAlgorithmException:
-   :throws InvalidKeyException:
+   Creates a sha1 encoding.
+
+   :param s: The encoding value.
+   :param keyString: The encoding key.
+   :throws UnsupportedEncodingException: If encoding not supported.
+   :throws NoSuchAlgorithmException: If the algorithm does not exist.
+   :throws InvalidKeyException: If the key provided is invalid.
+   :return: The encoded value.
 

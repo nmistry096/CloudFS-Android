@@ -11,12 +11,12 @@ Methods
 canceled
 ^^^^^^^^
 
-.. java:method:: public void canceled(String file, ProgressAction action)
+.. java:method:: public void canceled(String file, BitcasaProgressListener.ProgressAction action)
    :outertype: BitcasaProgressListener
 
 onProgressUpdate
 ^^^^^^^^^^^^^^^^
 
-.. java:method:: public void onProgressUpdate(String file, int percentage, ProgressAction action)
+.. java:method:: public void onProgressUpdate(String file, int percentage, BitcasaProgressListener.ProgressAction action)
    :outertype: BitcasaProgressListener
 

@@ -1,42 +1,42 @@
 /**
  * Bitcasa Client Android SDK
  * Copyright (C) 2015 Bitcasa, Inc.
- * 215 Castro Street, 2nd Floor
- * Mountain View, CA 94041
+ * 1200 Park Place,
+ * Suite 350 San Mateo, CA 94403.
  *
  * This file contains an SDK in Java for accessing the Bitcasa infinite drive in Android platform.
  *
- * For support, please send email to support@bitcasa.com.
+ * For support, please send email to sdks@bitcasa.com.
  */
 
 package com.bitcasa.cloudfs;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import com.bitcasa.cloudfs.Utils.BitcasaRESTConstants;
-import com.bitcasa.cloudfs.Utils.BitcasaRESTConstants.Exists;
-import com.bitcasa.cloudfs.Utils.BitcasaRESTConstants.RestoreMethod;
-import com.bitcasa.cloudfs.Utils.BitcasaRESTConstants.VersionExists;
 import com.bitcasa.cloudfs.api.RESTAdapter;
 import com.bitcasa.cloudfs.exception.BitcasaException;
-import com.bitcasa.cloudfs.model.ApplicationData;
 import com.bitcasa.cloudfs.model.ItemMeta;
-import com.bitcasa.cloudfs.model.Storage;
-
-import org.json.JSONObject;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.AbstractMap;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The Item class provides accessibility to CloudFS Item.
  */
-public abstract class Item {
+public abstract class Item implements Parcelable{
 
     /**
      * The REST Adapter instance.
      */
-    protected RESTAdapter restAdapter;
+    protected final RESTAdapter restAdapter;
 
     /**
      * The item id.
@@ -75,21 +75,36 @@ public abstract class Item {
     /**
      * A value that indicates whether the item is mirrored.
      */
-    private boolean isMirrored;
+    protected boolean isMirrored;
     /**
      * The item's absolute parent path.
      */
-    private String absoluteParentPath;
+    protected String absoluteParentPath;
 
     /**
      * The item's absolute path.
      */
-    private String absolutePath;
+    protected String absolutePath;
 
     /**
      * The item application data.
      */
-    private ApplicationData applicationData;
+    protected JsonObject applicationData;
+
+    /**
+     * The item's parent id.
+     */
+    private String parentId;
+
+    /**
+     * The parent state of the item.
+     */
+    private String state;
+
+    /**
+     * The share key of an item if the item is of type share.
+     */
+    private String shareKey;
 
     /**
      * Initializes an instance of the Item.
@@ -97,18 +112,25 @@ public abstract class Item {
      * @param restAdapter        The REST Adapter instance.
      * @param meta               The item meta data returned from REST Adapter.
      * @param absoluteParentPath The absolute parent path of this item.
+     * @param state        The parent state of the item.
+     * @param shareKey           The share key of the item if the item is of type share.
      */
-    Item(final RESTAdapter restAdapter, final ItemMeta meta, final String absoluteParentPath) {
+    Item(final RESTAdapter restAdapter,
+         final ItemMeta meta,
+         final String absoluteParentPath,
+         final String state,
+         final String shareKey) {
         this.restAdapter = restAdapter;
-        id = meta.getId();
-        type = meta.getType();
-        name = meta.getName();
-        dateCreated = new Date(meta.getDateCreated());
-        dateMetaLastModified = new Date(meta.getDateMetaLastModified());
-        dateContentLastModified = new Date(meta.getDateContentLastModified());
-        version = meta.getVersion();
-        isMirrored = meta.isMirrored();
-        applicationData = meta.getApplicationData();
+        this.id = meta.getId();
+        this.type = meta.getType();
+        this.name = meta.getName();
+        this.dateCreated = new Date(meta.getDateCreated());
+        this.dateMetaLastModified = new Date(meta.getDateMetaLastModified());
+        this.dateContentLastModified = new Date(meta.getDateContentLastModified());
+        this.version = meta.getVersion();
+        this.isMirrored = meta.isMirrored();
+        this.applicationData = meta.getApplicationData();
+        this.parentId = meta.getParentId();
         if (absoluteParentPath == null) {
             this.absoluteParentPath = "/";
         } else {
@@ -116,13 +138,77 @@ public abstract class Item {
         }
 
         if (absoluteParentPath == null) {
-            this.absolutePath = "/" + this.id;
-        } else if (absoluteParentPath.equals("/")) {
+            this.absolutePath = '/' + this.id;
+        } else if ("/".equals(absoluteParentPath)) {
             this.absolutePath = absoluteParentPath + this.id;
         } else {
             this.absolutePath = absoluteParentPath + '/' + this.id;
         }
+
+        this.state = state;
+        this.shareKey = shareKey;
     }
+
+    /**
+     * Initializes the Item instance.
+     *
+     * @param source The parcel object parameter.
+     */
+    public Item(Parcel source) {
+        id = source.readString();
+        type = source.readString();
+        name = source.readString();
+        dateCreated = new Date(source.readLong());
+        dateMetaLastModified = new Date(source.readLong());
+        dateContentLastModified = new Date(source.readLong());
+        version = source.readInt();
+        isMirrored = source.readInt() != 0;
+        applicationData = (JsonObject) new JsonParser().parse(source.readString());
+        parentId = source.readString();
+        absoluteParentPath = source.readString();
+        absolutePath = source.readString();
+        restAdapter = (RESTAdapter)source.readValue(
+                RESTAdapter.class.getClassLoader());
+        state = source.readString();
+        shareKey = source.readString();
+    }
+
+    /**
+     * Describe the kinds of special objects contained in this Parcelable's marshalled representation
+     *
+     * @return a bitmask indicating the set of special object types marshalled by the Parcelable
+     */
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    /**
+     * Flatten this object in to a Parcel.
+     *
+     * @param out   The Parcel in which the object should be written.
+     * @param flags Additional flags about how the object should be written. May be 0 or PARCELABLE_WRITE_RETURN_VALUE
+     */
+    @Override
+    public void writeToParcel(Parcel out, int flags) {
+        out.writeString(id);
+        out.writeString(type);
+        out.writeString(name);
+        out.writeLong(dateCreated.getTime());
+        out.writeLong(dateMetaLastModified.getTime());
+        out.writeLong(dateContentLastModified.getTime());
+        out.writeInt(version);
+        out.writeInt(isMirrored ? 1 : 0);
+        out.writeString(applicationData.toString());
+        out.writeString(parentId);
+        out.writeString(absoluteParentPath);
+        out.writeString(absolutePath);
+        out.writeValue(restAdapter);
+        out.writeString(state);
+        out.writeString(shareKey);
+     }
+
+
 
     /**
      * Returns a string containing a concise, human-readable description of this object.
@@ -131,14 +217,14 @@ public abstract class Item {
      */
     @Override
     public String toString() {
-        StringBuilder stingBuilder = new StringBuilder();
-        stingBuilder.append("\nid[").append(id)
-                .append("] type[").append(type)
-                .append("] name[").append(name).append("] dateCreated[").append(dateCreated.getTime())
-                .append("] dateMetaLastModified[").append(dateMetaLastModified.getTime())
-                .append("] dateContentLastModified[").append(dateContentLastModified.getTime())
-                .append("] version[").append(version).append("] getIsMirrored[").append(isMirrored)
-                .append("]").append("absoluteParentPathId[");
+        final StringBuilder stingBuilder = new StringBuilder();
+        stingBuilder.append("\nid[").append(this.id)
+                .append("] type[").append(this.type)
+                .append("] name[").append(this.name).append("] dateCreated[").append(this.dateCreated.getTime())
+                .append("] dateMetaLastModified[").append(this.dateMetaLastModified.getTime())
+                .append("] dateContentLastModified[").append(this.dateContentLastModified.getTime())
+                .append("] version[").append(this.version).append("] getIsMirrored[").append(this.isMirrored)
+                .append(']').append("absoluteParentPathId[");
 
         return stingBuilder.toString();
     }
@@ -149,7 +235,7 @@ public abstract class Item {
      * @return The item id.
      */
     public String getId() {
-        return id;
+        return this.id;
     }
 
     /**
@@ -167,7 +253,7 @@ public abstract class Item {
      * @return The item type.
      */
     public String getType() {
-        return type;
+        return this.type;
     }
 
     /**
@@ -176,7 +262,7 @@ public abstract class Item {
      * @return A value indicating whether the item is mirrored.
      */
     public boolean getIsMirrored() {
-        return isMirrored;
+        return this.isMirrored;
     }
 
     /**
@@ -185,7 +271,34 @@ public abstract class Item {
      * @return The item name.
      */
     public String getName() {
-        return name;
+        return this.name;
+    }
+
+    /**
+     * Gets the item version number.
+     *
+     * @return The item version number;
+     */
+    public int getVersion() {
+        return this.version;
+    }
+
+    /**
+     * Gets the parent state of the item.
+     *
+     * @return The parent state.
+     */
+    public String getState() {
+        return this.state;
+    }
+
+    /**
+     * Set the parent state of the item.
+     *
+     * @param state The parent state to be set.
+     */
+    public void setState(final String state) {
+        this.state = state;
     }
 
     /**
@@ -195,16 +308,19 @@ public abstract class Item {
      * @param name The item name.
      * @return A value indicating whether the operation was successful or not.
      * @throws BitcasaException If a CloudFS API error occurs.
-     * @throws IOException      If a network error occurs.
      */
-    public boolean setName(String name) throws BitcasaException, IOException {
-        HashMap<String, String> values = new HashMap<String, String>();
-        values.put(BitcasaRESTConstants.PARAM_NAME, name);
-        boolean status = changeAttributes(values, VersionExists.FAIL);
-        if (status) {
-            this.name = name;
+    public boolean setName(final String name) throws BitcasaException {
+        if (this.state.equals(BitcasaRESTConstants.ITEM_STATE_NORMAL)) {
+            final AbstractMap<String, String> values = new HashMap<String, String>();
+            values.put(BitcasaRESTConstants.PARAM_NAME, name);
+            final boolean status = this.changeAttributes(values, BitcasaRESTConstants.VersionExists.FAIL);
+            if (status) {
+                this.name = name;
+            }
+            return status;
+        } else {
+            throw new BitcasaException("Set name operation cannot be performed on this item.");
         }
-        return status;
     }
 
     /**
@@ -213,7 +329,7 @@ public abstract class Item {
      * @return The item's created date.
      */
     public Date getDateCreated() {
-        return dateCreated;
+        return this.dateCreated;
     }
 
     /**
@@ -222,7 +338,7 @@ public abstract class Item {
      * @return The item's meta last modified date.
      */
     public Date getDateMetaLastModified() {
-        return dateMetaLastModified;
+        return this.dateMetaLastModified;
     }
 
     /**
@@ -231,7 +347,7 @@ public abstract class Item {
      * @return The item's content last modified date.
      */
     public Date getDateContentLastModified() {
-        return dateContentLastModified;
+        return this.dateContentLastModified;
     }
 
     /**
@@ -240,7 +356,7 @@ public abstract class Item {
      * @return The absolute parent path of the item.
      */
     public String getAbsoluteParentPath() {
-        return absoluteParentPath;
+        return this.absoluteParentPath;
     }
 
     /**
@@ -249,54 +365,60 @@ public abstract class Item {
      *
      * @return The item's application data.
      */
-    public ApplicationData getApplicationData() {
-        return applicationData;
+    public JsonObject getApplicationData() {
+        return this.applicationData;
+    }
+
+    /**
+     * Gets the item's share key if the item is of type share.
+     *
+     * @return The share key of the item.
+     */
+    public String getShareKey() {
+        return this.shareKey;
+    }
+
+    /**
+     * Sets the item's share key.
+     *
+     * @param shareKey The share key to be set.
+     */
+    public void setShareKey(String shareKey) {
+        this.shareKey = shareKey;
     }
 
     /**
      * Sets the application data and sends update to CloudFS instantly.
      *
-     * @param applicationData The application data of the item.
+     * @param applicationData The application data to be set.
      * @return A value indicating whether the operation was successful or not.
      * @throws BitcasaException If a CloudFS API error occurs.
-     * @throws IOException      If a network error occurs.
      */
-    public boolean setApplicationData(ApplicationData applicationData)
-            throws BitcasaException, IOException {
-        HashMap<String, String> values = new HashMap<String, String>();
+    public boolean setApplicationData(final JsonObject applicationData)
+            throws BitcasaException {
+        if (this.state.equals(BitcasaRESTConstants.ITEM_STATE_NORMAL)) {
+            final String applicationDataString = applicationData.toString();
 
-        if (applicationData.getAlbumArt() != null) {
-            values.put(BitcasaRESTConstants.TAG_ALBUM_ART, applicationData.getAlbumArt());
-        }
-        if (applicationData.getDigest() != null) {
-            values.put(BitcasaRESTConstants.TAG_DIGEST, applicationData.getDigest());
-        }
-        if (applicationData.getNonce() != null) {
-            values.put(BitcasaRESTConstants.TAG_NONCE, applicationData.getNonce());
-        }
-        if (applicationData.getPayload()!= null) {
-            values.put(BitcasaRESTConstants.TAG_PAYLOAD, applicationData.getPayload());
-        }
-        if (applicationData.getOriginalPath() != null) {
-            values.put(BitcasaRESTConstants.TAG_BITCASA_ORIGINAL_PATH, applicationData.getOriginalPath());
-        }
-        if (applicationData.getRelativeIdPath() != null) {
-            values.put(BitcasaRESTConstants.TAG_RELATIVE_ID_PATH, applicationData.getRelativeIdPath());
-        }
+            final AbstractMap<String, String> attributes = new HashMap<String, String>();
+            attributes.put("application_data", applicationDataString);
 
-        JSONObject applicationJson = new JSONObject(values);
-        String applicationDataString = applicationJson.toString();
-
-
-        HashMap<String, String> attributes = new HashMap<String, String>();
-        attributes.put("application_data", applicationDataString);
-
-        // TODO: Parse JSON accordignly. 
-        boolean status = changeAttributes(attributes, VersionExists.FAIL);
-        if (status) {
-            this.applicationData = applicationData;
+            return this.changeAttributes(attributes, BitcasaRESTConstants.VersionExists.FAIL);
+        } else {
+            throw new BitcasaException("Set application data operation cannot be performed on this item.");
         }
-        return status;
+    }
+
+    /**
+     * Gets the item's parent id.
+     *
+     * @return The item's parent id.
+     */
+    public String getParentId() {
+        return this.parentId;
+    }
+
+    public void setParentId(String parentId) {
+        this.parentId = parentId;
     }
 
     /**
@@ -306,10 +428,9 @@ public abstract class Item {
      * @param ifConflict The action to be taken if a conflict occurs.
      * @return boolean          A value indicating whether the operation was successful or not.
      * @throws BitcasaException If a CloudFS API error occurs.
-     * @throws IOException      If a network error occurs.
      */
-    public abstract boolean changeAttributes(HashMap<String, String> values, VersionExists ifConflict)
-            throws BitcasaException, IOException;
+    public abstract boolean changeAttributes(Map<String, String> values, BitcasaRESTConstants.VersionExists ifConflict)
+            throws BitcasaException;
 
     /**
      * Moves the item to the given destination.
@@ -320,13 +441,19 @@ public abstract class Item {
      * @throws IOException      If response data can not be read.
      * @throws BitcasaException If the server can not move the item due to an error.
      */
-    public Item move(Container destination, Exists exists)
+    public Item move(final Container destination, BitcasaRESTConstants.Exists exists)
             throws IOException, BitcasaException {
         if (exists == null) {
-            exists = Exists.RENAME;
+            exists = BitcasaRESTConstants.Exists.RENAME;
         }
-
-        return restAdapter.move(this, destination.getPath(), null, exists);
+        if (this.getState().equals(BitcasaRESTConstants.ITEM_STATE_NORMAL)) {
+            Item resultItem = this.restAdapter.move(this, destination.getPath(), null, exists);
+            resultItem.setParentId(destination.getId());
+            this.setState(BitcasaRESTConstants.ITEM_STATE_DEAD);
+            return resultItem;
+        } else {
+            throw new BitcasaException("Move operation cannot be performed on this item.");
+        }
     }
 
     /**
@@ -338,13 +465,19 @@ public abstract class Item {
      * @throws IOException      If response data can not be read.
      * @throws BitcasaException If the server can not copy the item due to an error.
      */
-    public Item copy(Container destination, Exists exists)
+    public Item copy(final Container destination, final String newName, BitcasaRESTConstants.Exists exists)
             throws IOException, BitcasaException {
         if (exists == null) {
-            exists = Exists.RENAME;
+            exists = BitcasaRESTConstants.Exists.RENAME;
         }
 
-        return restAdapter.copy(this, destination.getAbsoluteParentPath(), null, exists);
+        if (this.getState().equals(BitcasaRESTConstants.ITEM_STATE_NORMAL)) {
+            Item resultItem = this.restAdapter.copy(this, destination.getPath(), newName, exists);
+            resultItem.setParentId(destination.getId());
+            return resultItem;
+        } else {
+            throw new BitcasaException("Copy operation cannot be performed on this item.");
+        }
     }
 
     /**
@@ -357,34 +490,121 @@ public abstract class Item {
      * @throws IOException      If a network error occurs.
      * @throws BitcasaException If a CloudFS API error occurs.
      */
-    public boolean delete(boolean commit, boolean force) throws IOException, BitcasaException {
-        if (this.getType().equals(FileType.FOLDER)) {
-            return restAdapter.deleteFolder(this.getPath(), commit, force);
-        } else {
-            return restAdapter.deleteFile(this.getPath(), commit, force);
+    public boolean delete(final boolean commit, final boolean force) throws IOException, BitcasaException {
+        boolean successResult = false;
+
+        if (this.getState().equals(BitcasaRESTConstants.ITEM_STATE_TRASH)) {
+            if (commit) {
+                successResult = this.restAdapter.deleteTrashItem(this.getId());
+
+                if (successResult) {
+                    this.setState(BitcasaRESTConstants.ITEM_STATE_DEAD);
+                }
+            }
+        } else if (this.getState().equals(BitcasaRESTConstants.ITEM_STATE_NORMAL)) {
+            String path = this.getPath();
+            this.applicationData.addProperty("_bitcasa_original_path", path);
+            if (this.getType().equals(Item.FileType.FOLDER)) {
+                successResult = this.restAdapter.deleteFolder(this.getPath(), commit, force);
+            } else {
+                successResult = this.restAdapter.deleteFile(this.getPath(), commit);
+            }
+
+            if (successResult && !commit) {
+                this.setState(BitcasaRESTConstants.ITEM_STATE_TRASH);
+            } else if (successResult && commit) {
+                this.setState(BitcasaRESTConstants.ITEM_STATE_DEAD);
+            }
+        } else if (this.getState().equals(BitcasaRESTConstants.ITEM_STATE_SHARE)) {
+            throw new BitcasaException("Delete operation should be performed on the main share.");
         }
+
+        return successResult;
     }
 
     /**
      * Restore the item to given destination.
      *
-     * @param destination     The restore destination.
-     * @param method          The restore method.
-     * @param restoreArgument The restore argument.
+     * @param destination      The restore destination.
+     * @param method           The restore method.
+     * @param restoreArgument  The restore argument.
+     * @param maintainValidity If true, item maintains it's validity. The default is false.
      * @return boolean A value indicating whether the operation was successful or not.
      * @throws UnsupportedEncodingException If encoding is not supported.
-     * @throws BitcasaException             BitcasaException If a CloudFS API error occurs.
+     * @throws BitcasaException             If a CloudFS API error occurs.
      */
-    public boolean restore(Container destination, RestoreMethod method, String restoreArgument)
+    public boolean restore(final Container destination, final BitcasaRESTConstants.RestoreMethod method,
+                           final String restoreArgument, final boolean maintainValidity)
             throws UnsupportedEncodingException, BitcasaException {
-        return restAdapter.recoverTrashItem(this.getId(), method, destination.getPath());
+        final boolean resultValue;
+        if (this.getState().equals(BitcasaRESTConstants.ITEM_STATE_TRASH)) {
+            final boolean result = this.restAdapter.recoverTrashItem(this.getId(), method, destination.getPath());
+            if (result) {
+                this.setState(BitcasaRESTConstants.ITEM_STATE_DEAD);
+                if (maintainValidity) {
+                    Item itemMeta;
+                    if (method == BitcasaRESTConstants.RestoreMethod.RESCUE) {
+                        if (destination.getPath().isEmpty() ||
+                                destination.getState().equals(BitcasaRESTConstants.ITEM_STATE_DEAD)) {
+                            this.absolutePath = '/' + this.getId();
+                            this.absoluteParentPath = "/";
+                            itemMeta = this.getType().equals(Item.FileType.FILE) ?
+                                    this.restAdapter.getItemMeta(this.getPath()) : this.restAdapter.getFolderMeta(this.getPath());
+                            //TODO: Need to check the error code for file not found.
+                            this.maintainItemValidity(itemMeta);
+                        } else {
+                            this.absoluteParentPath = destination.getPath();
+                            this.absolutePath = this.absoluteParentPath + '/' + this.getId();
+                            itemMeta = this.getType().equals(Item.FileType.FILE) ?
+                                    this.restAdapter.getItemMeta(this.getPath()) : this.restAdapter.getFolderMeta(this.getPath());
+                            //TODO: Need to check the error code for file not found.
+                            this.maintainItemValidity(itemMeta);
+                        }
+                    } else if (method == BitcasaRESTConstants.RestoreMethod.RECREATE) {
+                        itemMeta = this.getType().equals(Item.FileType.FILE) ?
+                                this.restAdapter.getItemMeta(this.getPath()) : this.restAdapter.getFolderMeta(this.getPath());
+                        if (itemMeta == null) {
+                            this.absolutePath = destination.getAbsoluteParentPath() + '/' + this.getId();
+                            this.absoluteParentPath = destination.getAbsoluteParentPath();
+                        }
+                    } else {
+                        itemMeta = this.getType().equals(Item.FileType.FILE) ?
+                                this.restAdapter.getItemMeta(this.getPath()) : this.restAdapter.getFolderMeta(this.getPath());
+                        this.maintainItemValidity(itemMeta);
+                    }
+                    this.setState(BitcasaRESTConstants.ITEM_STATE_NORMAL);
+                }
+            }
+            resultValue = result;
+        } else {
+            resultValue = false;
+        }
+
+        return resultValue;
     }
 
     /**
      * File type interface containing the item types.
      */
     public interface FileType {
-        String FILE = "file";
-        String FOLDER = "folder";
+        final String FILE = "file";
+        final String FOLDER = "folder";
+    }
+
+    /**
+     * Set the attributes of an item which has been restored.
+     *
+     * @param item The item data to be set.
+     */
+    private void maintainItemValidity(final Item item) {
+        this.id = item.getId();
+        this.type = item.getType();
+        this.name = item.getName();
+        this.dateCreated = item.getDateCreated();
+        this.dateMetaLastModified = item.getDateMetaLastModified();
+        this.dateContentLastModified = item.getDateContentLastModified();
+        this.version = item.getVersion();
+        this.isMirrored = item.getIsMirrored();
+        this.applicationData = item.applicationData;
     }
 }

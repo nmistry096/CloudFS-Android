@@ -17,7 +17,7 @@ Constructors
 Video
 ^^^^^
 
-.. java:constructor:: public Video(RESTAdapter restAdapter, ItemMeta itemMeta, String absoluteParentPath)
+.. java:constructor:: public Video(RESTAdapter restAdapter, ItemMeta itemMeta, String absoluteParentPath, String parentState, String shareKey)
    :outertype: Video
 
    Initializes an instance of Video.
@@ -25,4 +25,6 @@ Video
    :param restAdapter: The REST Adapter instance.
    :param itemMeta: The video meta data returned from REST Adapter.
    :param absoluteParentPath: The absolute parent path of this video.
+   :param parentState: The parent state of the item.
+   :param shareKey: The share key of the item if the item is of type share.
 

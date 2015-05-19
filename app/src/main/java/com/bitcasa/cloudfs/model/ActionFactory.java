@@ -1,3 +1,13 @@
+/**
+ * Bitcasa Client Android SDK
+ * Copyright (C) 2015 Bitcasa, Inc.
+ * 1200 Park Place,
+ * Suite 350 San Mateo, CA 94403.
+ *
+ * This file contains an SDK in Java for accessing the Bitcasa infinite drive in Android platform.
+ *
+ * For support, please send email to sdks@bitcasa.com.
+ */
 package com.bitcasa.cloudfs.model;
 
 import android.util.Pair;
@@ -10,7 +20,7 @@ import java.lang.reflect.InvocationTargetException;
 /**
  * Factory that generates Action objects.
  */
-public final class ActionFactory {
+public class ActionFactory {
 
     /**
      * Prevents initialization of this utility.
@@ -26,21 +36,25 @@ public final class ActionFactory {
      * @return Generated action.
      */
     public static BaseAction getAction(final BaseAction baseAction) {
+
+        BaseAction newBaseAction;
         try {
-            Pair<HistoryActions, Class> pair = HistoryActions.getAction(baseAction.getActionString());
-            Class<?> actionClass = pair.second;
-            Constructor<?> exceptionConstructor = actionClass.getDeclaredConstructor(BaseAction.class);
-            BaseAction action = (BaseAction) exceptionConstructor.newInstance(baseAction);
+            final Pair<HistoryActions, Class> pair = HistoryActions.getAction(baseAction.getActionString());
+            final Class<?> actionClass = pair.second;
+            final Constructor<?> exceptionConstructor = actionClass.getDeclaredConstructor(BaseAction.class);
+            final BaseAction action = (BaseAction) exceptionConstructor.newInstance(baseAction);
             action.setAction(pair.first);
-            return action;
-        } catch (NoSuchMethodException exception) {
-            return baseAction;
-        } catch (InstantiationException exception) {
-            return baseAction;
-        } catch (IllegalAccessException exception) {
-            return baseAction;
-        } catch (InvocationTargetException exception) {
-            return baseAction;
+            newBaseAction = action;
+        } catch (final NoSuchMethodException exception) {
+            newBaseAction = baseAction;
+        } catch (final InstantiationException exception) {
+            newBaseAction = baseAction;
+        } catch (final IllegalAccessException exception) {
+            newBaseAction = baseAction;
+        } catch (final InvocationTargetException exception) {
+            newBaseAction = baseAction;
         }
+
+        return newBaseAction;
     }
 }

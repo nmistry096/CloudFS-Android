@@ -1,12 +1,12 @@
 /**
  * Bitcasa Client Android SDK
  * Copyright (C) 2015 Bitcasa, Inc.
- * 215 Castro Street, 2nd Floor
- * Mountain View, CA 94041
+ * 1200 Park Place,
+ * Suite 350 San Mateo, CA 94403.
  *
  * This file contains an SDK in Java for accessing the Bitcasa infinite drive in Android platform.
  *
- * For support, please send email to support@bitcasa.com.
+ * For support, please send email to sdks@bitcasa.com.
  */
 package com.bitcasa.cloudfs.api;
 
@@ -30,6 +30,7 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.security.InvalidKeyException;
+import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 import java.util.Set;
@@ -57,8 +58,8 @@ public class BitcasaRESTUtility {
      * @param queryParams Query parameters.
      * @return The requested url.
      */
-    public String getRequestUrl(Credential credential, String request, String method, Map<String, String> queryParams) {
-        StringBuilder url = new StringBuilder();
+    public String getRequestUrl(final Credential credential, final String request, final String method, final Map<String, String> queryParams) {
+        final StringBuilder url = new StringBuilder();
         url.append(BitcasaRESTConstants.HTTPS);
         url.append(credential.getEndPoint())
                 .append(BitcasaRESTConstants.API_VERSION_2)
@@ -68,9 +69,9 @@ public class BitcasaRESTUtility {
             url.append(method);
         }
 
-        if (queryParams != null && !queryParams.isEmpty()) {
-            url.append("?");
-            url.append(generateParamsString(queryParams));
+        if ((queryParams != null) && !queryParams.isEmpty()) {
+            url.append('?');
+            url.append(this.generateParamsString(queryParams));
         }
 
         return url.toString();
@@ -83,18 +84,29 @@ public class BitcasaRESTUtility {
      * @param params Parameter Strings.
      * @return The generated parameters.
      */
-    public String generateParamsString(Map<String, String> params) {
+    public String generateParamsString(final Map<String, ?> params) {
         String query = null;
-        if (params != null && params.size() > 0) {
-            StringBuilder paramsString = new StringBuilder();
-            Set<String> keys = params.keySet();
-            for (String key : keys) {
-                Object value = params.get(key);
-                paramsString
-                        .append(key)
-                        .append("=")
-                        .append(replaceSpaceWithPlus(value.toString()))
-                        .append("&");
+        if ((params != null) && (!params.isEmpty())) {
+            final StringBuilder paramsString = new StringBuilder();
+            final Set<String> keys = params.keySet();
+            for (final String key : keys) {
+                final Object value = params.get(key);
+
+                if (value instanceof String) {
+                    paramsString
+                            .append(key)
+                            .append('=')
+                            .append(this.replaceSpaceWithPlus(value.toString()))
+                            .append('&');
+                } else if (value instanceof String[]) {
+                    for (String path : (String[]) value) {
+                        paramsString
+                                .append(key)
+                                .append('=')
+                                .append(this.replaceSpaceWithPlus(path.toString()))
+                                .append('&');
+                    }
+                }
 
             }
 
@@ -113,11 +125,11 @@ public class BitcasaRESTUtility {
      * @param connection HttpURLConnection object.
      * @param headers    Map of headers.
      */
-    public void setRequestHeaders(Credential credential, HttpURLConnection connection,
-                                  Map<String, String> headers) {
+    public void setRequestHeaders(final Credential credential, final HttpURLConnection connection,
+                                  final Map<String, String> headers) {
         if (headers != null) {
-            Set<String> headerFields = headers.keySet();
-            for (String header : headerFields) {
+            final Set<String> headerFields = headers.keySet();
+            for (final String header : headerFields) {
                 connection.setRequestProperty(header, headers.get(header));
             }
         }
@@ -127,33 +139,35 @@ public class BitcasaRESTUtility {
                 + credential.getTokenType().substring(1);
 
         // tag on default headers
-        String accessToken = tokenType + " " + credential.getAccessToken();
+        final String accessToken = tokenType + ' ' + credential.getAccessToken();
         connection.setRequestProperty(BitcasaRESTConstants.HEADER_AUTORIZATION, accessToken);
         Log.d("setRequestHeaders", "we should set the auth header: " + accessToken);
     }
 
     /**
-     * @param s
-     * @param keyString
-     * @return
-     * @throws UnsupportedEncodingException
-     * @throws NoSuchAlgorithmException
-     * @throws InvalidKeyException
+     * Creates a sha1 encoding.
+     *
+     * @param s         The encoding value.
+     * @param keyString The encoding key.
+     * @return The encoded value.
+     * @throws UnsupportedEncodingException If encoding not supported.
+     * @throws NoSuchAlgorithmException     If the algorithm does not exist.
+     * @throws InvalidKeyException          If the key provided is invalid.
      */
-    public String sha1(String s, String keyString) throws
+    public String sha1(final String s, final String keyString) throws
             UnsupportedEncodingException, NoSuchAlgorithmException,
             InvalidKeyException {
 
-        SecretKeySpec key = new SecretKeySpec((keyString).getBytes(), "HmacSHA1");
-        Mac mac = Mac.getInstance("HmacSHA1");
+        final Key key = new SecretKeySpec(keyString.getBytes(), "HmacSHA1");
+        final Mac mac = Mac.getInstance("HmacSHA1");
         mac.init(key);
 
-        byte[] bytes = mac.doFinal(s.getBytes("UTF-8"));
+        final byte[] bytes = mac.doFinal(s.getBytes("UTF-8"));
 
         return Base64.encodeToString(bytes, Base64.NO_WRAP);
     }
 
-    public String replaceSpaceWithPlus(String s) {
+    public String replaceSpaceWithPlus(final String s) {
         return s.replace(" ", "+");
     }
 
@@ -164,27 +178,27 @@ public class BitcasaRESTUtility {
      * @param params  The uri value.
      * @param date    The date and time.
      * @return String of the authorization value
-     * @throws InvalidKeyException          If the key provided is invalid
-     * @throws UnsupportedEncodingException If encoding not supported
-     * @throws NoSuchAlgorithmException     If the algorithm does not exist
+     * @throws InvalidKeyException          If the key provided is invalid.
+     * @throws UnsupportedEncodingException If encoding not supported.
+     * @throws NoSuchAlgorithmException     If the algorithm does not exist.
      */
-    public String generateAuthorizationValue(Session session, String uri, String params, String date) throws InvalidKeyException, UnsupportedEncodingException, NoSuchAlgorithmException {
+    public String generateAuthorizationValue(final Session session, final String uri, final String params, final String date) throws InvalidKeyException, UnsupportedEncodingException, NoSuchAlgorithmException {
         final StringBuilder stringToSign = new StringBuilder();
         stringToSign
                 .append(BitcasaRESTConstants.REQUEST_METHOD_POST)
-                .append("&")
+                .append('&')
                 .append(uri)
-                .append("&")
+                .append('&')
                 .append(params)
-                .append("&")
-                .append(replaceSpaceWithPlus(Uri.encode(BitcasaRESTConstants.HEADER_CONTENT_TYPE, " "))).append(":")
-                .append(replaceSpaceWithPlus(Uri.encode(BitcasaRESTConstants.FORM_URLENCODED, " ")))
-                .append("&")
-                .append(replaceSpaceWithPlus(Uri.encode(BitcasaRESTConstants.HEADER_DATE, " "))).append(":")
-                .append(replaceSpaceWithPlus(Uri.encode(date, " ")));
-        Log.d(TAG, stringToSign.toString());
+                .append('&')
+                .append(this.replaceSpaceWithPlus(Uri.encode(BitcasaRESTConstants.HEADER_CONTENT_TYPE, " "))).append(':')
+                .append(this.replaceSpaceWithPlus(Uri.encode(BitcasaRESTConstants.FORM_URLENCODED, " ")))
+                .append('&')
+                .append(this.replaceSpaceWithPlus(Uri.encode(BitcasaRESTConstants.HEADER_DATE, " "))).append(':')
+                .append(this.replaceSpaceWithPlus(Uri.encode(date, " ")));
+        Log.d(BitcasaRESTUtility.TAG, stringToSign.toString());
 
-        return "BCS " + session.getClientId() + ":" + sha1(stringToSign.toString(), session.getClientSecret());
+        return "BCS " + session.getClientId() + ':' + this.sha1(stringToSign.toString(), session.getClientSecret());
     }
 
     /**
@@ -198,23 +212,23 @@ public class BitcasaRESTUtility {
      * @throws UnsupportedEncodingException If encoding not supported
      * @throws NoSuchAlgorithmException     If the algorithm does not exist
      */
-    public String generateAdminAuthorizationValue(Session session, String uri, String params, String date) throws InvalidKeyException, UnsupportedEncodingException, NoSuchAlgorithmException {
+    public String generateAdminAuthorizationValue(final Session session, final String uri, final String params, final String date) throws InvalidKeyException, UnsupportedEncodingException, NoSuchAlgorithmException {
         final StringBuilder stringToSign = new StringBuilder();
         stringToSign
                 .append(BitcasaRESTConstants.REQUEST_METHOD_POST)
-                .append("&")
+                .append('&')
                 .append(uri)
-                .append("&")
+                .append('&')
                 .append(params)
-                .append("&")
-                .append(replaceSpaceWithPlus(Uri.encode(BitcasaRESTConstants.HEADER_CONTENT_TYPE, " "))).append(":")
-                .append(replaceSpaceWithPlus(Uri.encode(BitcasaRESTConstants.FORM_URLENCODED, " ")))
-                .append("&")
-                .append(replaceSpaceWithPlus(Uri.encode(BitcasaRESTConstants.HEADER_DATE, " "))).append(":")
-                .append(replaceSpaceWithPlus(Uri.encode(date, " ")));
-        Log.d(TAG, stringToSign.toString());
+                .append('&')
+                .append(this.replaceSpaceWithPlus(Uri.encode(BitcasaRESTConstants.HEADER_CONTENT_TYPE, " "))).append(':')
+                .append(this.replaceSpaceWithPlus(Uri.encode(BitcasaRESTConstants.FORM_URLENCODED, " ")))
+                .append('&')
+                .append(this.replaceSpaceWithPlus(Uri.encode(BitcasaRESTConstants.HEADER_DATE, " "))).append(':')
+                .append(this.replaceSpaceWithPlus(Uri.encode(date, " ")));
+        Log.d(BitcasaRESTUtility.TAG, stringToSign.toString());
 
-        return "BCS " + session.getAdminClientId() + ":" + sha1(stringToSign.toString(), session.getAdminClientSecret());
+        return "BCS " + session.getAdminClientId() + ':' + this.sha1(stringToSign.toString(), session.getAdminClientSecret());
     }
 
     /**
@@ -223,26 +237,26 @@ public class BitcasaRESTUtility {
      * @param connection The HttpsURLConnection which contains the status code and error.
      * @throws IOException Occurs if the server response can not be processed.
      */
-    public BitcasaError checkRequestResponse(HttpsURLConnection connection) throws IOException {
+    public BitcasaError checkRequestResponse(final HttpsURLConnection connection) throws IOException {
         BitcasaError error = null;
         InputStream inputStream = null;
 
         try {
             final int responseCode = connection.getResponseCode();
 
-            Log.d(TAG, "checkRequestResponse: Response code is: " + responseCode);
+            Log.d(BitcasaRESTUtility.TAG, "checkRequestResponse: Response code is: " + responseCode);
 
-            if (!(responseCode == HttpsURLConnection.HTTP_OK ||
-                    responseCode == HttpsURLConnection.HTTP_PARTIAL)) {
+            if (!((responseCode == HttpsURLConnection.HTTP_OK) ||
+                    (responseCode == HttpsURLConnection.HTTP_PARTIAL))) {
                 inputStream = connection.getErrorStream();
 
-                BitcasaRESTUtility restUtility = new BitcasaRESTUtility();
-                String response = restUtility.getResponseFromInputStream(inputStream);
-                BitcasaResponse bitcasasResponse = new Gson().fromJson(response,
+                final BitcasaRESTUtility restUtility = new BitcasaRESTUtility();
+                final String response = restUtility.getResponseFromInputStream(inputStream);
+                final BitcasaResponse bitcasasResponse = new Gson().fromJson(response,
                         BitcasaResponse.class);
-                ResponseError responseError = bitcasasResponse.getError();
+                final ResponseError responseError = bitcasasResponse.getError();
 
-                JsonElement errorDataElement = responseError.getData();
+                final JsonElement errorDataElement = responseError.getData();
                 String errorData = null;
                 if (!errorDataElement.isJsonNull()) {
                     errorData = errorDataElement.getAsString();
@@ -266,11 +280,11 @@ public class BitcasaRESTUtility {
      * @return The processed JSON string.
      * @throws IOException If a network error occurs.
      */
-    public String getResponseFromInputStream(InputStream inputStream) throws IOException {
-        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-        StringBuilder responseBuilder = new StringBuilder();
-        String line;
+    public String getResponseFromInputStream(final InputStream inputStream) throws IOException {
+        final BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+        final StringBuilder responseBuilder = new StringBuilder();
         try {
+            String line;
             while ((line = bufferedReader.readLine()) != null) {
                 responseBuilder.append(line);
             }

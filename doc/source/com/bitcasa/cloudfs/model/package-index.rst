@@ -25,7 +25,6 @@ com.bitcasa.cloudfs.model
    ActionShareReceive
    ActionTrash
    AlterData
-   ApplicationData
    BaseAction
    BitcasaResponse
    DateCreated

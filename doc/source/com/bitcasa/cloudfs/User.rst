@@ -1,3 +1,7 @@
+.. java:import:: android.os Parcel
+
+.. java:import:: android.os Parcelable
+
 .. java:import:: com.bitcasa.cloudfs.api RESTAdapter
 
 .. java:import:: com.bitcasa.cloudfs.model UserProfile
@@ -10,9 +14,19 @@ User
 .. java:package:: com.bitcasa.cloudfs
    :noindex:
 
-.. java:type:: public class User
+.. java:type:: public class User implements Parcelable
 
    The User class provides accessibility to CloudFS User.
+
+Fields
+------
+CREATOR
+^^^^^^^
+
+.. java:field:: public static final Parcelable.Creator<User> CREATOR
+   :outertype: User
+
+   {@inheritDoc}
 
 Constructors
 ------------
@@ -27,8 +41,26 @@ User
    :param restAdapter: The REST Adapter instance.
    :param profile: The user profile.
 
+User
+^^^^
+
+.. java:constructor:: public User(Parcel in)
+   :outertype: User
+
+   Initializes the User instance.
+
+   :param in: The parcel object containing the user details.
+
 Methods
 -------
+describeContents
+^^^^^^^^^^^^^^^^
+
+.. java:method:: @Override public int describeContents()
+   :outertype: User
+
+   :return: @inheritDoc
+
 getCreatedAt
 ^^^^^^^^^^^^
 
@@ -108,4 +140,13 @@ toString
    Creates a string containing a concise, human-readable description of User object.
 
    :return: The printable representation of User object.
+
+writeToParcel
+^^^^^^^^^^^^^
+
+.. java:method:: @Override public void writeToParcel(Parcel out, int flags)
+   :outertype: User
+
+   :param out: @inheritDoc
+   :param flags: @inheritDoc
 
