@@ -71,11 +71,13 @@ public class BitcasaRESTConstants {
     public static final String METHOD_ADMIN = "/admin";
     public static final String METHOD_CLOUDFS = "/cloudfs";
     public static final String METHOD_CUSTOMERS = "/customers/";
+    public static final String METHOD_PLAN = "plan/";
 
     public static final String PARAM_CLIENT_ID = "client_id";
     public static final String PARAM_REDIRECT = "redirect";
     public static final String PARAM_USER = "user";
     public static final String PARAM_NAME = "name";
+    public static final String PARAM_LIMIT = "limit";
     public static final String PARAM_PASSWORD = "password";
     public static final String PARAM_CURRENT_PASSWORD = "current_password";
     public static final String PARAM_SECRET = "secret";
@@ -108,6 +110,8 @@ public class BitcasaRESTConstants {
     public static final String PARAM_EMAIL = "email";
     public static final String PARAM_FIRSTNAME = "first_name";
     public static final String PARAM_LASTNAME = "last_name";
+    public static final String PARAM_PLANCODE = "plan_code";
+    public static final String PARAM_PLANID = "plan_id";
     public static final String PARAM_MIME = "mime";
 
     public static final String BODY_FOLDERNAME = "folder_name";
@@ -116,6 +120,7 @@ public class BitcasaRESTConstants {
     public static final String BODY_TO = "to";
     public static final String BODY_EXISTS = "exists";
     public static final String BODY_NAME = "name";
+    public static final String BODY_LIMIT = "limit";
     public static final String BODY_PATH = "path";
     public static final String BODY_RESTORE = "restore";
     public static final String BODY_RESCUE_PATH = "rescue-path";

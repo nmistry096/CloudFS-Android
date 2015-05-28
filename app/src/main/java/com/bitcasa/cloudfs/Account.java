@@ -3,9 +3,9 @@
  * Copyright (C) 2015 Bitcasa, Inc.
  * 1200 Park Place,
  * Suite 350 San Mateo, CA 94403.
- *
+ * <p/>
  * This file contains an SDK in Java for accessing the Bitcasa infinite drive in Android platform.
- *
+ * <p/>
  * For support, please send email to sdks@bitcasa.com.
  */
 
@@ -15,17 +15,23 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 import com.bitcasa.cloudfs.api.RESTAdapter;
+import com.bitcasa.cloudfs.model.Plan;
 import com.bitcasa.cloudfs.model.UserProfile;
 
 /**
  * The Account class provides accessibility to CloudFS Account.
  */
-public class Account implements Parcelable{
+public class Account implements Parcelable {
 
     /**
      * The api service to access REST end point.
      */
     private final RESTAdapter restAdapter;
+
+    /**
+     * The account plan instance.
+     */
+    private Plan plan;
 
     /**
      * The account locale value.
@@ -83,8 +89,9 @@ public class Account implements Parcelable{
      * @param restAdapter The REST Adapter instance.
      * @param profile     The user profile.
      */
-    public Account(final RESTAdapter restAdapter, final UserProfile profile) {
+    public Account(final RESTAdapter restAdapter, final UserProfile profile, final Plan plan) {
         this.restAdapter = restAdapter;
+        this.plan = plan;
         this.accountLocale = profile.getLocale();
         this.id = profile.getAccountId();
         this.stateDisplayName = profile.getAccountState().getDisplayName();
@@ -113,8 +120,8 @@ public class Account implements Parcelable{
         planDisplayName = in.readString();
         planId = in.readString();
         sessionLocale = in.readString();
-        restAdapter = (RESTAdapter)in.readValue(
-                RESTAdapter.class.getClassLoader());
+        restAdapter = (RESTAdapter) in.readValue(RESTAdapter.class.getClassLoader());
+        plan = (Plan) in.readValue(Plan.class.getClassLoader());
     }
 
     /**
@@ -146,6 +153,7 @@ public class Account implements Parcelable{
         out.writeString(planId);
         out.writeString(sessionLocale);
         out.writeValue(restAdapter);
+        out.writeValue(plan);
     }
 
     public static final Parcelable.Creator<Account> CREATOR = new Parcelable.Creator<Account>() {
@@ -194,7 +202,7 @@ public class Account implements Parcelable{
      *
      * @param storageUsage
      */
-    public void setStorageUsage(long storageUsage){
+    public void setStorageUsage(long storageUsage) {
         this.storageUsage = storageUsage;
     }
 
@@ -212,7 +220,7 @@ public class Account implements Parcelable{
      *
      * @param storageLimit The storage limit to be set.
      */
-    public void setStorageLimit(long storageLimit){
+    public void setStorageLimit(long storageLimit) {
         this.storageLimit = storageLimit;
     }
 
@@ -277,6 +285,24 @@ public class Account implements Parcelable{
      */
     public String getSessionLocale() {
         return this.sessionLocale;
+    }
+
+    /**
+     * Gets the account plan.
+     *
+     * @return The account plan.
+     */
+    public Plan getPlan() {
+        return this.plan;
+    }
+
+    /**
+     * Sets the account plan.
+     *
+     * @param plan The account plan to be set.
+     */
+    public void setPlan(Plan plan) {
+        this.plan = plan;
     }
 
     /**

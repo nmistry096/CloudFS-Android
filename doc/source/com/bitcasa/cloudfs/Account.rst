@@ -4,6 +4,8 @@
 
 .. java:import:: com.bitcasa.cloudfs.api RESTAdapter
 
+.. java:import:: com.bitcasa.cloudfs.model Plan
+
 .. java:import:: com.bitcasa.cloudfs.model UserProfile
 
 Account
@@ -29,7 +31,7 @@ Constructors
 Account
 ^^^^^^^
 
-.. java:constructor:: public Account(RESTAdapter restAdapter, UserProfile profile)
+.. java:constructor:: public Account(RESTAdapter restAdapter, UserProfile profile, Plan plan)
    :outertype: Account
 
    Initializes an instance of the Account.
@@ -88,6 +90,16 @@ getOverStorageLimit
    Gets a value indicating whether the storage limit is exceeded.
 
    :return: True if the limit is exceeded, otherwise false.
+
+getPlan
+^^^^^^^
+
+.. java:method:: public Plan getPlan()
+   :outertype: Account
+
+   Gets the account plan.
+
+   :return: The account plan.
 
 getPlanDisplayName
 ^^^^^^^^^^^^^^^^^^
@@ -158,6 +170,16 @@ getStorageUsage
    Gets the account's storage usage.
 
    :return: The storage used by the account.
+
+setPlan
+^^^^^^^
+
+.. java:method:: public void setPlan(Plan plan)
+   :outertype: Account
+
+   Sets the account plan.
+
+   :param plan: The account plan to be set.
 
 setStorageLimit
 ^^^^^^^^^^^^^^^

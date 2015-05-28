@@ -67,6 +67,14 @@ session.setAdminCredentials(String adminClientId, String adminClientSecret);
 user = session.createAccount(String username, String password, String email, String firstName, String lastName, Boolean logInToCreatedUser);
 ```
 
+Create account plan (for paid accounts only)
+
+```java
+session.setAdminCredentials(String adminClientId, String adminClientSecret);
+user = session.createPlan(String planName, String planLimit)
+```
+
+
 ## Test Suite
 
 The tests that exist are functional tests designed to be used with a CloudFS test user. They use API credentials on your free CloudFS account. You should add the credentials to the file app\src\test\java\com\bitcasa\cloudfs\BaseTest.java.

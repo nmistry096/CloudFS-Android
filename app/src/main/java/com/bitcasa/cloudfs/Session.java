@@ -15,6 +15,7 @@ import com.bitcasa.cloudfs.api.RESTAdapter;
 import com.bitcasa.cloudfs.exception.BitcasaException;
 import com.bitcasa.cloudfs.model.ActionFactory;
 import com.bitcasa.cloudfs.model.BaseAction;
+import com.bitcasa.cloudfs.model.Plan;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -188,6 +189,15 @@ public class Session {
     }
 
     /**
+     * Set the access token of this Session credentials instance.
+     *
+     * @param accessToken The access token to be set.
+     */
+    public void setAccessToken(final String accessToken) {
+        this.credential.setAccessToken(accessToken);
+    }
+
+    /**
      * Gets the action history.
      *
      * @param startVersion Integer representing which version number to start listing historical
@@ -234,11 +244,44 @@ public class Session {
     }
 
     /**
-     * Set the access token of this Session credentials instance.
+     * Creates a new account plan with the supplied data.
      *
-     * @param accessToken The access token to be set.
+     * @param name    The name of the account plan.
+     * @param limit   The limit for the account plan.
+     * @return The newly created account plan instance.
+     * @throws IOException              If a network error occurs.
+     * @throws IllegalArgumentException If the parameters are invalid or misused.
+     * @throws BitcasaException         If a CloudFS API error occurs.
      */
-    public void setAccessToken(final String accessToken) {
-        this.credential.setAccessToken(accessToken);
+    public Plan createPlan(final String name, String limit) throws BitcasaException, IOException {
+        return this.restAdapter.createPlan(this, name, limit);
+    }
+
+    /**
+     * Update the user details and account plan for the given the user account code.
+     *
+     * @param id        The account id of the user account.
+     * @param username  The username of the account to be updated.
+     * @param firstName The first name of the account to be updated.
+     * @param lastName  The last name of the account to be updated.
+     * @param planCode  The plan code of the account to be updated.
+     * @return The updated user.
+     * @throws BitcasaException If a CloudFS API error occurs.
+     * @throws IOException      If response data can not be read due to network errors.
+     */
+    public User updateUser(final String id, final String username, final String firstName,
+                           final String lastName, final String planCode)
+            throws BitcasaException, IOException {
+        return this.restAdapter.updateUser(this, id, username, firstName, lastName, planCode);
+    }
+
+    /**
+     * Lists the custom end user account plans.
+     *
+     * @return List of custom end user plans.
+     * @throws BitcasaException If a CloudFS API error occurs.
+     */
+    public Plan[] listPlans() throws BitcasaException {
+        return this.restAdapter.listPlans(this);
     }
 }

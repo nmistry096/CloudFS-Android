@@ -48,6 +48,8 @@
 
 .. java:import:: com.bitcasa.cloudfs.model ItemMeta
 
+.. java:import:: com.bitcasa.cloudfs.model Plan
+
 .. java:import:: com.bitcasa.cloudfs.model ShareItem
 
 .. java:import:: com.bitcasa.cloudfs.model SharedFolder
@@ -313,15 +315,15 @@ createAccount
    Creates a new CloudFS user with the supplied data.
 
    :param session: Session object.
-   :param username: String username.
-   :param password: String password.
-   :param email: String email.
-   :param firstName: String first name.
-   :param lastName: String last name.
+   :param username: The username for the new user.
+   :param password: The password for the new user.
+   :param email: The email for the new user.
+   :param firstName: The first name of the new user.
+   :param lastName: The last name of the new user.
    :throws BitcasaException: If a CloudFS API error occurs.
    :throws IllegalArgumentException: If the parameters are invalid or misused.
    :throws IOException: If a network error occurs.
-   :return: User object.
+   :return: The newly created user.
 
 createFolder
 ^^^^^^^^^^^^
@@ -337,6 +339,22 @@ createFolder
    :throws BitcasaException: If a CloudFS API error occurs.
    :throws IOException: If a network error occurs.
    :return: An instance of the newly created folder.
+
+createPlan
+^^^^^^^^^^
+
+.. java:method:: public Plan createPlan(Session session, String name, String limit) throws BitcasaException, IOException, IllegalArgumentException
+   :outertype: RESTAdapter
+
+   Creates a new account plan with the supplied data.
+
+   :param session: The session object.
+   :param name: The name of the account plan.
+   :param limit: The limit for the account plan.
+   :throws BitcasaException: If a CloudFS API error occurs.
+   :throws IllegalArgumentException: If the parameters are invalid or misused.
+   :throws IOException: If a network error occurs.
+   :return: The newly created account plan instance.
 
 createShare
 ^^^^^^^^^^^
@@ -394,6 +412,20 @@ deleteFolder
    :throws BitcasaException: If a CloudFS API error occurs.
    :throws IOException: If response data can not be read due to network errors.
    :return: Returns true if the folder is deleted successfully, otherwise false.
+
+deletePlan
+^^^^^^^^^^
+
+.. java:method:: public boolean deletePlan(Session session, String planId) throws IOException, BitcasaException
+   :outertype: RESTAdapter
+
+   Deletes the account plan from CloudFS for the given plan id.
+
+   :param session: The session object.
+   :param planId: The path of the item which needs to be deleted.
+   :throws BitcasaException: If a CloudFS API error occurs.
+   :throws IOException: If response data can not be read due to network errors.
+   :return: Returns true if the account plan is deleted successfully, otherwise false.
 
 deleteShare
 ^^^^^^^^^^^
@@ -542,6 +574,18 @@ listHistory
    :throws IOException: If a network error occurs.
    :return: ActionHistory object containing actions associated with current account.
 
+listPlans
+^^^^^^^^^
+
+.. java:method:: public Plan[] listPlans(Session session) throws BitcasaException
+   :outertype: RESTAdapter
+
+   Lists the custom end user account plans.
+
+   :param session: The session object.
+   :throws BitcasaException: If a CloudFS API error occurs.
+   :return: List of custom end user plans.
+
 listShare
 ^^^^^^^^^
 
@@ -634,6 +678,24 @@ unlockShare
    :throws BitcasaException: If a CloudFS API error occurs.
    :throws IOException: If a network error occurs.
    :return: Returns true if the share is unlocked successfully, otherwise false.
+
+updateUser
+^^^^^^^^^^
+
+.. java:method:: public User updateUser(Session session, String id, String username, String firstName, String lastName, String planCode) throws BitcasaException, IOException
+   :outertype: RESTAdapter
+
+   Update the user details and account plan for the given the user account code.
+
+   :param session: The session object.
+   :param id: The account id of the user account.
+   :param username: The username of the account to be updated.
+   :param firstName: The firstname of the account to be updated.
+   :param lastName: The lastname of the account to be updated.
+   :param planCode: The plan code of the account to be updated.
+   :throws IOException: If response data can not be read due to network errors.
+   :throws BitcasaException: If a CloudFS API error occurs.
+   :return: The updated user.
 
 uploadFile
 ^^^^^^^^^^

@@ -32,16 +32,16 @@ public abstract class BaseTest {
 
     private static final boolean CLEANED = false;
 
-    protected static final String cloudfsEndpoint = "beve3sodxx.cloudfs.io";
-    protected static final String clientId = "c6c_n1nkn2gS8gPlqNgLrDv90YhqXwJkYKuyzJWMp3s";
-    protected static final String clientSecret = "d9TRBSvwd3zsGM6iN7ym7D6aTPjbVUuR6XCeJLRu5V7NXaHX4Bq2w6JGzuqVqfLASVd4Qnh6v1ftQ23J2K9Otw";
-    protected static final String username = "manendra@calcey.com";
+    protected static final String cloudfsEndpoint = "xm4q7hu8qr.cloudfs.io";
+    protected static final String clientId = "XOjmPTQFrGo6IxIY4j_YczPm7WLRAEBhKxGZAyMYhME";
+    protected static final String clientSecret = "ds-LgDs7oLBB5IzxGMx8vgHFm5pll8ABX_tkv1VAIIFZmGMDvMhZban-fcyx2hvihuckbag7l7KFOUvS5R-mIQ";
+    protected static final String username = "praveen@calcey.com";
     protected static final String password = "user@123";
     protected static final String usernameTwo = "naja@calcey.com";
     protected static final String passwordTwo = "user@123";
 
-    protected static final String adminId = "lO8YWMqr6SLlPztLI7JiPDM-yQuosvlvLiCA_2vzdf0";
-    protected static final String adminSecret = "eIdbCSpAawBmyzCcdb5c1htZqyeCeim13cFJb1knGlQ2MjZ8AGWcBrTanTlJnNyDcPdDTPBgGK9znF0HnvjRpw";
+    protected static final String adminId = "-1dRXHnhHJKkfUfkGeIfgWYpiuC06si1YDZ4SXArJvw";
+    protected static final String adminSecret = "PXa-G6ILMUgRAg0iFCVOnRJ2yMxylhDSg-r98uxY4NM9p1Sw3FFWymSymDP-xjhM9c5IkYsBZwpBjHf05m525Q";
 
     protected static final String testFolderName = "CFSAndroidSDKTest";
 

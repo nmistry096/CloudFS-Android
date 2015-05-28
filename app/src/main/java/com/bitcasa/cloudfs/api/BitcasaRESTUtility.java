@@ -232,6 +232,35 @@ public class BitcasaRESTUtility {
     }
 
     /**
+     * Generate admin authorization value
+     *
+     * @param session Session object
+     * @param uri  String uri
+     * @param date    String of date
+     * @return String of the authorization value
+     * @throws InvalidKeyException          If the key provided is invalid
+     * @throws UnsupportedEncodingException If encoding not supported
+     * @throws NoSuchAlgorithmException     If the algorithm does not exist
+     */
+    public String generateAdminAuthorizationValue(final String requestMethod, final Session session, final String uri, final String date)
+            throws InvalidKeyException, UnsupportedEncodingException, NoSuchAlgorithmException {
+        final StringBuilder stringToSign = new StringBuilder();
+        stringToSign
+                .append(requestMethod)
+                .append('&')
+                .append(uri)
+                .append('&')
+                .append(this.replaceSpaceWithPlus(Uri.encode(BitcasaRESTConstants.HEADER_CONTENT_TYPE, " "))).append(':')
+                .append(this.replaceSpaceWithPlus(Uri.encode(BitcasaRESTConstants.FORM_URLENCODED, " ")))
+                .append('&')
+                .append(this.replaceSpaceWithPlus(Uri.encode(BitcasaRESTConstants.HEADER_DATE, " "))).append(':')
+                .append(this.replaceSpaceWithPlus(Uri.encode(date, " ")));
+        Log.d(BitcasaRESTUtility.TAG, stringToSign.toString());
+
+        return "BCS " + session.getAdminClientId() + ':' + this.sha1(stringToSign.toString(), session.getAdminClientSecret());
+    }
+
+    /**
      * Creates a BitcasaError if server responds with an error code.
      *
      * @param connection The HttpsURLConnection which contains the status code and error.

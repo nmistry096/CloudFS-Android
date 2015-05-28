@@ -3,9 +3,9 @@
  * Copyright (C) 2015 Bitcasa, Inc.
  * 1200 Park Place,
  * Suite 350 San Mateo, CA 94403.
- *
+ * <p/>
  * This file contains an SDK in Java for accessing the Bitcasa infinite drive in Android platform.
- *
+ * <p/>
  * For support, please send email to sdks@bitcasa.com.
  */
 package com.bitcasa.cloudfs.api;
@@ -36,6 +36,7 @@ import com.bitcasa.cloudfs.model.BaseAction;
 import com.bitcasa.cloudfs.model.BitcasaResponse;
 import com.bitcasa.cloudfs.model.ItemList;
 import com.bitcasa.cloudfs.model.ItemMeta;
+import com.bitcasa.cloudfs.model.Plan;
 import com.bitcasa.cloudfs.model.ShareItem;
 import com.bitcasa.cloudfs.model.SharedFolder;
 import com.bitcasa.cloudfs.model.UserProfile;
@@ -77,7 +78,7 @@ import javax.net.ssl.HttpsURLConnection;
 /**
  * Entry point to all CloudFS API requests.
  */
-public class RESTAdapter implements Parcelable,Cloneable{
+public class RESTAdapter implements Parcelable, Cloneable {
 
     private static final String TAG = RESTAdapter.class.getSimpleName();
     private static final String MISSING_PARAM = "Missing required parameter : ";
@@ -164,10 +165,8 @@ public class RESTAdapter implements Parcelable,Cloneable{
      *
      * @return A clone of RESTAdapter.
      */
-    public RESTAdapter clone()
-    {
-        RESTAdapter restAdapter = new RESTAdapter(this.credential);
-        return  restAdapter;
+    public RESTAdapter clone() {
+        return new RESTAdapter(this.credential);
     }
 
     /**
@@ -340,9 +339,15 @@ public class RESTAdapter implements Parcelable,Cloneable{
                 if (!bitcasaResponse.getResult().isJsonNull()) {
                     final UserProfile userProfile = new Gson().fromJson(bitcasaResponse.getResult(),
                             UserProfile.class);
-                    account = new Account(this.clone(), userProfile);
+
+                    Plan plan = new Plan(userProfile.getAccountPlan().getDisplayName(),
+                            userProfile.getAccountId(),
+                            limit);
+
+                    account = new Account(this.clone(), userProfile, plan);
                     account.setStorageLimit(limit);
                     account.setStorageUsage(usage);
+
 
                 } else {
                     throw new BitcasaException(bitcasaResponse.getError().getCode(),
@@ -417,133 +422,6 @@ public class RESTAdapter implements Parcelable,Cloneable{
                 connection.disconnect();
             }
         }
-
-        return user;
-    }
-
-    /**
-     * Creates a new CloudFS user with the supplied data.
-     *
-     * @param session   Session object.
-     * @param username  String username.
-     * @param password  String password.
-     * @param email     String email.
-     * @param firstName String first name.
-     * @param lastName  String last name.
-     * @return User object.
-     * @throws IOException              If a network error occurs.
-     * @throws IllegalArgumentException If the parameters are invalid or misused.
-     * @throws BitcasaException         If a CloudFS API error occurs.
-     */
-    public User createAccount(final Session session, final String username, final String password, final String email,
-                              final String firstName, final String lastName) throws IOException,
-            IllegalArgumentException, BitcasaException {
-        if (RESTAdapter.stringParameterNotValid(username)) {
-            throw new IllegalArgumentException(RESTAdapter.MISSING_PARAM + "username");
-        }
-        if (RESTAdapter.stringParameterNotValid(password)) {
-            throw new IllegalArgumentException(RESTAdapter.MISSING_PARAM + "password");
-        }
-
-        final Map<String, String> parameters = new TreeMap<String, String>();
-        final Map<String, String> queryParams = new TreeMap<String, String>();
-
-        parameters.put(BitcasaRESTConstants.PARAM_USERNAME, Uri.encode(username, " "));
-        parameters.put(BitcasaRESTConstants.PARAM_PASSWORD, Uri.encode(password, " "));
-
-        if ((email != null) && !email.isEmpty()) {
-            parameters.put(BitcasaRESTConstants.PARAM_EMAIL, Uri.encode(email));
-        }
-        if ((firstName != null) && !firstName.isEmpty()) {
-            parameters.put(BitcasaRESTConstants.PARAM_FIRSTNAME, Uri.encode(firstName, " "));
-        }
-        if ((lastName != null) && !lastName.isEmpty()) {
-            parameters.put(BitcasaRESTConstants.PARAM_LASTNAME, Uri.encode(lastName, " "));
-        }
-
-        final String body = this.bitcasaRESTUtility.generateParamsString(parameters);
-
-        final String endpoint = BitcasaRESTConstants.METHOD_ADMIN + BitcasaRESTConstants.METHOD_CLOUDFS +
-                BitcasaRESTConstants.METHOD_CUSTOMERS;
-        final String url = this.bitcasaRESTUtility.getRequestUrl(this.credential, endpoint, null, queryParams);
-        Log.d(RESTAdapter.TAG, "createAccount: " + url + " body: " + body);
-        HttpsURLConnection connection = null;
-        OutputStream outputStream = null;
-        InputStream inputStream = null;
-
-        User user = null;
-        try {
-            final SimpleDateFormat sdf = new SimpleDateFormat(BitcasaRESTConstants.DATE_FORMAT,
-                    Locale.US);
-            sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
-            String date = sdf.format(Calendar.getInstance(Locale.US).getTime());
-            int index = date.lastIndexOf('+');
-            if (index == -1) {
-                index = date.length();
-            }
-            date = date.substring(0, index);
-
-            connection = (HttpsURLConnection) new URL(url).openConnection();
-            connection.setRequestMethod(BitcasaRESTConstants.REQUEST_METHOD_POST);
-
-
-            final String uri = BitcasaRESTConstants.API_VERSION_2 + BitcasaRESTConstants.METHOD_ADMIN
-                    + BitcasaRESTConstants.METHOD_CLOUDFS + BitcasaRESTConstants.METHOD_CUSTOMERS;
-
-            final String authorizationValue = this.bitcasaRESTUtility.generateAdminAuthorizationValue(session,
-                    uri, body, date);
-            connection.setRequestProperty(BitcasaRESTConstants.HEADER_AUTORIZATION,
-                    authorizationValue);
-            connection.setRequestProperty(BitcasaRESTConstants.HEADER_CONTENT_TYPE,
-                    BitcasaRESTConstants.FORM_URLENCODED);
-            connection.setRequestProperty(BitcasaRESTConstants.HEADER_DATE, date);
-
-            if (body != null) {
-                connection.setDoOutput(true);
-                outputStream = connection.getOutputStream();
-                outputStream.write(body.getBytes());
-            }
-
-            final BitcasaError error = this.bitcasaRESTUtility.checkRequestResponse(connection);
-            if (error == null) {
-                inputStream = connection.getInputStream();
-                final String response = this.bitcasaRESTUtility.getResponseFromInputStream(inputStream);
-                final BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
-
-                if (!bitcasaResponse.getResult().isJsonNull()) {
-                    final UserProfile userProfile = new Gson().fromJson(bitcasaResponse.getResult(),
-                            UserProfile.class);
-                    user = new User(this.clone(), userProfile);
-                } else {
-                    throw new BitcasaException(bitcasaResponse.getError().getCode(),
-                            bitcasaResponse.getError().getMessage());
-                }
-            }
-
-        } catch (final MalformedURLException e) {
-            throw new BitcasaException(e);
-        } catch (final ProtocolException e) {
-            throw new BitcasaException(e);
-        } catch (final UnsupportedEncodingException e) {
-            throw new BitcasaException(e);
-        } catch (final IOException ioe) {
-            throw new BitcasaException(ioe);
-        } catch (final NoSuchAlgorithmException e) {
-            throw new BitcasaException(e);
-        } catch (final InvalidKeyException e) {
-            throw new BitcasaException(e);
-        } finally {
-            if (outputStream != null) {
-                outputStream.close();
-            }
-            if (inputStream != null) {
-                inputStream.close();
-            }
-            if (connection != null) {
-                connection.disconnect();
-            }
-        }
-
 
         return user;
     }
@@ -2082,13 +1960,13 @@ public class RESTAdapter implements Parcelable,Cloneable{
     /**
      * Creates a share including the item in the path specified.
      *
-     * @param paths     Paths to the items to be shared.
+     * @param paths    Paths to the items to be shared.
      * @param password Password to access the share to be created.
      * @return The created share object.
      * @throws IOException      If a network error occurs
      * @throws BitcasaException If a CloudFS API error occurs.
      */
-    public Share createShare(final String [] paths, final String password) throws IOException, BitcasaException {
+    public Share createShare(final String[] paths, final String password) throws IOException, BitcasaException {
         if (paths.length == 0 || paths == null) {
             throw new IllegalArgumentException(RESTAdapter.MISSING_PARAM + "path");
         }
@@ -2866,5 +2744,541 @@ public class RESTAdapter implements Parcelable,Cloneable{
         }
         return booleanResult;
     }
+    //endregion
+
+    //region Admin operations
+
+    /**
+     * Creates a new CloudFS user with the supplied data.
+     *
+     * @param session   Session object.
+     * @param username  The username for the new user.
+     * @param password  The password for the new user.
+     * @param email     The email for the new user.
+     * @param firstName The first name of the new user.
+     * @param lastName  The last name of the new user.
+     * @return The newly created user.
+     * @throws IOException              If a network error occurs.
+     * @throws IllegalArgumentException If the parameters are invalid or misused.
+     * @throws BitcasaException         If a CloudFS API error occurs.
+     */
+    public User createAccount(final Session session, final String username, final String password, final String email,
+                              final String firstName, final String lastName) throws IOException,
+            IllegalArgumentException, BitcasaException {
+        if (RESTAdapter.stringParameterNotValid(username)) {
+            throw new IllegalArgumentException(RESTAdapter.MISSING_PARAM + "username");
+        }
+        if (RESTAdapter.stringParameterNotValid(password)) {
+            throw new IllegalArgumentException(RESTAdapter.MISSING_PARAM + "password");
+        }
+
+        final Map<String, String> parameters = new TreeMap<String, String>();
+        final Map<String, String> queryParams = new TreeMap<String, String>();
+
+        parameters.put(BitcasaRESTConstants.PARAM_USERNAME, Uri.encode(username, " "));
+        parameters.put(BitcasaRESTConstants.PARAM_PASSWORD, Uri.encode(password, " "));
+
+        if ((email != null) && !email.isEmpty()) {
+            parameters.put(BitcasaRESTConstants.PARAM_EMAIL, Uri.encode(email));
+        }
+        if ((firstName != null) && !firstName.isEmpty()) {
+            parameters.put(BitcasaRESTConstants.PARAM_FIRSTNAME, Uri.encode(firstName, " "));
+        }
+        if ((lastName != null) && !lastName.isEmpty()) {
+            parameters.put(BitcasaRESTConstants.PARAM_LASTNAME, Uri.encode(lastName, " "));
+        }
+
+        final String body = this.bitcasaRESTUtility.generateParamsString(parameters);
+
+        final String endpoint = BitcasaRESTConstants.METHOD_ADMIN + BitcasaRESTConstants.METHOD_CLOUDFS +
+                BitcasaRESTConstants.METHOD_CUSTOMERS;
+        final String url = this.bitcasaRESTUtility.getRequestUrl(this.credential, endpoint, null, queryParams);
+        Log.d(RESTAdapter.TAG, "createAccount: " + url + " body: " + body);
+        HttpsURLConnection connection = null;
+        OutputStream outputStream = null;
+        InputStream inputStream = null;
+
+        User user = null;
+        try {
+            final SimpleDateFormat sdf = new SimpleDateFormat(BitcasaRESTConstants.DATE_FORMAT,
+                    Locale.US);
+            sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
+            String date = sdf.format(Calendar.getInstance(Locale.US).getTime());
+            int index = date.lastIndexOf('+');
+            if (index == -1) {
+                index = date.length();
+            }
+            date = date.substring(0, index);
+
+            connection = (HttpsURLConnection) new URL(url).openConnection();
+            connection.setRequestMethod(BitcasaRESTConstants.REQUEST_METHOD_POST);
+
+
+            final String uri = BitcasaRESTConstants.API_VERSION_2 + BitcasaRESTConstants.METHOD_ADMIN
+                    + BitcasaRESTConstants.METHOD_CLOUDFS + BitcasaRESTConstants.METHOD_CUSTOMERS;
+
+            final String authorizationValue = this.bitcasaRESTUtility.generateAdminAuthorizationValue(session,
+                    uri, body, date);
+            connection.setRequestProperty(BitcasaRESTConstants.HEADER_AUTORIZATION,
+                    authorizationValue);
+            connection.setRequestProperty(BitcasaRESTConstants.HEADER_CONTENT_TYPE,
+                    BitcasaRESTConstants.FORM_URLENCODED);
+            connection.setRequestProperty(BitcasaRESTConstants.HEADER_DATE, date);
+
+            if (body != null) {
+                connection.setDoOutput(true);
+                outputStream = connection.getOutputStream();
+                outputStream.write(body.getBytes());
+            }
+
+            final BitcasaError error = this.bitcasaRESTUtility.checkRequestResponse(connection);
+            if (error == null) {
+                inputStream = connection.getInputStream();
+                final String response = this.bitcasaRESTUtility.getResponseFromInputStream(inputStream);
+                final BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
+
+                if (!bitcasaResponse.getResult().isJsonNull()) {
+                    final UserProfile userProfile = new Gson().fromJson(bitcasaResponse.getResult(),
+                            UserProfile.class);
+                    user = new User(this.clone(), userProfile);
+                } else {
+                    throw new BitcasaException(bitcasaResponse.getError().getCode(),
+                            bitcasaResponse.getError().getMessage());
+                }
+            }
+
+        } catch (final MalformedURLException e) {
+            throw new BitcasaException(e);
+        } catch (final ProtocolException e) {
+            throw new BitcasaException(e);
+        } catch (final UnsupportedEncodingException e) {
+            throw new BitcasaException(e);
+        } catch (final IOException ioe) {
+            throw new BitcasaException(ioe);
+        } catch (final NoSuchAlgorithmException e) {
+            throw new BitcasaException(e);
+        } catch (final InvalidKeyException e) {
+            throw new BitcasaException(e);
+        } finally {
+            if (outputStream != null) {
+                outputStream.close();
+            }
+            if (inputStream != null) {
+                inputStream.close();
+            }
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+
+
+        return user;
+    }
+
+    /**
+     * Creates a new account plan with the supplied data.
+     *
+     * @param session The session object.
+     * @param name    The name of the account plan.
+     * @param limit   The limit for the account plan.
+     * @return The newly created account plan instance.
+     * @throws IOException              If a network error occurs.
+     * @throws IllegalArgumentException If the parameters are invalid or misused.
+     * @throws BitcasaException         If a CloudFS API error occurs.
+     */
+    public Plan createPlan(Session session, String name, String limit) throws BitcasaException, IOException,
+            IllegalArgumentException {
+        if (RESTAdapter.stringParameterNotValid(name)) {
+            throw new IllegalArgumentException(RESTAdapter.MISSING_PARAM + "name");
+        }
+        if (RESTAdapter.stringParameterNotValid(limit)) {
+            throw new IllegalArgumentException(RESTAdapter.MISSING_PARAM + "limit");
+        }
+
+        final Map<String, String> parameters = new TreeMap<String, String>();
+        final Map<String, String> queryParams = new TreeMap<String, String>();
+
+        parameters.put(BitcasaRESTConstants.PARAM_NAME, Uri.encode(name, " "));
+        parameters.put(BitcasaRESTConstants.PARAM_LIMIT, Uri.encode(limit, " "));
+
+        final String body = this.bitcasaRESTUtility.generateParamsString(parameters);
+
+        final String endpoint = BitcasaRESTConstants.METHOD_ADMIN + BitcasaRESTConstants.METHOD_CUSTOMERS
+                + BitcasaRESTConstants.METHOD_PLAN;
+        final String url = this.bitcasaRESTUtility.getRequestUrl(this.credential, endpoint, null, queryParams);
+        Log.d(RESTAdapter.TAG, "createPlan: " + url + " body: " + body);
+        HttpsURLConnection connection = null;
+        OutputStream outputStream = null;
+        InputStream inputStream = null;
+
+        Plan plan = null;
+        try {
+            final SimpleDateFormat sdf = new SimpleDateFormat(BitcasaRESTConstants.DATE_FORMAT,
+                    Locale.US);
+            sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
+            String date = sdf.format(Calendar.getInstance(Locale.US).getTime());
+            int index = date.lastIndexOf('+');
+            if (index == -1) {
+                index = date.length();
+            }
+            date = date.substring(0, index);
+
+            connection = (HttpsURLConnection) new URL(url).openConnection();
+            connection.setRequestMethod(BitcasaRESTConstants.REQUEST_METHOD_POST);
+
+
+            final String uri = BitcasaRESTConstants.API_VERSION_2 + BitcasaRESTConstants.METHOD_ADMIN
+                    + BitcasaRESTConstants.METHOD_CUSTOMERS + BitcasaRESTConstants.METHOD_PLAN;
+
+            final String authorizationValue = this.bitcasaRESTUtility.generateAdminAuthorizationValue(session,
+                    uri, body, date);
+            connection.setRequestProperty(BitcasaRESTConstants.HEADER_AUTORIZATION,
+                    authorizationValue);
+            connection.setRequestProperty(BitcasaRESTConstants.HEADER_CONTENT_TYPE,
+                    BitcasaRESTConstants.FORM_URLENCODED);
+            connection.setRequestProperty(BitcasaRESTConstants.HEADER_DATE, date);
+
+            if (body != null) {
+                connection.setDoOutput(true);
+                outputStream = connection.getOutputStream();
+                outputStream.write(body.getBytes());
+            }
+
+            final BitcasaError error = this.bitcasaRESTUtility.checkRequestResponse(connection);
+            if (error == null) {
+                inputStream = connection.getInputStream();
+                final String response = this.bitcasaRESTUtility.getResponseFromInputStream(inputStream);
+                final BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
+
+                if (!bitcasaResponse.getResult().isJsonNull()) {
+                    plan = new Gson().fromJson(bitcasaResponse.getResult(),
+                            Plan.class);
+                } else {
+                    throw new BitcasaException(bitcasaResponse.getError().getCode(),
+                            bitcasaResponse.getError().getMessage());
+                }
+            }
+
+        } catch (final MalformedURLException e) {
+            throw new BitcasaException(e);
+        } catch (final ProtocolException e) {
+            throw new BitcasaException(e);
+        } catch (final UnsupportedEncodingException e) {
+            throw new BitcasaException(e);
+        } catch (final IOException ioe) {
+            throw new BitcasaException(ioe);
+        } catch (final NoSuchAlgorithmException e) {
+            throw new BitcasaException(e);
+        } catch (final InvalidKeyException e) {
+            throw new BitcasaException(e);
+        } finally {
+            if (outputStream != null) {
+                outputStream.close();
+            }
+            if (inputStream != null) {
+                inputStream.close();
+            }
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+
+
+        return plan;
+    }
+
+    /**
+     * Lists the custom end user account plans.
+     *
+     * @param session The session object.
+     * @return List of custom end user plans.
+     * @throws BitcasaException If a CloudFS API error occurs.
+     */
+    public Plan[] listPlans(Session session) throws BitcasaException {
+        final ArrayList<Plan> listPlans = new ArrayList<Plan>();
+        final String url = this.bitcasaRESTUtility.getRequestUrl(this.credential,
+                BitcasaRESTConstants.METHOD_ADMIN + BitcasaRESTConstants.METHOD_CUSTOMERS +
+                        BitcasaRESTConstants.METHOD_PLAN, null, null);
+
+        Log.d(RESTAdapter.TAG, "listPlans URL: " + url);
+        HttpsURLConnection connection = null;
+
+        try {
+            connection = (HttpsURLConnection) new URL(url)
+                    .openConnection();
+            connection.setDoInput(true);
+            connection.setRequestMethod(BitcasaRESTConstants.REQUEST_METHOD_GET);
+
+            final SimpleDateFormat sdf = new SimpleDateFormat(BitcasaRESTConstants.DATE_FORMAT,
+                    Locale.US);
+            sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
+            String date = sdf.format(Calendar.getInstance(Locale.US).getTime());
+            int index = date.lastIndexOf('+');
+            if (index == -1) {
+                index = date.length();
+            }
+            date = date.substring(0, index);
+
+            final String uri = BitcasaRESTConstants.API_VERSION_2 + BitcasaRESTConstants.METHOD_ADMIN
+                    + BitcasaRESTConstants.METHOD_CUSTOMERS + BitcasaRESTConstants.METHOD_PLAN;
+
+            final String authorizationValue = this.bitcasaRESTUtility.generateAdminAuthorizationValue(BitcasaRESTConstants.REQUEST_METHOD_GET, session,
+                    uri, date);
+            connection.setRequestProperty(BitcasaRESTConstants.HEADER_AUTORIZATION,
+                    authorizationValue);
+            connection.setRequestProperty(BitcasaRESTConstants.HEADER_CONTENT_TYPE,
+                    BitcasaRESTConstants.FORM_URLENCODED);
+            connection.setRequestProperty(BitcasaRESTConstants.HEADER_DATE, date);
+
+
+            final BitcasaError error = this.bitcasaRESTUtility.checkRequestResponse(connection);
+
+            if (error == null) {
+                final String response = this.bitcasaRESTUtility.getResponseFromInputStream(connection.getInputStream());
+                final BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
+
+                if (!bitcasaResponse.getResult().isJsonNull()) {
+                    final Plan[] plans = new Gson().fromJson(bitcasaResponse.getResult(),
+                            Plan[].class);
+
+                    for (final Plan plan : plans) {
+                        listPlans.add(plan);
+                    }
+
+                } else {
+                    throw new BitcasaException(bitcasaResponse.getError().getCode(),
+                            bitcasaResponse.getError().getMessage());
+                }
+            }
+
+        } catch (final ProtocolException e) {
+            throw new BitcasaException(e);
+        } catch (final MalformedURLException e) {
+            throw new BitcasaException(e);
+        } catch (final IOException ioe) {
+            throw new BitcasaException(ioe);
+        } catch (final BitcasaException e) {
+            throw new BitcasaException(e);
+        } catch (final JsonSyntaxException e) {
+            throw new BitcasaException(e);
+        } catch (final RuntimeException e) {
+            throw new BitcasaException(e);
+        } catch (NoSuchAlgorithmException e) {
+            throw new BitcasaException(e);
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+
+        return listPlans.toArray(new Plan[listPlans.size()]);
+    }
+
+    /**
+     * Update the user details and account plan for the given the user account code.
+     *
+     * @param session   The session object.
+     * @param id        The account id of the user account.
+     * @param username  The username of the account to be updated.
+     * @param firstName The firstname of the account to be updated.
+     * @param lastName  The lastname of the account to be updated.
+     * @param planCode  The plan code of the account to be updated.
+     * @return The updated user.
+     * @throws BitcasaException If a CloudFS API error occurs.
+     * @throws IOException      If response data can not be read due to network errors.
+     */
+    public User updateUser(Session session, String id, String username, String firstName,
+                           String lastName, String planCode)
+            throws BitcasaException, IOException {
+
+        if (RESTAdapter.stringParameterNotValid(id)) {
+            throw new IllegalArgumentException(RESTAdapter.MISSING_PARAM + "username");
+        }
+
+        final Map<String, String> parameters = new TreeMap<String, String>();
+        final Map<String, String> queryParams = new TreeMap<String, String>();
+
+        parameters.put(BitcasaRESTConstants.PARAM_ID, Uri.encode(id, " "));
+
+        if ((username != null) && !username.isEmpty()) {
+            parameters.put(BitcasaRESTConstants.PARAM_USERNAME, Uri.encode(username, " "));
+        }
+        if ((firstName != null) && !firstName.isEmpty()) {
+            parameters.put(BitcasaRESTConstants.PARAM_FIRSTNAME, Uri.encode(firstName, " "));
+        }
+        if ((lastName != null) && !lastName.isEmpty()) {
+            parameters.put(BitcasaRESTConstants.PARAM_LASTNAME, Uri.encode(lastName, " "));
+        }
+        if ((planCode != null) && !planCode.isEmpty()) {
+            parameters.put(BitcasaRESTConstants.PARAM_PLANCODE, Uri.encode(planCode, " "));
+        }
+
+        final String body = this.bitcasaRESTUtility.generateParamsString(parameters);
+
+        final String endpoint = BitcasaRESTConstants.METHOD_ADMIN + BitcasaRESTConstants.METHOD_CUSTOMERS + id;
+        final String url = this.bitcasaRESTUtility.getRequestUrl(this.credential, endpoint, null, queryParams);
+        Log.d(RESTAdapter.TAG, "createAccount: " + url + " body: " + body);
+        HttpsURLConnection connection = null;
+        OutputStream outputStream = null;
+        InputStream inputStream = null;
+
+        User user = null;
+        try {
+            final SimpleDateFormat sdf = new SimpleDateFormat(BitcasaRESTConstants.DATE_FORMAT,
+                    Locale.US);
+            sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
+            String date = sdf.format(Calendar.getInstance(Locale.US).getTime());
+            int index = date.lastIndexOf('+');
+            if (index == -1) {
+                index = date.length();
+            }
+            date = date.substring(0, index);
+
+            connection = (HttpsURLConnection) new URL(url).openConnection();
+            connection.setRequestMethod(BitcasaRESTConstants.REQUEST_METHOD_POST);
+
+
+            final String uri = BitcasaRESTConstants.API_VERSION_2 + BitcasaRESTConstants.METHOD_ADMIN
+                    + BitcasaRESTConstants.METHOD_CUSTOMERS + id;
+
+            final String authorizationValue = this.bitcasaRESTUtility.generateAdminAuthorizationValue(session,
+                    uri, body, date);
+            connection.setRequestProperty(BitcasaRESTConstants.HEADER_AUTORIZATION,
+                    authorizationValue);
+            connection.setRequestProperty(BitcasaRESTConstants.HEADER_CONTENT_TYPE,
+                    BitcasaRESTConstants.FORM_URLENCODED);
+            connection.setRequestProperty(BitcasaRESTConstants.HEADER_DATE, date);
+
+            if (body != null) {
+                connection.setDoOutput(true);
+                outputStream = connection.getOutputStream();
+                outputStream.write(body.getBytes());
+            }
+
+            final BitcasaError error = this.bitcasaRESTUtility.checkRequestResponse(connection);
+            if (error == null) {
+                inputStream = connection.getInputStream();
+                final String response = this.bitcasaRESTUtility.getResponseFromInputStream(inputStream);
+                final BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
+
+                if (!bitcasaResponse.getResult().isJsonNull()) {
+                    final UserProfile userProfile = new Gson().fromJson(bitcasaResponse.getResult(),
+                            UserProfile.class);
+                    user = new User(this.clone(), userProfile);
+                } else {
+                    throw new BitcasaException(bitcasaResponse.getError().getCode(),
+                            bitcasaResponse.getError().getMessage());
+                }
+            }
+
+        } catch (final MalformedURLException e) {
+            throw new BitcasaException(e);
+        } catch (final ProtocolException e) {
+            throw new BitcasaException(e);
+        } catch (final UnsupportedEncodingException e) {
+            throw new BitcasaException(e);
+        } catch (final IOException ioe) {
+            throw new BitcasaException(ioe);
+        } catch (final NoSuchAlgorithmException e) {
+            throw new BitcasaException(e);
+        } catch (final InvalidKeyException e) {
+            throw new BitcasaException(e);
+        } finally {
+            if (outputStream != null) {
+                outputStream.close();
+            }
+            if (inputStream != null) {
+                inputStream.close();
+            }
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+
+
+        return user;
+    }
+
+    /**
+     * Deletes the account plan from CloudFS for the given plan id.
+     *
+     * @param session The session object.
+     * @param planId  The path of the item which needs to be deleted.
+     * @return Returns true if the account plan is deleted successfully, otherwise false.
+     * @throws IOException      If response data can not be read due to network errors.
+     * @throws BitcasaException If a CloudFS API error occurs.
+     */
+    public boolean deletePlan(Session session, String planId)
+            throws IOException, BitcasaException {
+
+        final String endpoint = BitcasaRESTConstants.METHOD_ADMIN + BitcasaRESTConstants.METHOD_CUSTOMERS +
+                BitcasaRESTConstants.METHOD_PLAN + planId + File.separator;
+        final String url = this.bitcasaRESTUtility.getRequestUrl(this.credential, endpoint, null, null);
+
+        Log.d(RESTAdapter.TAG, "deletePlan: URL - " + url);
+        HttpsURLConnection connection = null;
+        InputStream inputStream = null;
+
+        boolean result = false;
+        try {
+
+            connection = (HttpsURLConnection) new URL(url).openConnection();
+            connection.setDoInput(true);
+            connection.setRequestMethod(BitcasaRESTConstants.REQUEST_METHOD_DELETE);
+
+            final SimpleDateFormat sdf = new SimpleDateFormat(BitcasaRESTConstants.DATE_FORMAT,
+                    Locale.US);
+            sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
+            String date = sdf.format(Calendar.getInstance(Locale.US).getTime());
+            int index = date.lastIndexOf('+');
+            if (index == -1) {
+                index = date.length();
+            }
+            date = date.substring(0, index);
+
+            final String uri = BitcasaRESTConstants.API_VERSION_2 + BitcasaRESTConstants.METHOD_ADMIN
+                    + BitcasaRESTConstants.METHOD_CUSTOMERS +
+                    BitcasaRESTConstants.METHOD_PLAN + planId + File.separator;
+
+            final String authorizationValue = this.bitcasaRESTUtility.generateAdminAuthorizationValue(BitcasaRESTConstants.REQUEST_METHOD_DELETE, session,
+                    uri, date);
+            connection.setRequestProperty(BitcasaRESTConstants.HEADER_AUTORIZATION,
+                    authorizationValue);
+            connection.setRequestProperty(BitcasaRESTConstants.HEADER_CONTENT_TYPE,
+                    BitcasaRESTConstants.FORM_URLENCODED);
+            connection.setRequestProperty(BitcasaRESTConstants.HEADER_DATE, date);
+
+            final BitcasaError error = this.bitcasaRESTUtility.checkRequestResponse(connection);
+            if (error == null) {
+                inputStream = connection.getInputStream();
+                final String response = this.bitcasaRESTUtility.getResponseFromInputStream(inputStream);
+                final BitcasaResponse bitcasaResponse = new Gson().fromJson(response,
+                        BitcasaResponse.class);
+
+                if (!bitcasaResponse.getResult().isJsonNull()) {
+                    result = Boolean.valueOf(bitcasaResponse.getResult().toString());
+                }
+            } else {
+                result = false;
+            }
+
+        } catch (NoSuchAlgorithmException e) {
+            throw new BitcasaException(e);
+        } catch (InvalidKeyException e) {
+            throw new BitcasaException(e);
+        } finally {
+            if (inputStream != null) {
+                inputStream.close();
+            }
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+
+        return result;
+    }
+
     //endregion
 }

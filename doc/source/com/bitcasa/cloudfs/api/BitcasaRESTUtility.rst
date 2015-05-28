@@ -97,6 +97,22 @@ generateAdminAuthorizationValue
    :throws NoSuchAlgorithmException: If the algorithm does not exist
    :return: String of the authorization value
 
+generateAdminAuthorizationValue
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. java:method:: public String generateAdminAuthorizationValue(String requestMethod, Session session, String uri, String date) throws InvalidKeyException, UnsupportedEncodingException, NoSuchAlgorithmException
+   :outertype: BitcasaRESTUtility
+
+   Generate admin authorization value
+
+   :param session: Session object
+   :param uri: String uri
+   :param date: String of date
+   :throws UnsupportedEncodingException: If encoding not supported
+   :throws InvalidKeyException: If the key provided is invalid
+   :throws NoSuchAlgorithmException: If the algorithm does not exist
+   :return: String of the authorization value
+
 generateAuthorizationValue
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 

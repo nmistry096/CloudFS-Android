@@ -41,21 +41,25 @@ Sessions represent connections to CloudFS. They use a set of credentials that co
 a client ID and a client secret. These credentials can be obtained via the Bitcasa admin console.
 
 :java:type:`Session`  - Performs regular file system operations.
+
       ::
 
         session = new Session(String endPoint, String clientId, String clientSecret);
 
 A user can be linked to the session by authenticating using a username and a password.
+
       ::
 
         session.authenticate(String username, String password);
 
 You can assert whether a user is linked to the session.
+
       ::
 
         session.isLinked();
 
 The currently linked user can be unlinked from the session.
+
       ::
 
         session.unlink();
@@ -65,21 +69,44 @@ Admin Operations
 .. note:: You need to set the admin credentials in order to perform admin operations.
   You can create end users for an admin/paid account. If 'logInToCreatedUser' is true, logs in to the user after creating it.
 
-- `Create Account <com/bitcasa/cloudfs/Session#createaccount>`_
+- `Create Account <com/bitcasa/cloudfs/Session.html#createaccount>`_
+
       ::
 
         session.setAdminCredentials(String adminClientId, String adminClientSecret);
         user = session.createAccount(String username, String password, String email, String firstName, String lastName, Boolean logInToCreatedUser);
 
+- `Create Account Plan <com/bitcasa/cloudfs/Session.html#createplan>`_
+
+      ::
+
+        session.setAdminCredentials(String adminClientId, String adminClientSecret);
+        Plan plan = session.createPlan(String planName, String planLimit);
+
+- `List Account Plans <com/bitcasa/cloudfs/Session.html#listplans>`_
+
+      ::
+
+        session.setAdminCredentials(String adminClientId, String adminClientSecret);
+        Plan[] plan = session.listPlans();
+
+- `Update User <com/bitcasa/cloudfs/Session.html#updateuser>`_
+
+      ::
+
+        session.setAdminCredentials(String adminClientId, String adminClientSecret);
+        user = session.updateUser(String accountId, String username, String firstname, String lastname, String planCode);
+
+
 File System Operations
 ----------------------
 .. note:: You need to create a session in order to perform file system operations.
 
-- `Get Root Folder <com/bitcasa/cloudfs/FileSystem#root>`_
+- `Get Root Folder <com/bitcasa/cloudfs/FileSystem.html#root>`_
 
       ::
 
-        fileSystem = new Filesystem(session.getRestAdapter()); ::
+        fileSystem = new Filesystem(session.getRestAdapter());
         root = fileSystem.root();
 
 	  
@@ -142,6 +169,7 @@ Folder Operations
 - `Change Folder Attributes <com/bitcasa/cloudfs/Item.html#changeattributes>`_
 
   You can change the attributes of a Folder by providing a hash map of field names and values. An example is given below.
+
       ::
 
         folder.changeAttributes(HashMap<String, String> values, VersionConflict conflictAction);
@@ -178,7 +206,7 @@ Folder Operations
 
   You can restore a Folder from the trash. The restore method can be set to either FAIL, RESCUE or RECREATE. This will return the Success/failure status of the operation.
 
-      ::    
+      ::
 
         status = folder.restore(Container destination, RestoreMethod method, String restoreArgument);
 
@@ -208,6 +236,7 @@ File Operations
 - `Change File Attributes <com/bitcasa/cloudfs/Item.html#changeattributes>`_
 
   You can change the attributes of a File by providing a hash map of field names and values. An example is given below.
+
       ::
 
         file.changeAttributes(HashMap<String, String> values, VersionConflict conflictAction);
@@ -244,7 +273,7 @@ File Operations
 
   You can restore files from the trash. The restore method can be set to either FAIL, RESCUE or RECREATE. This will return the Success/failure status of the operation.
 
-      ::    
+      ::
 
         status = file.restore(Container destination, RestoreMethod method, String restoreArgument);
 
@@ -274,6 +303,7 @@ Share Operations
 - `Receive Share <com/bitcasa/cloudfs/Share.html#receive>`_
 
   Receives all share files to the given path.
+
       ::
 
         share.receive(String path, BitcasaRESTConstants.Exists exists);
@@ -281,13 +311,14 @@ Share Operations
  
 - `Delete Share <com/bitcasa/cloudfs/Share.html#delete>`_
 
-      ::    
+      ::
 
         share.delete();
 
 - `Set Share Password <com/bitcasa/cloudfs/Share.html#setpassword>`_
 
   Sets the share password. Old password is only needed if one exists.
+
       ::
 
         share.setPassword(String newPassword, String currentPassword);

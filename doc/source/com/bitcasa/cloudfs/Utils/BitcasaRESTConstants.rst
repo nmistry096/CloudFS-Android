@@ -58,6 +58,12 @@ BODY_FROM
 .. java:field:: public static final String BODY_FROM
    :outertype: BitcasaRESTConstants
 
+BODY_LIMIT
+^^^^^^^^^^
+
+.. java:field:: public static final String BODY_LIMIT
+   :outertype: BitcasaRESTConstants
+
 BODY_NAME
 ^^^^^^^^^
 
@@ -348,6 +354,12 @@ METHOD_PING
 .. java:field:: public static final String METHOD_PING
    :outertype: BitcasaRESTConstants
 
+METHOD_PLAN
+^^^^^^^^^^^
+
+.. java:field:: public static final String METHOD_PLAN
+   :outertype: BitcasaRESTConstants
+
 METHOD_PROFILE
 ^^^^^^^^^^^^^^
 
@@ -534,6 +546,12 @@ PARAM_LATEST
 .. java:field:: public static final String PARAM_LATEST
    :outertype: BitcasaRESTConstants
 
+PARAM_LIMIT
+^^^^^^^^^^^
+
+.. java:field:: public static final String PARAM_LIMIT
+   :outertype: BitcasaRESTConstants
+
 PARAM_MIME
 ^^^^^^^^^^
 
@@ -562,6 +580,18 @@ PARAM_PATH
 ^^^^^^^^^^
 
 .. java:field:: public static final String PARAM_PATH
+   :outertype: BitcasaRESTConstants
+
+PARAM_PLANCODE
+^^^^^^^^^^^^^^
+
+.. java:field:: public static final String PARAM_PLANCODE
+   :outertype: BitcasaRESTConstants
+
+PARAM_PLANID
+^^^^^^^^^^^^
+
+.. java:field:: public static final String PARAM_PLANID
    :outertype: BitcasaRESTConstants
 
 PARAM_REDIRECT

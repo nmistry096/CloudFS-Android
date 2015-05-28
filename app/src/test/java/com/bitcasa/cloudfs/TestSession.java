@@ -1,6 +1,9 @@
 package com.bitcasa.cloudfs;
 
+import android.widget.AbsSeekBar;
+
 import com.bitcasa.cloudfs.exception.BitcasaException;
+import com.bitcasa.cloudfs.model.Plan;
 
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
@@ -16,6 +19,8 @@ import java.io.IOException;
 public class TestSession extends BaseTest {
 
     private Session mBitcasaSession;
+    public static User testUser;
+    public static Plan createdPlan;
 
     /**
      * Tests the authenticate method of the session class.
@@ -181,15 +186,108 @@ public class TestSession extends BaseTest {
         this.mBitcasaSession.setAdminCredentials(BaseTest.adminId, BaseTest.adminSecret);
         final String email = System.currentTimeMillis() + "@unique.com";
 
-        User user = null;
         try {
-            user = this.mBitcasaSession.createAccount(email, "123456", email, "First", "Last", false);
+            testUser = this.mBitcasaSession.createAccount(email, "123456", email, "First", "Last", false);
         } catch (final IOException e) {
             e.printStackTrace();
         } catch (final BitcasaException e) {
             e.printStackTrace();
         }
-        Assert.assertNotNull(user);
-        junit.framework.Assert.assertEquals(user.getUsername(), email);
+        Assert.assertNotNull(testUser);
+        junit.framework.Assert.assertEquals(testUser.getUsername(), email);
+    }
+
+    @Test
+    public void test9CreatePlan(){
+        this.mBitcasaSession = new Session(BaseTest.cloudfsEndpoint, BaseTest.clientId, BaseTest.clientSecret);
+        try {
+            this.mBitcasaSession.authenticate(BaseTest.username, BaseTest.password);
+        } catch (final IOException e) {
+            Assert.fail();
+            e.printStackTrace();
+        } catch (final BitcasaException e) {
+            Assert.fail();
+            e.printStackTrace();
+        }
+        this.mBitcasaSession.setAdminCredentials(BaseTest.adminId, BaseTest.adminSecret);
+
+        try {
+
+            /*
+            * WARNING!!! Only run the following set of commented code on a test environment.
+            * It will delete the the account plans from your account and if there are users assigned to
+            * the deleted plans it will cause complications.
+            * DO NOT run it on a production environment.
+            *
+            */
+            /*
+            Plan[] plans = mBitcasaSession.listPlans();
+            if(plans.length > 0) {
+                for(Plan plan : plans){
+                    boolean deleteStatus = mBitcasaSession.getRestAdapter().deletePlan(mBitcasaSession, plan.getId());
+                }
+            }
+            */
+
+            createdPlan = mBitcasaSession.createPlan("TestPlan", "1024");
+            Assert.assertNotNull(createdPlan);
+            mBitcasaSession.getRestAdapter().deletePlan(mBitcasaSession, createdPlan.getId());
+        } catch (BitcasaException e) {
+            Assert.fail();
+        } catch (IOException e) {
+            Assert.fail();
+        }
+    }
+
+    @Test
+    public void testListPlan(){
+        this.mBitcasaSession = new Session(BaseTest.cloudfsEndpoint, BaseTest.clientId, BaseTest.clientSecret);
+        try {
+            this.mBitcasaSession.authenticate(BaseTest.username, BaseTest.password);
+        } catch (final IOException e) {
+            Assert.fail();
+            e.printStackTrace();
+        } catch (final BitcasaException e) {
+            Assert.fail();
+            e.printStackTrace();
+        }
+        this.mBitcasaSession.setAdminCredentials(BaseTest.adminId, BaseTest.adminSecret);
+
+        try {
+            Plan[] plans = mBitcasaSession.listPlans();
+            Assert.assertNotNull(plans);
+        } catch (BitcasaException e) {
+            Assert.fail();
+        }
+    }
+
+    @Test
+    public void testUpdate(){
+        this.mBitcasaSession = new Session(BaseTest.cloudfsEndpoint, BaseTest.clientId, BaseTest.clientSecret);
+        try {
+            this.mBitcasaSession.authenticate(BaseTest.username, BaseTest.password);
+        } catch (final IOException e) {
+            Assert.fail();
+            e.printStackTrace();
+        } catch (final BitcasaException e) {
+            Assert.fail();
+            e.printStackTrace();
+        }
+        this.mBitcasaSession.setAdminCredentials(BaseTest.adminId, BaseTest.adminSecret);
+
+        try {
+            User updatedUser = mBitcasaSession.updateUser(mBitcasaSession.account().getId(),
+                    "praveen@calcey.com","Praveen","Prav",null);
+            Assert.assertNotNull(updatedUser);
+            Session testSession = new Session(BaseTest.cloudfsEndpoint, BaseTest.clientId, BaseTest.clientSecret);
+            testSession.authenticate(updatedUser.getUsername(), BaseTest.password);
+            User testUser = testSession.user();
+            Assert.assertNotNull(testUser);
+
+        } catch (BitcasaException e) {
+            Assert.fail();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
