@@ -32,16 +32,16 @@ public abstract class BaseTest {
 
     private static final boolean CLEANED = false;
 
-    protected static final String cloudfsEndpoint = "xm4q7hu8qr.cloudfs.io";
-    protected static final String clientId = "XOjmPTQFrGo6IxIY4j_YczPm7WLRAEBhKxGZAyMYhME";
-    protected static final String clientSecret = "ds-LgDs7oLBB5IzxGMx8vgHFm5pll8ABX_tkv1VAIIFZmGMDvMhZban-fcyx2hvihuckbag7l7KFOUvS5R-mIQ";
-    protected static final String username = "praveen@calcey.com";
-    protected static final String password = "user@123";
-    protected static final String usernameTwo = "naja@calcey.com";
-    protected static final String passwordTwo = "user@123";
+    protected static final String cloudfsEndpoint = "<add cloudfs endpoint here>";
+    protected static final String clientId = "<add client id here>";
+    protected static final String clientSecret = "<add client secret here>";
+    protected static final String username = "<add cloudfs username here>";
+    protected static final String password = "<add cloudfs password here>";
+    protected static final String usernameTwo = "<add cloudfs alternate username here>";
+    protected static final String passwordTwo = "<add cloudfs alternate password here>";
 
-    protected static final String adminId = "-1dRXHnhHJKkfUfkGeIfgWYpiuC06si1YDZ4SXArJvw";
-    protected static final String adminSecret = "PXa-G6ILMUgRAg0iFCVOnRJ2yMxylhDSg-r98uxY4NM9p1Sw3FFWymSymDP-xjhM9c5IkYsBZwpBjHf05m525Q";
+    protected static final String adminId = "<add cloudfs admin id here - only available for paid users>";
+    protected static final String adminSecret = "<add cloudfs admin secret here - only available for paid users>";
 
     protected static final String testFolderName = "CFSAndroidSDKTest";
 
