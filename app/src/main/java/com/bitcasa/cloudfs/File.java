@@ -86,7 +86,7 @@ public class File extends Item {
      */
     @Override
     public void writeToParcel(Parcel out, int flags) {
-        super.writeToParcel(out,flags);
+        super.writeToParcel(out, flags);
         out.writeString(extension);
         out.writeString(mime);
         out.writeLong(size);

@@ -20,7 +20,7 @@ public class Storage {
     /**
      * Used storage amount.
      */
-    private final Integer usage;
+    private final Long usage;
 
     /**
      * Storage limit.
@@ -30,7 +30,7 @@ public class Storage {
     /**
      * Stores the value after parsing the limit attribute.
      */
-    private Integer parsedLimit;
+    private Long parsedLimit;
 
     /**
      * Over the limit.
@@ -44,7 +44,7 @@ public class Storage {
      * @param limit Storage limit.
      * @param otl   Over the limit.
      */
-    public Storage(final Integer usage, final Integer limit, final Boolean otl) {
+    public Storage(final Long usage, final Long limit, final Boolean otl) {
         this.usage = usage;
         this.parsedLimit = limit;
         this.limit = null;
@@ -56,7 +56,7 @@ public class Storage {
      *
      * @return Used storage amount.
      */
-    public final Integer getUsage() {
+    public final Long getUsage() {
         return this.usage;
     }
 
@@ -65,7 +65,7 @@ public class Storage {
      *
      * @return Storage limit.
      */
-    public final Integer getLimit() {
+    public final Long getLimit() {
 
         if (this.parsedLimit == null) {
             int limit = 0;
@@ -74,7 +74,7 @@ public class Storage {
             } catch (final NumberFormatException e) {
                 // this.limit is not a number and limit is already assigned to 0.
             } finally {
-                this.parsedLimit = Integer.valueOf(limit);
+                this.parsedLimit = Long.valueOf(limit);
             }
         }
 

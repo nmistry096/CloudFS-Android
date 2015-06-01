@@ -31,7 +31,7 @@ import java.util.Map;
 /**
  * The Item class provides accessibility to CloudFS Item.
  */
-public abstract class Item implements Parcelable{
+public abstract class Item implements Parcelable {
 
     /**
      * The REST Adapter instance.
@@ -167,7 +167,7 @@ public abstract class Item implements Parcelable{
         parentId = source.readString();
         absoluteParentPath = source.readString();
         absolutePath = source.readString();
-        restAdapter = (RESTAdapter)source.readValue(
+        restAdapter = (RESTAdapter) source.readValue(
                 RESTAdapter.class.getClassLoader());
         state = source.readString();
         shareKey = source.readString();
@@ -206,8 +206,7 @@ public abstract class Item implements Parcelable{
         out.writeValue(restAdapter);
         out.writeString(state);
         out.writeString(shareKey);
-     }
-
+    }
 
 
     /**

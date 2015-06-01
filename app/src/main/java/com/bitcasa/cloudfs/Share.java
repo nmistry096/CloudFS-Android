@@ -30,7 +30,7 @@ import java.util.Map;
 /**
  * The Share class provides accessibility to CloudFS Share.
  */
-public class Share implements Parcelable{
+public class Share implements Parcelable {
 
     /**
      * The Share Key.
@@ -118,7 +118,7 @@ public class Share implements Parcelable{
     };
 
     public Share(Parcel source) {
-        restAdapter = (RESTAdapter)source.readValue(RESTAdapter.class.getClassLoader());
+        restAdapter = (RESTAdapter) source.readValue(RESTAdapter.class.getClassLoader());
         shareKey = source.readString();
         name = source.readString();
         url = source.readString();

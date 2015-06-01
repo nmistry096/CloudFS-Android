@@ -17,7 +17,7 @@ import android.os.Parcelable;
 /**
  * The BitcasaError class provides custom errors.
  */
-public class BitcasaError implements Parcelable{
+public class BitcasaError implements Parcelable {
 
     /**
      * The error code.

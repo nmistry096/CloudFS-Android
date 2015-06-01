@@ -31,7 +31,7 @@ com.bitcasa.cloudfs.model
    Holds
    ItemList
    ItemMeta
-   Plan
+   PlanMeta
    ResponseError
    Session
    ShareItem

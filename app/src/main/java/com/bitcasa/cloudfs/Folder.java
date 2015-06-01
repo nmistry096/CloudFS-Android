@@ -50,8 +50,7 @@ public class Folder extends Container {
      *
      * @param source The parcel object parameter.
      */
-    public Folder(Parcel source)
-    {
+    public Folder(Parcel source) {
         super(source);
     }
 

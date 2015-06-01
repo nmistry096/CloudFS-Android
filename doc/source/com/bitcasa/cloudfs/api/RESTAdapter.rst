@@ -16,6 +16,8 @@
 
 .. java:import:: com.bitcasa.cloudfs Item
 
+.. java:import:: com.bitcasa.cloudfs Plan
+
 .. java:import:: com.bitcasa.cloudfs Session
 
 .. java:import:: com.bitcasa.cloudfs Share
@@ -48,11 +50,13 @@
 
 .. java:import:: com.bitcasa.cloudfs.model ItemMeta
 
-.. java:import:: com.bitcasa.cloudfs.model Plan
+.. java:import:: com.bitcasa.cloudfs.model PlanMeta
 
 .. java:import:: com.bitcasa.cloudfs.model ShareItem
 
 .. java:import:: com.bitcasa.cloudfs.model SharedFolder
+
+.. java:import:: com.bitcasa.cloudfs.model Storage
 
 .. java:import:: com.bitcasa.cloudfs.model UserProfile
 

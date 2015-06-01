@@ -46,8 +46,7 @@ public class Container extends Item {
      *
      * @param source The parcel object parameter.
      */
-    public Container(Parcel source)
-    {
+    public Container(Parcel source) {
         super(source);
     }
 
@@ -63,7 +62,7 @@ public class Container extends Item {
          */
         @Override
         public Container createFromParcel(Parcel source) {
-                return new Container(source);
+            return new Container(source);
         }
 
         /**

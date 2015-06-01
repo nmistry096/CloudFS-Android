@@ -15,7 +15,7 @@ Constructors
 Storage
 ^^^^^^^
 
-.. java:constructor:: public Storage(Integer usage, Integer limit, Boolean otl)
+.. java:constructor:: public Storage(Long usage, Long limit, Boolean otl)
    :outertype: Storage
 
    Initializes a new instance of storage details.
@@ -29,7 +29,7 @@ Methods
 getLimit
 ^^^^^^^^
 
-.. java:method:: public final Integer getLimit()
+.. java:method:: public final Long getLimit()
    :outertype: Storage
 
    Gets the storage limit.
@@ -49,7 +49,7 @@ getOtl
 getUsage
 ^^^^^^^^
 
-.. java:method:: public final Integer getUsage()
+.. java:method:: public final Long getUsage()
    :outertype: Storage
 
    Gets the used storage amount.

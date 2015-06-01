@@ -15,7 +15,6 @@ import com.bitcasa.cloudfs.api.RESTAdapter;
 import com.bitcasa.cloudfs.exception.BitcasaException;
 import com.bitcasa.cloudfs.model.ActionFactory;
 import com.bitcasa.cloudfs.model.BaseAction;
-import com.bitcasa.cloudfs.model.Plan;
 
 import java.io.IOException;
 import java.util.ArrayList;

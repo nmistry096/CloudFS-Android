@@ -3,9 +3,9 @@
  * Copyright (C) 2015 Bitcasa, Inc.
  * 1200 Park Place,
  * Suite 350 San Mateo, CA 94403.
- * <p/>
+ *
  * This file contains an SDK in Java for accessing the Bitcasa infinite drive in Android platform.
- * <p/>
+ *
  * For support, please send email to sdks@bitcasa.com.
  */
 package com.bitcasa.cloudfs.api;
@@ -20,6 +20,7 @@ import com.bitcasa.cloudfs.BitcasaError;
 import com.bitcasa.cloudfs.Credential;
 import com.bitcasa.cloudfs.Folder;
 import com.bitcasa.cloudfs.Item;
+import com.bitcasa.cloudfs.Plan;
 import com.bitcasa.cloudfs.Session;
 import com.bitcasa.cloudfs.Share;
 import com.bitcasa.cloudfs.User;
@@ -36,9 +37,10 @@ import com.bitcasa.cloudfs.model.BaseAction;
 import com.bitcasa.cloudfs.model.BitcasaResponse;
 import com.bitcasa.cloudfs.model.ItemList;
 import com.bitcasa.cloudfs.model.ItemMeta;
-import com.bitcasa.cloudfs.model.Plan;
+import com.bitcasa.cloudfs.model.PlanMeta;
 import com.bitcasa.cloudfs.model.ShareItem;
 import com.bitcasa.cloudfs.model.SharedFolder;
+import com.bitcasa.cloudfs.model.Storage;
 import com.bitcasa.cloudfs.model.UserProfile;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -344,9 +346,9 @@ public class RESTAdapter implements Parcelable, Cloneable {
                             userProfile.getAccountId(),
                             limit);
 
+                    Storage storage = new Storage(usage, limit, userProfile.getStorage().getOtl());
+                    userProfile.setStorage(storage);
                     account = new Account(this.clone(), userProfile, plan);
-                    account.setStorageLimit(limit);
-                    account.setStorageUsage(usage);
 
 
                 } else {
@@ -2951,8 +2953,9 @@ public class RESTAdapter implements Parcelable, Cloneable {
                 final BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
 
                 if (!bitcasaResponse.getResult().isJsonNull()) {
-                    plan = new Gson().fromJson(bitcasaResponse.getResult(),
-                            Plan.class);
+                    PlanMeta planMeta = new Gson().fromJson(bitcasaResponse.getResult(),
+                            PlanMeta.class);
+                    plan = new Plan(planMeta);
                 } else {
                     throw new BitcasaException(bitcasaResponse.getError().getCode(),
                             bitcasaResponse.getError().getMessage());
@@ -3038,10 +3041,12 @@ public class RESTAdapter implements Parcelable, Cloneable {
                 final BitcasaResponse bitcasaResponse = new Gson().fromJson(response, BitcasaResponse.class);
 
                 if (!bitcasaResponse.getResult().isJsonNull()) {
-                    final Plan[] plans = new Gson().fromJson(bitcasaResponse.getResult(),
-                            Plan[].class);
+                    final PlanMeta[] plansMeta = new Gson().fromJson(bitcasaResponse.getResult(),
+                            PlanMeta[].class);
 
-                    for (final Plan plan : plans) {
+
+                    for (final PlanMeta planMeta : plansMeta) {
+                        Plan plan = new Plan(planMeta);
                         listPlans.add(plan);
                     }
 

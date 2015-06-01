@@ -2,26 +2,24 @@
 
 .. java:import:: android.os Parcelable
 
-.. java:import:: com.bitcasa.cloudfs.api RESTAdapter
-
-.. java:import:: com.google.gson.annotations SerializedName
+.. java:import:: com.bitcasa.cloudfs.model PlanMeta
 
 Plan
 ====
 
-.. java:package:: com.bitcasa.cloudfs.model
+.. java:package:: com.bitcasa.cloudfs
    :noindex:
 
 .. java:type:: public class Plan implements Parcelable
 
-   Model class for plan.
+   The Plan class provides accessibility to CloudFS Account Plans.
 
 Fields
 ------
 CREATOR
 ^^^^^^^
 
-.. java:field:: public static final Parcelable.Creator<Plan> CREATOR
+.. java:field:: public static final Creator<Plan> CREATOR
    :outertype: Plan
 
 Constructors
@@ -37,6 +35,16 @@ Plan
    :param displayName: Display name of the account plan.
    :param id: Id of the account plan.
    :param limit: Account plan limit.
+
+Plan
+^^^^
+
+.. java:constructor:: public Plan(PlanMeta planMeta)
+   :outertype: Plan
+
+   Initializes an account plan instance with plan meta object.
+
+   :param planMeta: The plan meta object.
 
 Plan
 ^^^^
@@ -89,36 +97,6 @@ getLimit
    Gets the limit of the account plan.
 
    :return: The account plan limit.
-
-setDisplayName
-^^^^^^^^^^^^^^
-
-.. java:method:: public void setDisplayName(String displayName)
-   :outertype: Plan
-
-   Sets the display name of the account plan.
-
-   :param displayName: The display name to be set.
-
-setId
-^^^^^
-
-.. java:method:: public void setId(String id)
-   :outertype: Plan
-
-   Sets the id of the account plan.
-
-   :param id: The plan id to be set.
-
-setLimit
-^^^^^^^^
-
-.. java:method:: public void setLimit(long limit)
-   :outertype: Plan
-
-   Sets the limit of the account plan.
-
-   :param limit: The plan limit to be set.
 
 writeToParcel
 ^^^^^^^^^^^^^

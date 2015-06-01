@@ -3,9 +3,9 @@
  * Copyright (C) 2015 Bitcasa, Inc.
  * 1200 Park Place,
  * Suite 350 San Mateo, CA 94403.
- * <p/>
+ *
  * This file contains an SDK in Java for accessing the Bitcasa infinite drive in Android platform.
- * <p/>
+ *
  * For support, please send email to sdks@bitcasa.com.
  */
 
@@ -15,7 +15,6 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 import com.bitcasa.cloudfs.api.RESTAdapter;
-import com.bitcasa.cloudfs.model.Plan;
 import com.bitcasa.cloudfs.model.UserProfile;
 
 /**
@@ -59,24 +58,9 @@ public class Account implements Parcelable {
     private long storageUsage;
 
     /**
-     * The account's storage limit.
-     */
-    private long storageLimit;
-
-    /**
      * The account's over storage limit.
      */
     private final boolean overStorageLimit;
-
-    /**
-     * The account plan display name.
-     */
-    private final String planDisplayName;
-
-    /**
-     * The account plan id.
-     */
-    private final String planId;
 
     /**
      * The account session locale.
@@ -97,10 +81,7 @@ public class Account implements Parcelable {
         this.stateDisplayName = profile.getAccountState().getDisplayName();
         this.stateId = profile.getAccountState().getId();
         this.storageUsage = profile.getStorage().getUsage();
-        this.storageLimit = profile.getStorage().getLimit();
         this.overStorageLimit = profile.getStorage().getOtl();
-        this.planDisplayName = profile.getAccountPlan().getDisplayName();
-        this.planId = profile.getAccountPlan().getId();
         this.sessionLocale = profile.getSession().getLocale();
     }
 
@@ -115,10 +96,7 @@ public class Account implements Parcelable {
         stateDisplayName = in.readString();
         stateId = in.readString();
         storageUsage = in.readLong();
-        storageLimit = in.readLong();
         overStorageLimit = in.readInt() != 0;
-        planDisplayName = in.readString();
-        planId = in.readString();
         sessionLocale = in.readString();
         restAdapter = (RESTAdapter) in.readValue(RESTAdapter.class.getClassLoader());
         plan = (Plan) in.readValue(Plan.class.getClassLoader());
@@ -147,10 +125,7 @@ public class Account implements Parcelable {
         out.writeString(stateDisplayName);
         out.writeString(stateId);
         out.writeLong(storageUsage);
-        out.writeLong(storageLimit);
         out.writeInt(overStorageLimit ? 1 : 0);
-        out.writeString(planDisplayName);
-        out.writeString(planId);
         out.writeString(sessionLocale);
         out.writeValue(restAdapter);
         out.writeValue(plan);
@@ -198,30 +173,12 @@ public class Account implements Parcelable {
     }
 
     /**
-     * Sets the account's storage usage.
-     *
-     * @param storageUsage
-     */
-    public void setStorageUsage(long storageUsage) {
-        this.storageUsage = storageUsage;
-    }
-
-    /**
      * Gets the account's storage limit.
      *
      * @return The account's storage limit.
      */
     public long getStorageLimit() {
-        return this.storageLimit;
-    }
-
-    /**
-     * Sets the account's storage limit.
-     *
-     * @param storageLimit The storage limit to be set.
-     */
-    public void setStorageLimit(long storageLimit) {
-        this.storageLimit = storageLimit;
+        return this.plan.getLimit();
     }
 
     /**
@@ -230,7 +187,7 @@ public class Account implements Parcelable {
      * @return The account plan display name.
      */
     public String getPlanDisplayName() {
-        return this.planDisplayName;
+        return this.plan.getDisplayName();
     }
 
     /**
@@ -275,7 +232,7 @@ public class Account implements Parcelable {
      * @return The account plan id
      */
     public String getPlanId() {
-        return this.planId;
+        return this.plan.getId();
     }
 
     /**
@@ -297,15 +254,6 @@ public class Account implements Parcelable {
     }
 
     /**
-     * Sets the account plan.
-     *
-     * @param plan The account plan to be set.
-     */
-    public void setPlan(Plan plan) {
-        this.plan = plan;
-    }
-
-    /**
      * Creates a string containing a concise, human-readable description of Account object.
      *
      * @return The printable representation of Account object.
@@ -315,8 +263,8 @@ public class Account implements Parcelable {
 
         return "] \nlocale[" + this.sessionLocale + "] \nstate_display_name[" + this.stateDisplayName
                 + "] \nstate_id[" + this.stateId + "] \nstorage_usage[" + this.storageUsage +
-                "] \nstorage_limit[" + this.storageLimit + "] \nstorage_otl[" + this.overStorageLimit
-                + "] \nplan_display_name[" + this.planDisplayName + "] \nplan_id[" + this.planId
+                "] \nstorage_limit[" + this.plan.getLimit() + "] \nstorage_otl[" + this.overStorageLimit
+                + "] \nplan_display_name[" + this.plan.getDisplayName() + "] \nplan_id[" + this.plan.getId()
                 + "] \nsession_locale[" + this.sessionLocale + "] \nid[" + this.id + "]*****";
     }
 

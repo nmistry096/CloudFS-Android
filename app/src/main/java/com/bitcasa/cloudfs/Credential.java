@@ -17,7 +17,7 @@ import android.os.Parcelable;
 /**
  * The Credential class provides accessibility to CloudFS Credential.
  */
-public class Credential implements Parcelable, Cloneable{
+public class Credential implements Parcelable, Cloneable {
 
     /**
      * The CloudFS API end point.
@@ -105,10 +105,9 @@ public class Credential implements Parcelable, Cloneable{
      *
      * @return A clone of Credential.
      */
-    public Credential clone()
-    {
+    public Credential clone() {
         Credential credential = new Credential(this.endpoint);
-        return  credential;
+        return credential;
     }
 
     /**

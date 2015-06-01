@@ -99,8 +99,8 @@ public class FileSystem {
      * @throws IOException      If a network error occurs.
      * @throws BitcasaException If a CloudFS API error occurs.
      */
-    public Share createShare(final String[] paths, final String password) throws IOException, BitcasaException{
-        return  this.restAdapter.createShare(paths, password);
+    public Share createShare(final String[] paths, final String password) throws IOException, BitcasaException {
+        return this.restAdapter.createShare(paths, password);
     }
 
     /**

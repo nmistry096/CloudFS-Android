@@ -3,28 +3,26 @@
  * Copyright (C) 2015 Bitcasa, Inc.
  * 1200 Park Place,
  * Suite 350 San Mateo, CA 94403.
- * <p/>
+ *
  * This file contains an SDK in Java for accessing the Bitcasa infinite drive in Android platform.
- * <p/>
+ *
  * For support, please send email to sdks@bitcasa.com.
  */
-package com.bitcasa.cloudfs.model;
+package com.bitcasa.cloudfs;
 
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import com.bitcasa.cloudfs.api.RESTAdapter;
-import com.google.gson.annotations.SerializedName;
+import com.bitcasa.cloudfs.model.PlanMeta;
 
 /**
- * Model class for plan.
+ * The Plan class provides accessibility to CloudFS Account Plans.
  */
-public class Plan implements Parcelable{
+public class Plan implements Parcelable {
 
     /**
      * Display name of the account plan.
      */
-    @SerializedName("name")
     private String displayName;
 
     /**
@@ -35,7 +33,6 @@ public class Plan implements Parcelable{
     /**
      * Account plan limit.
      */
-    @SerializedName("limit")
     private Long limit;
 
     /**
@@ -49,6 +46,17 @@ public class Plan implements Parcelable{
         this.displayName = displayName;
         this.id = id;
         this.limit = limit;
+    }
+
+    /**
+     * Initializes an account plan instance with plan meta object.
+     *
+     * @param planMeta The plan meta object.
+     */
+    public Plan(PlanMeta planMeta) {
+        this.displayName = planMeta.getDisplayName();
+        this.id = planMeta.getId();
+        this.limit = planMeta.getLimit();
     }
 
     /**
@@ -85,7 +93,7 @@ public class Plan implements Parcelable{
         out.writeLong(limit);
     }
 
-    public static final Parcelable.Creator<Plan> CREATOR = new Parcelable.Creator<Plan>() {
+    public static final Creator<Plan> CREATOR = new Creator<Plan>() {
 
         /**
          *Create a new instance of the Parcelable class, instantiating it from the given Parcel whose data had previously been written by Parcelable.writeToParcel()
@@ -108,7 +116,6 @@ public class Plan implements Parcelable{
         }
     };
 
-
     /**
      * Gets the display name of the account plan.
      *
@@ -116,15 +123,6 @@ public class Plan implements Parcelable{
      */
     public String getDisplayName() {
         return this.displayName;
-    }
-
-    /**
-     * Sets the display name of the account plan.
-     *
-     * @param displayName The display name to be set.
-     */
-    public void setDisplayName(String displayName) {
-        this.displayName = displayName;
     }
 
     /**
@@ -137,15 +135,6 @@ public class Plan implements Parcelable{
     }
 
     /**
-     * Sets the id of the account plan.
-     *
-     * @param id The plan id to be set.
-     */
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    /**
      * Gets the limit of the account plan.
      *
      * @return The account plan limit.
@@ -154,12 +143,4 @@ public class Plan implements Parcelable{
         return this.limit;
     }
 
-    /**
-     * Sets the limit of the account plan.
-     *
-     * @param limit The plan limit to be set.
-     */
-    public void setLimit(long limit) {
-        this.limit = limit;
-    }
 }

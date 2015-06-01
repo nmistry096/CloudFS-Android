@@ -1,9 +1,6 @@
 package com.bitcasa.cloudfs;
 
-import android.widget.AbsSeekBar;
-
 import com.bitcasa.cloudfs.exception.BitcasaException;
-import com.bitcasa.cloudfs.model.Plan;
 
 import org.junit.Assert;
 import org.junit.FixMethodOrder;

@@ -6,8 +6,6 @@
 
 .. java:import:: com.bitcasa.cloudfs.model BaseAction
 
-.. java:import:: com.bitcasa.cloudfs.model Plan
-
 .. java:import:: java.io IOException
 
 .. java:import:: java.util ArrayList

@@ -4,8 +4,6 @@
 
 .. java:import:: com.bitcasa.cloudfs.api RESTAdapter
 
-.. java:import:: com.bitcasa.cloudfs.model Plan
-
 .. java:import:: com.bitcasa.cloudfs.model UserProfile
 
 Account
@@ -170,36 +168,6 @@ getStorageUsage
    Gets the account's storage usage.
 
    :return: The storage used by the account.
-
-setPlan
-^^^^^^^
-
-.. java:method:: public void setPlan(Plan plan)
-   :outertype: Account
-
-   Sets the account plan.
-
-   :param plan: The account plan to be set.
-
-setStorageLimit
-^^^^^^^^^^^^^^^
-
-.. java:method:: public void setStorageLimit(long storageLimit)
-   :outertype: Account
-
-   Sets the account's storage limit.
-
-   :param storageLimit: The storage limit to be set.
-
-setStorageUsage
-^^^^^^^^^^^^^^^
-
-.. java:method:: public void setStorageUsage(long storageUsage)
-   :outertype: Account
-
-   Sets the account's storage usage.
-
-   :param storageUsage:
 
 toString
 ^^^^^^^^

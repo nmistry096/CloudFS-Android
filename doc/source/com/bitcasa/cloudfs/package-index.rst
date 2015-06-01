@@ -20,6 +20,7 @@ com.bitcasa.cloudfs
    Item
    Item-FileType
    Photo
+   Plan
    Session
    Share
    User
