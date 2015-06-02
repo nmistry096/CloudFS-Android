@@ -1,13 +1,13 @@
-# Bitcasa SDK for Android
+# CloudFS SDK for Android
   
-The **Bitcasa SDK for Android** enables Android developers to easily work with [Bitcasa Cloud Storage Platform](https://www.bitcasa.com/) and build scalable solutions.
+The **CloudFS SDK for Android** enables Android developers to easily work with [CloudFS Cloud Storage Platform](https://www.bitcasa.com/cloudfs/) and build scalable solutions.
 
-* [REST API Documentation](https://www.bitcasa.com/cloudfs-api-docs/)
+* [REST API Documentation](https://developer.bitcasa.com/cloudfs-api-documentation/)
 * [Blog](http://blog.bitcasa.com/) 
 
 ## Getting Started
 
-If you have already [signed up](https://www.bitcasa.com/cloudfs/pricing) and obtained your credentials you can get started in minutes.
+If you have already [signed up](http://access.bitcasa.com/Sign-Up/Info/Prototype/) and obtained your credentials you can get started in minutes.
 
 
 Cloning the git repository.
@@ -80,4 +80,6 @@ user = session.createPlan(String planName, String planLimit)
 The tests that exist are functional tests designed to be used with a CloudFS test user. They use API credentials on your free CloudFS account. You should add the credentials to the file app\src\test\java\com\bitcasa\cloudfs\BaseTest.java.
 
 
+## Support
 
+If you have any questions, comments or encounter any bugs please contact us at sdks@bitcasa.com.
