@@ -77,15 +77,16 @@ user = session.createPlan(String planName, String planLimit)
 
 ## Test Suite
 
-The tests that exist are junit tests designed to be used with a CloudFS test user. They use API credentials on your free CloudFS account. To test administrative operations you will have to acquire a paid account which would provide you with seperate admin credentials.  
+The tests that exist are junit tests designed to be used with a CloudFS test user. They use API credentials on your free CloudFS account. To test administrative operations you will have to acquire a paid account which would provide you with separate admin credentials.  
+
 You should add these credentials to the file:  
   
 ```bash
 app\src\test\java\com\bitcasa\cloudfs\BaseTest.java.
 ```  
 After adding the credentials open the project in Android Studio, and click "Build variants" and select "Unit Tests" under "Test Artifact" as shown below.  
-  
-[Build Variants](http://tools.android.com/_/rsrc/1423155717194/tech-docs/unit-testing-support/qSxL68MPv5.png?height=365&width=400)
+
+![alt tag](http://tools.android.com/_/rsrc/1423155717194/tech-docs/unit-testing-support/qSxL68MPv5.png?height=365&width=400)
 
 ## Support
 
