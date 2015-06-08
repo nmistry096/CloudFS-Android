@@ -274,7 +274,7 @@ public class TestSession extends BaseTest {
 
         try {
             User updatedUser = mBitcasaSession.updateUser(mBitcasaSession.account().getId(),
-                    "praveen@calcey.com","Praveen","Prav",null);
+                    mBitcasaSession.user().getUsername(),"Test FirstName","Test Last Name",null);
             Assert.assertNotNull(updatedUser);
             Session testSession = new Session(BaseTest.cloudfsEndpoint, BaseTest.clientId, BaseTest.clientSecret);
             testSession.authenticate(updatedUser.getUsername(), BaseTest.password);
