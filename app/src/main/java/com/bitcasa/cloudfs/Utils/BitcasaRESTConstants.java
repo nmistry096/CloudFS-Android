@@ -3,9 +3,9 @@
  * Copyright (C) 2015 Bitcasa, Inc.
  * 1200 Park Place,
  * Suite 350 San Mateo, CA 94403.
- *
+ * <p/>
  * This file contains an SDK in Java for accessing the Bitcasa infinite drive in Android platform.
- *
+ * <p/>
  * For support, please send email to sdks@bitcasa.com.
  */
 package com.bitcasa.cloudfs.Utils;
@@ -19,7 +19,7 @@ public class BitcasaRESTConstants {
 
     public static final String HTTPS = "https://";
     public static final String API_VERSION_2 = "/v2";
-    public static final String FORESLASH = "/";
+    public static final String FORWARDSLASH = "/";
 
     public static final String UTF_8_ENCODING = "UTF-8";
 

@@ -448,7 +448,7 @@ public class RESTAdapter implements Parcelable, Cloneable {
         if (folderPath != null) {
             endpoint.append(folderPath);
         } else {
-            endpoint.append(File.separator);
+            endpoint.append(BitcasaRESTConstants.FORWARDSLASH);
         }
 
         final Map<String, String> parameters = new TreeMap<String, String>();
@@ -749,9 +749,9 @@ public class RESTAdapter implements Parcelable, Cloneable {
         if (!sourceFile.exists() || !sourceFile.canRead()) {
             throw new BitcasaClientException("Unable to read file: " + sourceFilePath);
         }
-        String path = File.separator;
-        if ((folder != null) && (folder.getPath() != null && !(folder.getPath().equals(File.separator)))) {
-            path = folder.getPath() + File.separator;
+        String path = BitcasaRESTConstants.FORWARDSLASH;
+        if ((folder != null) && (folder.getPath() != null && !(folder.getPath().equals(BitcasaRESTConstants.FORWARDSLASH)))) {
+            path = folder.getPath() + BitcasaRESTConstants.FORWARDSLASH;
         }
 
 
@@ -1015,7 +1015,7 @@ public class RESTAdapter implements Parcelable, Cloneable {
         if ((item != null) && (item.getPath() != null)) {
             parent = item.getPath();
         } else {
-            parent = File.separator;
+            parent = BitcasaRESTConstants.FORWARDSLASH;
         }
         request.append(parent);
 
@@ -1141,7 +1141,7 @@ public class RESTAdapter implements Parcelable, Cloneable {
         if ((item != null) && (item.getPath() != null)) {
             parent = item.getPath();
         } else {
-            parent = File.separator;
+            parent = BitcasaRESTConstants.FORWARDSLASH;
         }
         request.append(parent);
 
@@ -2155,7 +2155,7 @@ public class RESTAdapter implements Parcelable, Cloneable {
         }
         final ArrayList<Item> items = new ArrayList<Item>();
         final String url = this.bitcasaRESTUtility.getRequestUrl(this.credential,
-                BitcasaRESTConstants.METHOD_SHARES, shareKey + File.separator, null);
+                BitcasaRESTConstants.METHOD_SHARES, shareKey + BitcasaRESTConstants.FORWARDSLASH, null);
 
         Log.d(RESTAdapter.TAG, "receiveShare URL: " + url);
         final Map<String, String> formParams = new TreeMap<String, String>();
@@ -2518,7 +2518,7 @@ public class RESTAdapter implements Parcelable, Cloneable {
      */
     public boolean deleteShare(final String shareKey) throws BitcasaException {
 
-        final String sb = shareKey + File.separator;
+        final String sb = shareKey + BitcasaRESTConstants.FORWARDSLASH;
         final String url = this.bitcasaRESTUtility.getRequestUrl(this.credential,
                 BitcasaRESTConstants.METHOD_SHARES, sb, null);
 
@@ -2637,7 +2637,7 @@ public class RESTAdapter implements Parcelable, Cloneable {
             throw new IllegalArgumentException(RESTAdapter.MISSING_PARAM + "path");
         }
         final StringBuilder sb = new StringBuilder();
-        if (trashItemId.startsWith(File.separator)) {
+        if (trashItemId.startsWith(BitcasaRESTConstants.FORWARDSLASH)) {
             sb.append(trashItemId.substring(1));
         } else {
             sb.append(trashItemId);
@@ -3219,7 +3219,7 @@ public class RESTAdapter implements Parcelable, Cloneable {
             throws IOException, BitcasaException {
 
         final String endpoint = BitcasaRESTConstants.METHOD_ADMIN + BitcasaRESTConstants.METHOD_CUSTOMERS +
-                BitcasaRESTConstants.METHOD_PLAN + planId + File.separator;
+                BitcasaRESTConstants.METHOD_PLAN + planId + BitcasaRESTConstants.FORWARDSLASH;
         final String url = this.bitcasaRESTUtility.getRequestUrl(this.credential, endpoint, null, null);
 
         Log.d(RESTAdapter.TAG, "deletePlan: URL - " + url);
@@ -3245,7 +3245,7 @@ public class RESTAdapter implements Parcelable, Cloneable {
 
             final String uri = BitcasaRESTConstants.API_VERSION_2 + BitcasaRESTConstants.METHOD_ADMIN
                     + BitcasaRESTConstants.METHOD_CUSTOMERS +
-                    BitcasaRESTConstants.METHOD_PLAN + planId + File.separator;
+                    BitcasaRESTConstants.METHOD_PLAN + planId + BitcasaRESTConstants.FORWARDSLASH;
 
             final String authorizationValue = this.bitcasaRESTUtility.generateAdminAuthorizationValue(BitcasaRESTConstants.REQUEST_METHOD_DELETE, session,
                     uri, date);
