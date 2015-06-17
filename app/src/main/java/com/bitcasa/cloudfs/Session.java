@@ -89,9 +89,15 @@ public class Session {
      * Checks whether a specific user is linked to the session or not.
      *
      * @return The value indicating whether the operation was successful or not.
+     * @throws BitcasaException If a CloudFS API error occurs.
      */
-    public boolean isLinked() {
-        return this.credential.getAccessToken() != null;
+    public boolean isLinked() throws BitcasaException {
+        if (this.credential.getAccessToken() != null) {
+            return this.restAdapter.ping();
+        } else {
+            return false;
+        }
+
     }
 
     /**

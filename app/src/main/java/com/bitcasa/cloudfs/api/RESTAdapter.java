@@ -305,6 +305,71 @@ public class RESTAdapter implements Parcelable, Cloneable {
         }
     }
 
+    /**
+     * Ping CloudFS server, can be ping by head or get request header
+     * @param useHeadMethod
+     * @return boolean value, true means succeed
+     */
+    public boolean ping(boolean useHeadMethod) throws BitcasaException {
+        boolean booleanResult = false;
+
+        String url = bitcasaRESTUtility.getRequestUrl(credential, BitcasaRESTConstants.METHOD_PING, null, null);
+        Log.d(TAG, "ping URL: " + url);
+        HttpsURLConnection connection = null;
+        try {
+            connection = (HttpsURLConnection) new URL(url).openConnection();
+            if (useHeadMethod)
+                connection.setRequestMethod(BitcasaRESTConstants.REQUEST_METHOD_HEAD);
+            else
+                connection.setRequestMethod(BitcasaRESTConstants.REQUEST_METHOD_GET);
+            bitcasaRESTUtility.setRequestHeaders(credential, connection, null);
+
+            BitcasaError error = bitcasaRESTUtility.checkRequestResponse(connection);
+            if (error == null)
+                booleanResult = true;
+
+        } catch (MalformedURLException e) {
+            throw  new BitcasaException(e);
+        } catch (IOException e) {
+            throw  new BitcasaException(e);
+        } finally {
+            if (connection != null)
+                connection.disconnect();
+        }
+        return booleanResult;
+    }
+
+    /**
+     * Ping CloudFS server, can be ping by head or get request header
+     * @param useHeadMethod
+     * @return boolean value, true means succeed
+     */
+    public boolean ping() throws BitcasaException {
+        boolean booleanResult = false;
+
+        String url = bitcasaRESTUtility.getRequestUrl(credential, BitcasaRESTConstants.METHOD_PING, null, null);
+        Log.d(TAG, "ping URL: " + url);
+        HttpsURLConnection connection = null;
+        try {
+            connection = (HttpsURLConnection) new URL(url).openConnection();
+            connection.setRequestMethod(BitcasaRESTConstants.REQUEST_METHOD_GET);
+            bitcasaRESTUtility.setRequestHeaders(credential, connection, null);
+
+            BitcasaError error = bitcasaRESTUtility.checkRequestResponse(connection);
+            if (error == null)
+                booleanResult = true;
+
+        } catch (MalformedURLException e) {
+            throw  new BitcasaException(e);
+        } catch (IOException e) {
+            throw  new BitcasaException(e);
+        } finally {
+            if (connection != null)
+                connection.disconnect();
+        }
+        return booleanResult;
+    }
+
     //region Account Data
 
     /**
@@ -427,6 +492,10 @@ public class RESTAdapter implements Parcelable, Cloneable {
 
         return user;
     }
+
+    //endregion
+
+    //region Item Operations
 
     /**
      * Lists all the files and folders under the given folder path.

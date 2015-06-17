@@ -51,7 +51,12 @@ public class TestSession extends BaseTest {
             Assert.fail();
             e.printStackTrace();
         }
-        junit.framework.Assert.assertTrue(this.mBitcasaSession.isLinked());
+        try {
+            junit.framework.Assert.assertTrue(this.mBitcasaSession.isLinked());
+        } catch (BitcasaException e) {
+            Assert.fail();
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -70,7 +75,12 @@ public class TestSession extends BaseTest {
             e.printStackTrace();
         }
         this.mBitcasaSession.unlink();
-        Assert.assertTrue(!this.mBitcasaSession.isLinked());
+        try {
+            Assert.assertTrue(!this.mBitcasaSession.isLinked());
+        } catch (BitcasaException e) {
+            Assert.fail();
+            e.printStackTrace();
+        }
     }
 
     /**
