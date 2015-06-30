@@ -28,24 +28,24 @@ session.authenticate(username, password);
 Getting the root folder
 
 ```java
-root = fileSystem.root();
+Folder root = fileSystem.root();
 ```
 
 Getting the contents of root folder
 
 ```java
-items = root.list();
+Item [] items = root.list();
 ```
 
 Creating a sub folder under root folder
 
 ```java
-folder = root.createFolder(String name, Exists exist);
+Folder folder = root.createFolder(String name, Exists exist);
 ```
 Uploading a file to a folder
 
 ```java
-uploadedFile = folder.upload(String filesystemPath, BitcasaProgressListener listener, BitcasaRESTConstants.Exists exists);
+File uploadedFile = folder.upload(String filesystemPath, BitcasaProgressListener listener, BitcasaRESTConstants.Exists exists);
 ```
 
 Download a file to a local destination.
@@ -64,14 +64,14 @@ Create user (for paid accounts only)
 
 ```java
 session.setAdminCredentials(String adminClientId, String adminClientSecret);
-user = session.createAccount(String username, String password, String email, String firstName, String lastName, Boolean logInToCreatedUser);
+User user = session.createAccount(String username, String password, String email, String firstName, String lastName, Boolean logInToCreatedUser);
 ```
 
 Create account plan (for paid accounts only)
 
 ```java
 session.setAdminCredentials(String adminClientId, String adminClientSecret);
-user = session.createPlan(String planName, String planLimit)
+Plan plan = session.createPlan(String planName, String planLimit)
 ```
 
 
