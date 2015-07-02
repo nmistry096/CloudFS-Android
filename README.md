@@ -1,14 +1,15 @@
 # CloudFS SDK for Android
   
-The **CloudFS SDK for Android** enables Android developers to easily work with [CloudFS Cloud Storage Platform](https://www.bitcasa.com/cloudfs/) and build scalable solutions.
+This SDK enables Android developers to easily work with the [CloudFS Storage Platform](https://www.bitcasa.com/cloudfs/) and build scalable solutions. CloudFS provides developers with a seamless and secure way to integrate cloud storage, access, and sharing functionality into applications.
 
+* [CloudFS FAQs](https://developer.bitcasa.com/faqs/)
 * [REST API Documentation](https://developer.bitcasa.com/cloudfs-api-documentation/)
 * [Blog](http://blog.bitcasa.com/) 
+* [Free Prototype Account](https://access.bitcasa.com/Sign-Up/Info/Prototype/) 
 
 ## Getting Started
 
 If you have already [signed up](http://access.bitcasa.com/Sign-Up/Info/Prototype/) and obtained your credentials you can get started in minutes.
-
 
 Cloning the git repository.
 
@@ -18,7 +19,7 @@ Cloning the git repository.
 
 ## Using the SDK
 
-Use the credentials you obtained from Bitcasa admin console to create a client session. This session can be used for all future requests to Bitcasa.
+Use the credentials you obtained from the CloudFS admin console to create a client session. This session can be used for all future requests to Bitcasa.
 
 ```java
 Session session = new Session(endpoint, clientId, clientSecret);
@@ -84,9 +85,8 @@ You should add these credentials to the file:
 ```bash
 app\src\test\java\com\bitcasa\cloudfs\BaseTest.java.
 ```  
-After adding the credentials open the project in Android Studio, and click "Build variants" and select "Unit Tests" under "Test Artifact" as shown below.  
 
-![alt tag](http://tools.android.com/_/rsrc/1423155717194/tech-docs/unit-testing-support/qSxL68MPv5.png?height=365&width=400)
+After adding the credentials, select the, 'Unit Tests,' test artifact under Build Variants in Android Studio.  
 
 ## Support
 
