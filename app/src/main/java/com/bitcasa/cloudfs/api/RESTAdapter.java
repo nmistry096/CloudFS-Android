@@ -168,7 +168,7 @@ public class RESTAdapter implements Parcelable, Cloneable {
      * @return A clone of RESTAdapter.
      */
     public RESTAdapter clone() {
-        return new RESTAdapter(this.credential);
+        return new RESTAdapter(this.credential.clone());
     }
 
     /**

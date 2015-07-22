@@ -44,6 +44,19 @@ public class Credential implements Parcelable, Cloneable {
     }
 
     /**
+     * Initializes and instance of the Credential.
+     *
+     * @param endpoint      The CloudFS API endpoint.
+     * @param accessToken   The CloudFS access token.
+     * @param tokenType     The access token type.
+     */
+    public Credential(String endpoint, String accessToken, String tokenType) {
+        this.endpoint = endpoint;
+        this.accessToken = accessToken;
+        this.tokenType = tokenType;
+    }
+
+    /**
      * Initializes the credential instance using a Parcel.
      *
      * @param in The parcel object.
@@ -106,7 +119,7 @@ public class Credential implements Parcelable, Cloneable {
      * @return A clone of Credential.
      */
     public Credential clone() {
-        Credential credential = new Credential(this.endpoint);
+        Credential credential = new Credential(this.endpoint, this.accessToken, this.tokenType);
         return credential;
     }
 
